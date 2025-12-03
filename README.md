@@ -16,6 +16,7 @@ To embed a chart on your website, you can use the following HTML code as an exam
 
 Simply replace the `src` URL with the link to your own chart if needed.
 
+[Austin Housing Starts](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
 
 [Vacancy Rate (Industrial)](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
 
