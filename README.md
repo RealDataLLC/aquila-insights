@@ -24,7 +24,7 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 
 Todo:
-Requirements vs Absorption (Office)
-Requirements vs Absorption (Industrial)
-Sales Taxes in Austin (Retail)
+- Requirements vs Absorption (Office)
+- Requirements vs Absorption (Industrial)
+- Sales Taxes in Austin (Retail)
 - Inflation adjusted
