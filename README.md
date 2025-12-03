@@ -18,8 +18,12 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 [Austin Housing Starts](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
 
-[Vacancy Rate (Industrial)](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+## Office
+[Requirements Total](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_total.html)
+[Requirements Average](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg.html)
 
+
+[Vacancy Rate (Industrial)](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
 
 
 
