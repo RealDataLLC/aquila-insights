@@ -23,6 +23,8 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 [Requirements Average](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg.html)
 
+[Tenant Demand by Industry](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg_by_industry.html)
+
 ## Industrial
 [Vacancy Rate (Industrial)](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
 
