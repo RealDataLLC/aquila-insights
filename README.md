@@ -20,6 +20,7 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 ## Office
 [Requirements Total](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_total.html)
+
 [Requirements Average](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg.html)
 
 
