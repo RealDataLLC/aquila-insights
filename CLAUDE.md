@@ -4,9 +4,12 @@
 
 **Aquila Insights** is a data visualization project for **Aquila Commercial**, providing interactive real estate market analytics through GitHub Pages. The project generates branded, interactive HTML charts from multiple data sources and publishes them as embeddable visualizations.
 
+**Workflow:** Jupyter notebooks are used for development and testing. Final charts are exported as self-contained HTML files to the `charts/` directory, linked in `README.md`, and automatically published to GitHub Pages for public access.
+
 **Maintained by:** Nelson Lin (nelson@subtlerealestate.com)
 **Repository:** https://github.com/realdatallc/aquila-insights
 **Deployment:** GitHub Pages (https://realdatallc.github.io/aquila-insights/)
+**Public Chart Index:** README.md (https://github.com/realdatallc/aquila-insights#readme)
 **Size:** ~33MB (primarily generated charts)
 **Active Branch:** Development occurs on feature branches, merges to main
 
@@ -565,6 +568,26 @@ Context: BUILDINGS SENT, SOURCE, INTERNAL NOTES
 
 ## Development Workflow
 
+### Overview: Purpose of This Project
+
+**Primary Goal:** Generate interactive, branded HTML charts from real estate data and publish them on GitHub Pages for public consumption.
+
+**Key Requirements:**
+1. ✅ **Charts MUST be saved** to `charts/` directory as self-contained HTML files
+2. ✅ **Charts MUST be added** to `README.md` with public GitHub Pages links
+3. ✅ **Charts MUST use** Aquila brand styling (colors, fonts)
+4. ✅ **Charts MUST be committed** to the repository and pushed to GitHub
+
+**Workflow Context:**
+- **Jupyter Notebooks** = Development/testing environment for iterating on charts
+- **`charts/` directory** = Production output (committed to repo)
+- **GitHub Pages** = Public hosting at `https://realdatallc.github.io/aquila-insights/charts/{filename}.html`
+- **README.md** = User-facing index of all published charts
+
+**Notebooks are NOT the deliverable**—the HTML charts hosted on GitHub Pages are the final product.
+
+---
+
 ### Standard Chart Generation Workflow
 
 1. **Open Jupyter Notebook** (SQL.ipynb, api-graphs.ipynb, or googlesheets.ipynb)
@@ -589,12 +612,25 @@ Context: BUILDINGS SENT, SOURCE, INTERNAL NOTES
    ```python
    fig.write_html('charts/chart_name.html')
    ```
-8. **Commit and Push**
+8. **Update README.md** (REQUIRED)
+   - Add a link to your new chart in the appropriate section
+   - Format: `[Descriptive Chart Name](https://realdatallc.github.io/aquila-insights/charts/chart_name.html)`
+   - Example:
+     ```markdown
+     ## Industrial Market
+     [Vacancy Rate by Submarket](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+     ```
+9. **Commit and Push**
    ```python
    from aquila_graphing_tools import commit_and_push_all
    commit_and_push_all("Descriptive commit message")
    ```
-9. **Verify Deployment** at https://realdatallc.github.io/aquila-insights/charts/chart_name.html
+   - Or manually: `git add . && git commit -m "Add new chart" && git push`
+10. **Verify Deployment**
+    - Wait 1-2 minutes for GitHub Pages to rebuild
+    - Visit: `https://realdatallc.github.io/aquila-insights/charts/chart_name.html`
+    - Check that the chart loads and is interactive
+    - Verify README.md link works
 
 ---
 
