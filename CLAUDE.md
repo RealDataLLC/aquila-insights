@@ -614,12 +614,23 @@ Context: BUILDINGS SENT, SOURCE, INTERNAL NOTES
    ```
 8. **Update README.md** (REQUIRED)
    - Add a link to your new chart in the appropriate section
-   - Format: `[Descriptive Chart Name](https://realdatallc.github.io/aquila-insights/charts/chart_name.html)`
-   - Example:
-     ```markdown
-     ## Industrial Market
-     [Vacancy Rate by Submarket](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
-     ```
+   - **Naming Convention:** `[Descriptive Chart Name [YYYY-MM-DD]](chart_url)`
+   - **Date Format:** Use ISO format (YYYY-MM-DD) for the date the chart was last updated
+   - Place the link under the appropriate category (Office, Industrial, General Economy)
+
+   **Examples:**
+   ```markdown
+   ## Office
+   [Austin Office Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office_vacancy_by_submarket.html)
+
+   [Tenant Requirements Total SF [2026-01-15]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_total.html)
+
+   ## Industrial
+   [Industrial Vacancy Rate Trends [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+
+   ## General Economy
+   [Austin Housing Starts (Monthly) [2026-01-10]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
+   ```
 9. **Commit and Push**
    ```python
    from aquila_graphing_tools import commit_and_push_all
@@ -742,6 +753,11 @@ fig.write_html('charts/descriptive_filename.html')
 - Be descriptive: `requirements_sf_avg_by_industry.html` ✓
 - Not generic: `chart1.html` ✗
 
+**README.md Link Format (REQUIRED):**
+- **Format:** `[Descriptive Chart Name [YYYY-MM-DD]](chart_url)`
+- **Date:** ISO format (YYYY-MM-DD) representing when chart was last updated
+- **Example:** `[Austin Office Vacancy [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office_vacancy.html)`
+
 ---
 
 ### 5. Code Organization in Notebooks
@@ -827,6 +843,14 @@ fig = aquila_styled_line_chart(
 
 3. **Update README.md:**
    Add link to new chart under appropriate category (Office, Industrial, General Economy)
+
+   **Format:** `[Descriptive Chart Name [YYYY-MM-DD]](chart_url)`
+
+   **Example:**
+   ```markdown
+   ## Office
+   [New Office Metric [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/new_chart_name.html)
+   ```
 
 4. **Commit:**
    ```python
@@ -954,16 +978,29 @@ df = df[
 
 ### Task 6: Add Chart to README
 
-**Pattern:**
+**Required Format:**
 ```markdown
 ## Category Name
-[Descriptive Chart Name](https://realdatallc.github.io/aquila-insights/charts/filename.html)
+[Descriptive Chart Name [YYYY-MM-DD]](https://realdatallc.github.io/aquila-insights/charts/filename.html)
 ```
 
-**Example:**
+**Date Format:**
+- Use ISO format: `YYYY-MM-DD`
+- Date represents when the chart was last updated/generated
+- Always include the date in square brackets after the chart name
+
+**Examples:**
 ```markdown
 ## Office
-[Tenant Demand by Industry](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg_by_industry.html)
+[Tenant Demand by Industry [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg_by_industry.html)
+
+[Austin Office Vacancy Rate Trends [2026-01-15]](https://realdatallc.github.io/aquila-insights/charts/office_vacancy_trends.html)
+
+## Industrial
+[Industrial Vacancy by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+
+## General Economy
+[Austin Housing Starts [2026-01-10]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
 ```
 
 ---
