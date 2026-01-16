@@ -41,10 +41,12 @@
 - `subprocess` - Git automation within notebooks
 
 ### External Services
-1. **PostgreSQL Database** - Commercial real estate market data
+1. **Supabase** - PostgreSQL database hosted on Supabase (commercial real estate market data)
 2. **Google Sheets API** - Tenant requirement tracking
 3. **FRED API** - Federal Reserve Economic Data (housing starts, economic indicators)
 4. **GitHub Pages** - Static site hosting
+
+**Note:** The project uses `aquila_tools.initialize_connection()` from an external repository to connect to Supabase. Alternatively, you can use the `initialize_supabase_connection()` function in `aquila_graphing_tools.py` for direct Supabase access via the Supabase Python SDK.
 
 ---
 
@@ -64,9 +66,10 @@
 ├── .gitignore                               # Excludes: aquila_graph.env, *.json
 ├── README.md                                # User-facing documentation with chart links
 ├── SQL.ipynb                                # PostgreSQL queries → industrial vacancy charts
+├── supabase-graphs.ipynb                    # Supabase → example graphing notebook
 ├── api-graphs.ipynb                         # FRED API → economic indicator charts
 ├── googlesheets.ipynb                       # Google Sheets → tenant demand charts
-├── aquila_graph.env                         # CREDENTIALS (FRED API, Google Service Account)
+├── aquila_graph.env                         # CREDENTIALS (FRED API, Google, Supabase)
 └── aquila_graphing_tools.py                 # Shared utilities (styling, git automation)
 ```
 
@@ -77,8 +80,9 @@
 
 **Jupyter Notebooks:**
 1. `SQL.ipynb` (1,897 lines) - PostgreSQL → Industrial vacancy charts
-2. `api-graphs.ipynb` (2,020 lines) - FRED API → Economic indicator charts
-3. `googlesheets.ipynb` (2,463 lines) - Google Sheets → 4 tenant demand charts
+2. `supabase-graphs.ipynb` - Supabase → Example notebook for querying and graphing
+3. `api-graphs.ipynb` (2,020 lines) - FRED API → Economic indicator charts
+4. `googlesheets.ipynb` (2,463 lines) - Google Sheets → 4 tenant demand charts
 
 **Configuration:**
 - `aquila_graph.env` - API keys and OAuth2 credentials (SENSITIVE)
@@ -96,6 +100,34 @@
 **Location:** `/home/user/aquila-insights/aquila_graphing_tools.py`
 
 #### Functions
+
+**`initialize_supabase_connection()`**
+
+Initializes and returns a Supabase client for database operations.
+
+**Parameters:** None (reads from environment variables)
+
+**Returns:** `supabase.Client` - Authenticated Supabase client
+
+**Environment Variables Required:**
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_KEY` - Your Supabase API key (anon or service_role)
+
+**Example:**
+```python
+from dotenv import load_dotenv
+from aquila_graphing_tools import initialize_supabase_connection
+import pandas as pd
+
+load_dotenv('aquila_graph.env')
+supabase = initialize_supabase_connection()
+
+# Query data
+response = supabase.table('market_tables_industrial').select('*').execute()
+df = pd.DataFrame(response.data)
+```
+
+---
 
 **`commit_and_push_all(commit_message="Update readme instructions")`**
 ```python
@@ -208,9 +240,74 @@ df = pd.read_sql(query, connection)
 - Industrial vacancy rates by submarket (multi-line time series)
 - Faceted by property type if needed
 
+**Note:** The `SQL.ipynb` notebook uses `aquila_tools.initialize_connection()` from an external repository, which actually connects to Supabase's PostgreSQL database.
+
 ---
 
-### 3. api-graphs.ipynb (FRED API Integration)
+### 3. supabase-graphs.ipynb (Supabase Integration)
+
+**Purpose:** Example notebook demonstrating Supabase connection and chart generation using the Supabase Python SDK.
+
+**Connection Method:**
+```python
+from aquila_graphing_tools import initialize_supabase_connection
+import pandas as pd
+
+supabase = initialize_supabase_connection()
+```
+
+**Supabase Credentials (in aquila_graph.env):**
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_KEY` - Supabase API key (anon or service_role)
+- `SUPABASE_USER`, `SUPABASE_PASSWORD`, `SUPABASE_HOST`, `SUPABASE_PORT`, `SUPABASE_DBNAME` - Direct PostgreSQL connection parameters (alternative method)
+
+**Query Pattern:**
+```python
+# Query with filters
+response = supabase.table('market_tables_industrial') \
+    .select('*') \
+    .gte('quarter', '2020-01-01') \
+    .order('quarter', desc=False) \
+    .execute()
+
+# Convert to DataFrame
+df = pd.DataFrame(response.data)
+```
+
+**Common Supabase Query Methods:**
+- `.select('col1, col2')` - Select specific columns
+- `.eq('column', 'value')` - Equal to filter
+- `.neq('column', 'value')` - Not equal to filter
+- `.gt('column', value)` - Greater than
+- `.gte('column', value)` - Greater than or equal
+- `.lt('column', value)` - Less than
+- `.lte('column', value)` - Less than or equal
+- `.like('column', '%pattern%')` - Pattern matching
+- `.in_('column', [val1, val2])` - IN list
+- `.order('column', desc=True/False)` - Sort results
+- `.limit(100)` - Limit rows returned
+- `.execute()` - Execute the query
+
+**Database Tables:**
+Same tables as SQL.ipynb:
+- `market_tables_industrial` - Quarterly industrial market data
+- `market_tables_office` - Quarterly office market data
+- Plus all other tables listed in SQL.ipynb section
+
+**Output Charts:**
+- Examples of industrial vacancy charts
+- Demonstrates Aquila styling with Supabase data
+- All standard Plotly chart types supported
+
+**Key Differences from SQL.ipynb:**
+- Uses Supabase Python SDK instead of direct PostgreSQL connection
+- RESTful API approach vs. raw SQL
+- Built-in authentication and RLS (Row Level Security) support
+- More Pythonic query interface
+
+---
+
+### 4. api-graphs.ipynb (FRED API Integration)
 
 **Purpose:** Fetch economic indicators from Federal Reserve Economic Data (FRED) and create trend charts.
 
@@ -669,7 +766,8 @@ fig = aquila_styled_line_chart(
 **Steps:**
 
 1. **Identify Source Notebook:**
-   - PostgreSQL → Edit `SQL.ipynb`
+   - Supabase → Edit `supabase-graphs.ipynb` (recommended for new Supabase charts)
+   - PostgreSQL → Edit `SQL.ipynb` (legacy, uses external aquila_tools)
    - FRED API → Edit `api-graphs.ipynb`
    - Google Sheets → Edit `googlesheets.ipynb`
 
@@ -882,7 +980,7 @@ else:
 
 **Required Packages:**
 ```bash
-pip install pandas plotly requests python-dotenv gspread oauth2client
+pip install pandas plotly requests python-dotenv gspread oauth2client supabase
 ```
 
 **Note:** No `requirements.txt` currently exists in repository. Consider creating one:
@@ -893,7 +991,8 @@ requests>=2.26.0
 python-dotenv>=0.19.0
 gspread>=4.0.0
 oauth2client>=4.1.3
-psycopg2-binary>=2.9.0  # For PostgreSQL
+psycopg2-binary>=2.9.0  # For PostgreSQL (if using direct connection)
+supabase>=2.0.0  # For Supabase integration
 ```
 
 ---
@@ -904,6 +1003,17 @@ psycopg2-binary>=2.9.0  # For PostgreSQL
 ```bash
 # FRED API
 FRED_API_KEY=your_key_here
+
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your_supabase_key_here
+
+# Supabase PostgreSQL Direct Connection (alternative method)
+SUPABASE_USER=postgres.your_project_id
+SUPABASE_PASSWORD=your_password
+SUPABASE_HOST=aws-0-us-east-1.pooler.supabase.com
+SUPABASE_PORT=5432
+SUPABASE_DBNAME=postgres
 
 # Google Service Account
 GOOGLE_SERVICE_ACCOUNT_TYPE=service_account
@@ -1109,6 +1219,7 @@ pip install X
 - **Environment config:** `/home/user/aquila-insights/aquila_graph.env`
 
 ### Key Functions
+- **Supabase connection:** `initialize_supabase_connection()`
 - **Styled line chart:** `aquila_styled_line_chart(df, x, y, color, facet_row, title, height)`
 - **Git automation:** `commit_and_push_all(commit_message)`
 
@@ -1117,7 +1228,7 @@ pip install X
 - **Font:** `AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"`
 
 ### Data Sources
-- **PostgreSQL:** Market tables (office, industrial, retail)
+- **Supabase:** PostgreSQL database hosted on Supabase (market tables: office, industrial, retail)
 - **Google Sheets:** Tenant requirements (ID: 1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec)
 - **FRED API:** Economic indicators (https://api.stlouisfed.org/fred/series/observations)
 
