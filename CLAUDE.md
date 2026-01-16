@@ -4,9 +4,12 @@
 
 **Aquila Insights** is a data visualization project for **Aquila Commercial**, providing interactive real estate market analytics through GitHub Pages. The project generates branded, interactive HTML charts from multiple data sources and publishes them as embeddable visualizations.
 
+**Workflow:** Jupyter notebooks are used for development and testing. Final charts are exported as self-contained HTML files to the `charts/` directory, linked in `README.md`, and automatically published to GitHub Pages for public access.
+
 **Maintained by:** Nelson Lin (nelson@subtlerealestate.com)
 **Repository:** https://github.com/realdatallc/aquila-insights
 **Deployment:** GitHub Pages (https://realdatallc.github.io/aquila-insights/)
+**Public Chart Index:** README.md (https://github.com/realdatallc/aquila-insights#readme)
 **Size:** ~33MB (primarily generated charts)
 **Active Branch:** Development occurs on feature branches, merges to main
 
@@ -565,6 +568,26 @@ Context: BUILDINGS SENT, SOURCE, INTERNAL NOTES
 
 ## Development Workflow
 
+### Overview: Purpose of This Project
+
+**Primary Goal:** Generate interactive, branded HTML charts from real estate data and publish them on GitHub Pages for public consumption.
+
+**Key Requirements:**
+1. ✅ **Charts MUST be saved** to `charts/` directory as self-contained HTML files
+2. ✅ **Charts MUST be added** to `README.md` with public GitHub Pages links
+3. ✅ **Charts MUST use** Aquila brand styling (colors, fonts)
+4. ✅ **Charts MUST be committed** to the repository and pushed to GitHub
+
+**Workflow Context:**
+- **Jupyter Notebooks** = Development/testing environment for iterating on charts
+- **`charts/` directory** = Production output (committed to repo)
+- **GitHub Pages** = Public hosting at `https://realdatallc.github.io/aquila-insights/charts/{filename}.html`
+- **README.md** = User-facing index of all published charts
+
+**Notebooks are NOT the deliverable**—the HTML charts hosted on GitHub Pages are the final product.
+
+---
+
 ### Standard Chart Generation Workflow
 
 1. **Open Jupyter Notebook** (SQL.ipynb, api-graphs.ipynb, or googlesheets.ipynb)
@@ -589,12 +612,36 @@ Context: BUILDINGS SENT, SOURCE, INTERNAL NOTES
    ```python
    fig.write_html('charts/chart_name.html')
    ```
-8. **Commit and Push**
+8. **Update README.md** (REQUIRED)
+   - Add a link to your new chart in the appropriate section
+   - **Naming Convention:** `[Descriptive Chart Name [YYYY-MM-DD]](chart_url)`
+   - **Date Format:** Use ISO format (YYYY-MM-DD) for the date the chart was last updated
+   - Place the link under the appropriate category (Office, Industrial, General Economy)
+
+   **Examples:**
+   ```markdown
+   ## Office
+   [Austin Office Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office_vacancy_by_submarket.html)
+
+   [Tenant Requirements Total SF [2026-01-15]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_total.html)
+
+   ## Industrial
+   [Industrial Vacancy Rate Trends [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+
+   ## General Economy
+   [Austin Housing Starts (Monthly) [2026-01-10]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
+   ```
+9. **Commit and Push**
    ```python
    from aquila_graphing_tools import commit_and_push_all
    commit_and_push_all("Descriptive commit message")
    ```
-9. **Verify Deployment** at https://realdatallc.github.io/aquila-insights/charts/chart_name.html
+   - Or manually: `git add . && git commit -m "Add new chart" && git push`
+10. **Verify Deployment**
+    - Wait 1-2 minutes for GitHub Pages to rebuild
+    - Visit: `https://realdatallc.github.io/aquila-insights/charts/chart_name.html`
+    - Check that the chart loads and is interactive
+    - Verify README.md link works
 
 ---
 
@@ -706,6 +753,11 @@ fig.write_html('charts/descriptive_filename.html')
 - Be descriptive: `requirements_sf_avg_by_industry.html` ✓
 - Not generic: `chart1.html` ✗
 
+**README.md Link Format (REQUIRED):**
+- **Format:** `[Descriptive Chart Name [YYYY-MM-DD]](chart_url)`
+- **Date:** ISO format (YYYY-MM-DD) representing when chart was last updated
+- **Example:** `[Austin Office Vacancy [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office_vacancy.html)`
+
 ---
 
 ### 5. Code Organization in Notebooks
@@ -791,6 +843,14 @@ fig = aquila_styled_line_chart(
 
 3. **Update README.md:**
    Add link to new chart under appropriate category (Office, Industrial, General Economy)
+
+   **Format:** `[Descriptive Chart Name [YYYY-MM-DD]](chart_url)`
+
+   **Example:**
+   ```markdown
+   ## Office
+   [New Office Metric [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/new_chart_name.html)
+   ```
 
 4. **Commit:**
    ```python
@@ -918,16 +978,29 @@ df = df[
 
 ### Task 6: Add Chart to README
 
-**Pattern:**
+**Required Format:**
 ```markdown
 ## Category Name
-[Descriptive Chart Name](https://realdatallc.github.io/aquila-insights/charts/filename.html)
+[Descriptive Chart Name [YYYY-MM-DD]](https://realdatallc.github.io/aquila-insights/charts/filename.html)
 ```
 
-**Example:**
+**Date Format:**
+- Use ISO format: `YYYY-MM-DD`
+- Date represents when the chart was last updated/generated
+- Always include the date in square brackets after the chart name
+
+**Examples:**
 ```markdown
 ## Office
-[Tenant Demand by Industry](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg_by_industry.html)
+[Tenant Demand by Industry [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg_by_industry.html)
+
+[Austin Office Vacancy Rate Trends [2026-01-15]](https://realdatallc.github.io/aquila-insights/charts/office_vacancy_trends.html)
+
+## Industrial
+[Industrial Vacancy by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+
+## General Economy
+[Austin Housing Starts [2026-01-10]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
 ```
 
 ---
