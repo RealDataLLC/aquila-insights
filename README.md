@@ -19,20 +19,22 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 
 ## Office
-[Requirements Total](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_total.html)
+[Requirements Total SF [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_total.html)
 
-[Requirements Average](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg.html)
+[Requirements Average SF [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg.html)
 
-[Tenant Demand by Industry](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg_by_industry.html)
+[Tenant Demand by Industry [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg_by_industry.html)
 
-[Tenant Demand by Size Range and Number](https://realdatallc.github.io/aquila-insights/charts/requirements_by_size_range.html)
+[Tenant Demand by Size Range and Number [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_by_size_range.html)
+
+[Asking vs Effective Rent by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office_asking_vs_effective_rent_by_submarket.html)
 
 
 ## Industrial
-[Vacancy Rate (Industrial)](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+[Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
 
 ## General Economy
-[Austin Housing Starts](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
+[Austin Housing Starts (Monthly) [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
 
 Todo:
 - Requirements vs Absorption (Office)

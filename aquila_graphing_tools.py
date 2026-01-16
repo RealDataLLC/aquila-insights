@@ -7,6 +7,46 @@ from datetime import datetime
 
 AQUILA_COLORS = ["#00325a", "#e6b40a", "#8c8c8c", "#18a0CF", "#D05325"]
 AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"
+
+def initialize_supabase_connection():
+    """
+    Initialize connection to Supabase database.
+    Returns a Supabase client for querying data.
+
+    Requires environment variables:
+    - SUPABASE_URL: Your Supabase project URL
+    - SUPABASE_KEY: Your Supabase API key (anon or service_role)
+
+    Returns
+    -------
+    supabase.Client
+        Authenticated Supabase client for database operations
+
+    Example
+    -------
+    >>> from dotenv import load_dotenv
+    >>> load_dotenv('aquila_graph.env')
+    >>> supabase = initialize_supabase_connection()
+    >>>
+    >>> # Query data
+    >>> response = supabase.table('your_table').select('*').execute()
+    >>> df = pd.DataFrame(response.data)
+    """
+    from supabase import create_client, Client
+    from dotenv import load_dotenv
+
+    load_dotenv('aquila_graph.env')
+
+    url = os.getenv("SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY")
+
+    if not url or not key:
+        raise ValueError(
+            "SUPABASE_URL and SUPABASE_KEY must be set in aquila_graph.env"
+        )
+
+    supabase: Client = create_client(url, key)
+    return supabase
 def commit_and_push_all(commit_message="Update readme instructions"):
     """
     Stages all changes, commits with the provided message,
