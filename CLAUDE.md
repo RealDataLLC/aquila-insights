@@ -1310,6 +1310,149 @@ pip install X
 - **GitHub Pages:** https://realdatallc.github.io/aquila-insights/
 - **Chart pattern:** https://realdatallc.github.io/aquila-insights/charts/{filename}.html
 
+### Automation Scripts
+- **Update all charts:** `python3 update_all_charts.py`
+- **Update Google Sheets charts:** `python3 update_google_sheets_charts.py`
+- **Update Supabase charts:** `python3 update_supabase_charts.py`
+- **Update FRED charts:** `python3 update_fred_charts.py`
+- **Auto-update README dates:** Add `--update-readme` flag
+
+---
+
+## Chart Update Automation
+
+### Overview
+
+Jupyter notebooks have been converted into executable Python scripts for one-line chart updates when data refreshes.
+
+### Available Scripts
+
+**Master Script (Runs All Updates):**
+```bash
+python3 update_all_charts.py                    # Update all charts
+python3 update_all_charts.py --update-readme    # Update all + README dates
+```
+
+**Individual Data Source Scripts:**
+```bash
+python3 update_google_sheets_charts.py          # 4 tenant demand charts
+python3 update_supabase_charts.py               # 1 industrial vacancy chart
+python3 update_fred_charts.py                   # 1 housing starts chart
+```
+
+### What Each Script Does
+
+**1. update_google_sheets_charts.py**
+- Fetches latest tenant requirements from Google Sheets
+- Generates 4 charts:
+  - `requirements_sf_total.html` - Monthly total SF (LOW/HIGH lines)
+  - `requirements_sf_avg.html` - Average SF with count (dual-axis)
+  - `requirements_sf_avg_by_industry.html` - Demand by industry (donut)
+  - `requirements_by_size_range.html` - SF by size range (horizontal bars)
+- Uses OAuth2 service account credentials from `aquila_graph.env`
+
+**2. update_supabase_charts.py**
+- Queries Supabase `market_tables_industrial` table
+- Generates 1 chart:
+  - `vacancy_rate_industrial.html` - Vacancy rate by submarket (line chart)
+- Requires Supabase credentials in `aquila_graph.env`
+- **Note:** May fail with 403 if RLS policies block anon key
+
+**3. update_fred_charts.py**
+- Fetches Austin housing data from Federal Reserve API
+- Series: AUST448BPPRIV (Private Housing Units Authorized)
+- Generates 1 chart:
+  - `austin_housing_starts.html` - Monthly housing starts (line chart)
+- Uses FRED API key from `aquila_graph.env`
+
+**4. update_all_charts.py**
+- Orchestrates all three scripts
+- Runs sequentially: Google Sheets → Supabase → FRED
+- Shows summary of successes/failures
+- Exit code 0 if all succeed, 1 if any fail
+
+### Usage Workflow
+
+**When Data Updates:**
+
+1. **Run the update script:**
+   ```bash
+   python3 update_all_charts.py --update-readme
+   ```
+
+2. **Review generated charts:**
+   ```bash
+   open charts/requirements_sf_total.html
+   # Or visit in browser
+   ```
+
+3. **Commit and push:**
+   ```bash
+   git add charts/ README.md
+   git commit -m "Update charts with latest data [2026-01-16]"
+   git push
+   ```
+
+4. **Verify on GitHub Pages:**
+   - Wait 1-2 minutes for deployment
+   - Check: https://realdatallc.github.io/aquila-insights/
+
+### README Date Stamping
+
+**Without --update-readme flag:**
+- Charts regenerate but README dates unchanged
+- Useful for testing/preview
+
+**With --update-readme flag:**
+- Charts regenerate AND README.md dates update to today
+- Format: `[Chart Name [YYYY-MM-DD]]`
+- Commit both charts/ and README.md together
+
+### Error Handling
+
+**Common Issues:**
+
+**1. Google Sheets 403 Forbidden**
+```
+ERROR: Insufficient Permission
+```
+**Solution:** Verify service account has access to spreadsheet, check credentials in `aquila_graph.env`
+
+**2. Supabase 403 Forbidden**
+```
+ERROR: 403 Forbidden - Check Supabase RLS policies
+```
+**Solution:** Use service_role key OR adjust RLS policies for anon access
+
+**3. FRED API Key Invalid**
+```
+ERROR: 400 Bad Request
+```
+**Solution:** Regenerate FRED API key at https://fred.stlouisfed.org/
+
+### Scheduling Updates
+
+**Manual Updates:**
+- Run scripts when you know data has refreshed
+- Google Sheets: After updating tenant requirements
+- Supabase: After quarterly market data import
+- FRED: Monthly (housing data updates)
+
+**Automated Updates (Optional):**
+- Set up cron job or GitHub Actions workflow
+- Example cron (daily at 8am):
+  ```cron
+  0 8 * * * cd /path/to/aquila-insights && python3 update_all_charts.py --update-readme
+  ```
+
+### Development Notes
+
+- Scripts use same styling as notebooks (Aquila brand colors/fonts)
+- Environment variables loaded from `aquila_graph.env`
+- All scripts follow same pattern: fetch → process → generate → save
+- Progress printed to stdout for monitoring
+- Errors include traceback for debugging
+
 ---
 
 ## Future Enhancements (from README Todo)
