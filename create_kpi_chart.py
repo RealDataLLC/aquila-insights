@@ -10,7 +10,7 @@ from plotly.subplots import make_subplots
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 
 # Read the Excel file (headers start at row 3, which is index 2)
-file_path = 'AMS- Property Split List (Updated 1.9.26).xlsx'
+file_path = 'data/AMS- Property Split List (Updated 1.9.26).xlsx'
 df = pd.read_excel(file_path, header=2)
 
 # Clean the data
@@ -78,7 +78,7 @@ fig.add_trace(
 # Update layout with Aquila styling
 fig.update_layout(
     title={
-        'text': 'Aquila KPIs: Property Portfolio Overview',
+        'text': 'Aquila KPIs: Property ManagementPortfolio Overview',
         'font': {'size': 24, 'family': AQUILA_FONT, 'color': '#00325a'}
     },
     height=600,
