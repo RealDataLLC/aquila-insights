@@ -31,9 +31,17 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 [Asking vs Effective Rent by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office_asking_vs_effective_rent_by_submarket.html)
 
+[Office Occupancy Rate by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/office_occupancy_by_size.html)
+
+[Office Weighted Average Rent by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/office_rent_by_size.html)
+
 
 ## Industrial
 [Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+
+[Industrial Occupancy Rate by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/industrial_occupancy_by_size.html)
+
+[Industrial Weighted Average Rent by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/industrial_rent_by_size.html)
 
 ## General Economy
 [Austin Housing Starts (Monthly) [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)

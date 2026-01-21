@@ -65,13 +65,18 @@
 │   ├── requirements_sf_avg.html             # Average SF requirements (dual-axis)
 │   ├── requirements_sf_avg_by_industry.html # Tenant demand by industry (donut)
 │   ├── requirements_sf_total.html           # Total SF requirements (line chart)
-│   └── vacancy_rate_industrial.html         # Industrial vacancy rates by submarket
+│   ├── vacancy_rate_industrial.html         # Industrial vacancy rates by submarket
+│   ├── office_occupancy_by_size.html        # Office occupancy by building size
+│   ├── office_rent_by_size.html             # Office rent by building size
+│   ├── industrial_occupancy_by_size.html    # Industrial occupancy by building size
+│   └── industrial_rent_by_size.html         # Industrial rent by building size
 ├── .gitignore                               # Excludes: aquila_graph.env, *.json
 ├── README.md                                # User-facing documentation with chart links
 ├── SQL.ipynb                                # PostgreSQL queries → industrial vacancy charts
 ├── supabase-graphs.ipynb                    # Supabase → example graphing notebook
 ├── api-graphs.ipynb                         # FRED API → economic indicator charts
 ├── googlesheets.ipynb                       # Google Sheets → tenant demand charts
+├── building-performance-by-size.ipynb       # Supabase → building performance by size charts
 ├── aquila_graph.env                         # CREDENTIALS (FRED API, Google, Supabase)
 └── aquila_graphing_tools.py                 # Shared utilities (styling, git automation)
 ```
@@ -86,6 +91,7 @@
 2. `supabase-graphs.ipynb` - Supabase → Example notebook for querying and graphing
 3. `api-graphs.ipynb` (2,020 lines) - FRED API → Economic indicator charts
 4. `googlesheets.ipynb` (2,463 lines) - Google Sheets → 4 tenant demand charts
+5. `building-performance-by-size.ipynb` - Supabase → 4 building performance by size charts (office and industrial)
 
 **Configuration:**
 - `aquila_graph.env` - API keys and OAuth2 credentials (SENSITIVE)
@@ -502,6 +508,161 @@ df['SIZE_RANGE'] = pd.cut(
   - Bar length: Total cumulative SF requested
   - Inside labels: Count of requirements
 - **Purpose:** Size distribution analysis
+
+---
+
+### 5. building-performance-by-size.ipynb (Building Performance Analysis)
+
+**Purpose:** Analyze building performance metrics (occupancy and rental rates) segmented by building size for both office and industrial properties.
+
+**Data Sources:**
+
+**Tables:**
+- `quarterly_report_data_office` (Supabase)
+- `quarterly_report_data_industrial` (Supabase)
+
+**Filters Applied:**
+- `aquila_competitive_set = True` - Only buildings in Aquila's competitive set
+- `building_status = 'Existing'` - Only existing buildings (not planned/under construction)
+
+**Key Fields:**
+- `rentable_building_area` - Building size (used for binning and weighting)
+- `occupancy_pct_total` - Building occupancy percentage
+- `costar_rental_rate` - Office rental rate ($/SF)
+- `survey_rental_rate` - Industrial rental rate ($/SF)
+- `quarter` or `report_date` - Time dimension
+
+**Connection Method:**
+```python
+from aquila_graphing_tools import initialize_supabase_connection
+supabase = initialize_supabase_connection()
+
+# Query with filters
+response = supabase.table('quarterly_report_data_office') \
+    .select('*') \
+    .eq('aquila_competitive_set', True) \
+    .eq('building_status', 'Existing') \
+    .execute()
+
+df = pd.DataFrame(response.data)
+```
+
+---
+
+**Data Processing:**
+
+**1. Size Binning:**
+- Automatically creates 5 bins per property type based on data distribution
+- Uses 20th, 40th, 60th, and 80th percentiles to create relatively even bins
+- Rounds bin edges to readable values (5k, 10k, 25k, 50k, 100k increments)
+- Separate bins for office vs industrial (different size distributions)
+
+**Binning Logic:**
+```python
+def round_to_readable(value):
+    """Round to nearest 5k, 10k, 25k, 50k, or 100k depending on magnitude"""
+    if value < 10000:
+        return round(value / 5000) * 5000
+    elif value < 50000:
+        return round(value / 10000) * 10000
+    elif value < 100000:
+        return round(value / 25000) * 25000
+    else:
+        return round(value / 50000) * 50000
+
+# Calculate quintiles
+quartiles = df['rentable_building_area'].quantile([0.2, 0.4, 0.6, 0.8])
+
+# Create rounded bins
+bins = [0, round_to_readable(q1), round_to_readable(q2),
+        round_to_readable(q3), round_to_readable(q4), float('inf')]
+
+# Example: Office might be [0, 25k, 50k, 100k, 200k, ∞]
+# Example: Industrial might be [0, 50k, 100k, 250k, 500k, ∞]
+```
+
+**2. Weighted Calculations:**
+All metrics are weighted by `rentable_building_area` to reflect the market reality that larger buildings have more impact.
+
+**Weighted Occupancy:**
+```python
+# Group by date and size bin, then calculate weighted average
+weighted_occ = df.groupby(['date', 'size_bin']).apply(
+    lambda x: np.average(
+        x['occupancy_pct_total'].dropna(),
+        weights=x.loc[x['occupancy_pct_total'].notna(), 'rentable_building_area']
+    )
+)
+```
+
+**Weighted Average Rent:**
+```python
+# Office uses costar_rental_rate, Industrial uses survey_rental_rate
+weighted_rent = df.groupby(['date', 'size_bin']).apply(
+    lambda x: np.average(
+        x['rental_rate'].dropna(),  # costar_rental_rate or survey_rental_rate
+        weights=x.loc[x['rental_rate'].notna(), 'rentable_building_area']
+    )
+)
+```
+
+**3. Time Series:**
+- Uses all available historical data (no date filtering)
+- Purpose: Visualize pandemic impacts and long-term trends
+- Quarterly granularity (matches data source)
+
+---
+
+**Output Charts:**
+
+**1. office_occupancy_by_size.html**
+- **Type:** Multi-line chart
+- **Metric:** Weighted occupancy rate by building size bin
+- **Y-axis:** Occupancy percentage (formatted as %)
+- **X-axis:** Quarter
+- **Legend:** 5 size bins (e.g., "0-25k SF", "25k-50k SF", etc.)
+- **Purpose:** Track how occupancy varies by building size over time
+
+**2. office_rent_by_size.html**
+- **Type:** Multi-line chart
+- **Metric:** Weighted average rent (costar_rental_rate) by building size bin
+- **Y-axis:** Rent ($/SF, formatted as currency)
+- **X-axis:** Quarter
+- **Legend:** 5 size bins
+- **Purpose:** Track rental rate trends by building size
+
+**3. industrial_occupancy_by_size.html**
+- **Type:** Multi-line chart
+- **Metric:** Weighted occupancy rate by building size bin
+- **Y-axis:** Occupancy percentage (formatted as %)
+- **X-axis:** Quarter
+- **Legend:** 5 size bins
+- **Purpose:** Track industrial occupancy by building size
+
+**4. industrial_rent_by_size.html**
+- **Type:** Multi-line chart
+- **Metric:** Weighted average rent (survey_rental_rate) by building size bin
+- **Y-axis:** Rent ($/SF, formatted as currency)
+- **X-axis:** Quarter
+- **Legend:** 5 size bins
+- **Purpose:** Track industrial rental rates by building size
+
+---
+
+**Key Insights:**
+
+This analysis enables:
+- Identifying which building sizes are performing best/worst
+- Comparing pandemic impacts across different building sizes
+- Understanding if smaller or larger buildings command premium rents
+- Tracking flight to quality or flight to value trends
+- Analyzing market segmentation by building size
+
+**Example Findings:**
+- Do larger office buildings have higher or lower occupancy?
+- Are smaller industrial buildings seeing faster rent growth?
+- Did pandemic impact large vs small buildings differently?
+- Which size segment recovered fastest post-pandemic?
 
 ---
 
@@ -1338,6 +1499,7 @@ python3 update_all_charts.py --update-readme    # Update all + README dates
 python3 update_google_sheets_charts.py          # 4 tenant demand charts
 python3 update_supabase_charts.py               # 1 industrial vacancy chart
 python3 update_fred_charts.py                   # 1 housing starts chart
+python3 update_building_performance_charts.py   # 4 building performance by size charts
 ```
 
 ### What Each Script Does
@@ -1365,9 +1527,23 @@ python3 update_fred_charts.py                   # 1 housing starts chart
   - `austin_housing_starts.html` - Monthly housing starts (line chart)
 - Uses FRED API key from `aquila_graph.env`
 
-**4. update_all_charts.py**
-- Orchestrates all three scripts
-- Runs sequentially: Google Sheets → Supabase → FRED
+**4. update_building_performance_charts.py**
+- Queries Supabase `quarterly_report_data_office` and `quarterly_report_data_industrial` tables
+- Filters for Aquila competitive set buildings with "Existing" status
+- Automatically creates 5 rounded size bins for each property type based on data distribution
+- Calculates weighted metrics (by rentable_building_area) for occupancy and rent
+- Generates 4 charts:
+  - `office_occupancy_by_size.html` - Office occupancy rate by building size (weighted)
+  - `office_rent_by_size.html` - Office weighted average rent by building size (uses costar_rental_rate)
+  - `industrial_occupancy_by_size.html` - Industrial occupancy rate by building size (weighted)
+  - `industrial_rent_by_size.html` - Industrial weighted average rent by building size (uses survey_rental_rate)
+- Shows full historical data to visualize pandemic impacts
+- Requires Supabase credentials in `aquila_graph.env`
+- **Note:** May fail with 403 if RLS policies block anon key
+
+**5. update_all_charts.py**
+- Orchestrates all chart update scripts
+- Runs sequentially: Google Sheets → Supabase → FRED → Building Performance
 - Shows summary of successes/failures
 - Exit code 0 if all succeed, 1 if any fail
 
