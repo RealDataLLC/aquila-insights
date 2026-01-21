@@ -11,6 +11,7 @@ This script runs:
 1. update_google_sheets_charts.py (4 charts)
 2. update_supabase_charts.py (1 chart)
 3. update_fred_charts.py (1 chart)
+4. update_building_performance_charts.py (4 charts)
 """
 
 import subprocess
@@ -66,6 +67,12 @@ def main():
         'FRED API Charts (1 chart)'
     )
 
+    # 4. Building Performance Charts
+    results['building_performance'] = run_script(
+        'update_building_performance_charts.py',
+        'Building Performance Charts (4 charts)'
+    )
+
     # Summary
     print("\n" + "=" * 70)
     print("SUMMARY")
@@ -90,6 +97,10 @@ def main():
         print("  • requirements_by_size_range.html")
         print("  • vacancy_rate_industrial.html")
         print("  • austin_housing_starts.html")
+        print("  • office_occupancy_by_size.html")
+        print("  • office_rent_by_size.html")
+        print("  • industrial_occupancy_by_size.html")
+        print("  • industrial_rent_by_size.html")
 
         if '--update-readme' in sys.argv:
             print("\n✓ README.md dates updated")
