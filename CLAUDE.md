@@ -38,16 +38,18 @@
 - `gspread` - Google Sheets API integration
 - `oauth2client` - OAuth2 authentication
 - `dotenv` - Environment variable management
+- `openpyxl` - Excel file reading and processing
 - PostgreSQL database driver (psycopg2 or similar)
 
 **Version Control:**
 - `subprocess` - Git automation within notebooks
 
-### External Services
+### External Services & Data Sources
 1. **Supabase** - PostgreSQL database hosted on Supabase (commercial real estate market data)
 2. **Google Sheets API** - Tenant requirement tracking
 3. **FRED API** - Federal Reserve Economic Data (housing starts, economic indicators)
-4. **GitHub Pages** - Static site hosting
+4. **Excel Files** - Property management data from Aquila Management Services (AMS)
+5. **GitHub Pages** - Static site hosting
 
 **Note:** The project uses `aquila_tools.initialize_connection()` from an external repository to connect to Supabase. Alternatively, you can use the `initialize_supabase_connection()` function in `aquila_graphing_tools.py` for direct Supabase access via the Supabase Python SDK.
 
@@ -60,18 +62,22 @@
 ├── .git/                                    # Git version control
 ├── __pycache__/                             # Python bytecode cache
 ├── charts/                                  # OUTPUT: Generated HTML visualizations (31MB)
+│   ├── ams_managed_properties_kpi.html      # AMS: Property management portfolio KPIs
 │   ├── austin_housing_starts.html           # FRED: Austin housing starts
 │   ├── requirements_by_size_range.html      # Tenant demand by size category
 │   ├── requirements_sf_avg.html             # Average SF requirements (dual-axis)
 │   ├── requirements_sf_avg_by_industry.html # Tenant demand by industry (donut)
 │   ├── requirements_sf_total.html           # Total SF requirements (line chart)
 │   └── vacancy_rate_industrial.html         # Industrial vacancy rates by submarket
+├── data/                                    # INPUT: Data files
+│   └── AMS- Property Split List.xlsx        # AMS property management portfolio
 ├── .gitignore                               # Excludes: aquila_graph.env, *.json
 ├── README.md                                # User-facing documentation with chart links
 ├── SQL.ipynb                                # PostgreSQL queries → industrial vacancy charts
 ├── supabase-graphs.ipynb                    # Supabase → example graphing notebook
 ├── api-graphs.ipynb                         # FRED API → economic indicator charts
 ├── googlesheets.ipynb                       # Google Sheets → tenant demand charts
+├── create_ams_kpi_chart.py                  # Script: Generate AMS property management KPIs
 ├── aquila_graph.env                         # CREDENTIALS (FRED API, Google, Supabase)
 └── aquila_graphing_tools.py                 # Shared utilities (styling, git automation)
 ```
@@ -502,6 +508,164 @@ df['SIZE_RANGE'] = pd.cut(
   - Bar length: Total cumulative SF requested
   - Inside labels: Count of requirements
 - **Purpose:** Size distribution analysis
+
+---
+
+### 5. create_ams_kpi_chart.py (AMS Property Management KPIs)
+
+**Purpose:** Generate KPI visualization from Excel data showing properties managed by Aquila Management Services (AMS).
+
+**AMS Definition:** Aquila Management Services (AMS) is the property management division of Aquila Commercial that oversees day-to-day operations, maintenance, and tenant relations for properties in the portfolio.
+
+**Data Source:**
+
+**File Location:** `data/AMS- Property Split List (Updated 1.9.26).xlsx`
+
+**Data Format:** Excel file (.xlsx) with headers starting at row 3
+
+**Key Columns:**
+- `Property Name \nAddress` - Property name and full address
+- `Entity Name` - Ownership entity
+- `Square \nFootage` - Building size (numeric)
+- `Type of              Property` - Property classification (Office, Industrial, Retail, Office/Retail, Office/Medical)
+- `Property Manager\nPhone #` - Assigned property manager contact
+- `Engineer\nPhone #` - Maintenance engineer contact
+- `Accounting \nSoftware` - Accounting system used
+- `Asst. PM / \nProp. Coordinator` - Assistant property manager
+
+**Data Loading:**
+```python
+import pandas as pd
+
+# Read Excel file (headers start at row 3, which is index 2)
+file_path = 'data/AMS- Property Split List (Updated 1.9.26).xlsx'
+df = pd.read_excel(file_path, header=2)
+
+# Clean column names
+df.columns = df.columns.str.strip()
+
+# Access the key columns
+property_col = 'Type of              Property'
+sqft_col = 'Square \nFootage'
+```
+
+**Data Processing:**
+
+**1. Clean Property Types:**
+```python
+# Remove extra spaces and standardize naming
+df[property_col] = df[property_col].str.strip().str.replace(r'\s+', ' ', regex=True)
+```
+
+**2. Calculate Metrics:**
+```python
+# Group by property type and calculate totals
+metrics = df.groupby(property_col).agg({
+    sqft_col: ['sum', 'count']  # Total SF and building count
+}).reset_index()
+
+metrics.columns = ['Property Type', 'Total Square Footage', 'Number of Buildings']
+```
+
+**3. Handle Missing Data:**
+```python
+# Remove rows with missing square footage or property type
+df_clean = df[[property_col, sqft_col]].dropna()
+```
+
+**Chart Generation:**
+
+**Chart Type:** Dual horizontal bar chart with subplots
+
+**Visualization:**
+```python
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+
+# Create side-by-side subplots
+fig = make_subplots(
+    rows=1, cols=2,
+    subplot_titles=('Total Square Footage', 'Number of Buildings'),
+    horizontal_spacing=0.15
+)
+
+# Left panel: Total SF by property type (navy blue)
+fig.add_trace(
+    go.Bar(
+        y=metrics['Property Type'],
+        x=metrics['Total Square Footage'],
+        orientation='h',
+        marker_color=AQUILA_COLORS[0],  # Navy blue
+        text=metrics['Total Square Footage'].apply(lambda x: f'{x:,.0f}'),
+        textposition='auto'
+    ),
+    row=1, col=1
+)
+
+# Right panel: Building count by property type (gold)
+fig.add_trace(
+    go.Bar(
+        y=metrics['Property Type'],
+        x=metrics['Number of Buildings'],
+        orientation='h',
+        marker_color=AQUILA_COLORS[1],  # Gold
+        text=metrics['Number of Buildings'],
+        textposition='auto'
+    ),
+    row=1, col=2
+)
+
+# Apply Aquila styling
+fig.update_layout(
+    title={'text': 'AMS Property Management KPIs'},
+    height=600,
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    font=dict(family=AQUILA_FONT, color='#00325a')
+)
+```
+
+**Output Chart:**
+
+**File:** `charts/ams_managed_properties_kpi.html`
+
+**Metrics Displayed:**
+- **Left Panel:** Total square footage by property type (navy blue bars)
+- **Right Panel:** Number of buildings by property type (gold bars)
+- **Sorting:** Properties sorted by total square footage (ascending)
+
+**Portfolio Summary (as of 2026-01-20):**
+- **Total Properties:** 45 buildings
+- **Total Square Footage:** 5,379,319 SF
+- **Property Mix:**
+  - Office: 22 buildings, 2,825,024 SF
+  - Industrial: 7 buildings, 1,274,891 SF
+  - Retail: 14 buildings, 1,057,683 SF
+  - Office/Retail: 1 building, 210,428 SF
+  - Office/Medical: 1 building, 11,293 SF
+
+**Script Usage:**
+```bash
+# Generate chart from Excel data
+python3 create_ams_kpi_chart.py
+
+# Output:
+# ✓ Chart saved to charts/ams_managed_properties_kpi.html
+# [Displays summary table with metrics by property type]
+```
+
+**Requirements:**
+- `pandas` - Data manipulation
+- `openpyxl` - Excel file reading
+- `plotly` - Interactive chart generation
+- `aquila_graphing_tools` - Aquila brand styling
+
+**Use Case:** This chart provides a high-level overview of the AMS property management portfolio, useful for:
+- Portfolio composition analysis
+- Asset allocation reporting
+- Property management capacity planning
+- Stakeholder presentations
 
 ---
 
@@ -1288,6 +1452,7 @@ pip install X
 
 ### File Paths
 - **Charts output:** `/home/user/aquila-insights/charts/`
+- **Data files:** `/home/user/aquila-insights/data/`
 - **Shared utilities:** `/home/user/aquila-insights/aquila_graphing_tools.py`
 - **Environment config:** `/home/user/aquila-insights/aquila_graph.env`
 
@@ -1304,6 +1469,7 @@ pip install X
 - **Supabase:** PostgreSQL database hosted on Supabase (market tables: office, industrial, retail)
 - **Google Sheets:** Tenant requirements (ID: 1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec)
 - **FRED API:** Economic indicators (https://api.stlouisfed.org/fred/series/observations)
+- **Excel Files:** AMS property management data (data/AMS- Property Split List.xlsx)
 
 ### Public URLs
 - **Repository:** https://github.com/realdatallc/aquila-insights
@@ -1315,6 +1481,7 @@ pip install X
 - **Update Google Sheets charts:** `python3 update_google_sheets_charts.py`
 - **Update Supabase charts:** `python3 update_supabase_charts.py`
 - **Update FRED charts:** `python3 update_fred_charts.py`
+- **Generate AMS KPIs:** `python3 create_ams_kpi_chart.py`
 - **Auto-update README dates:** Add `--update-readme` flag
 
 ---
