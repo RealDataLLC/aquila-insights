@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Generate Aquila KPI stacked bar chart from property split list
+Generate AMS Property Management KPI chart from property split list
 Shows number of buildings and combined square footage by property type
+for properties managed by Aquila Management Services (AMS)
 """
 
 import pandas as pd
@@ -78,7 +79,7 @@ fig.add_trace(
 # Update layout with Aquila styling
 fig.update_layout(
     title={
-        'text': 'Aquila KPIs: Property ManagementPortfolio Overview',
+        'text': 'AMS Property Management KPIs',
         'font': {'size': 24, 'family': AQUILA_FONT, 'color': '#00325a'}
     },
     height=600,
@@ -109,7 +110,7 @@ fig.update_yaxes(
 fig.update_annotations(font=dict(size=14, family=AQUILA_FONT, color='#00325a'))
 
 # Save to charts directory
-output_file = 'charts/aquila_kpi_property_overview.html'
+output_file = 'charts/ams_managed_properties_kpi.html'
 fig.write_html(output_file)
 print(f"✓ Chart saved to {output_file}")
 

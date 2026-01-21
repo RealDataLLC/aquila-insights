@@ -17,8 +17,8 @@ To embed a chart on your website, you can use the following HTML code as an exam
 Simply replace the `src` URL with the link to your own chart if needed.
 
 
-## Aquila Operations
-[Aquila KPIs: Property Management Portfolio by Type [2026-01-20]](https://realdatallc.github.io/aquila-insights/charts/aquila_kpi_property_overview.html)
+## Property Management
+[AMS Managed Properties KPIs [2026-01-20]](https://realdatallc.github.io/aquila-insights/charts/ams_managed_properties_kpi.html)
 
 ## Office
 [Requirements Total SF [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_total.html)
