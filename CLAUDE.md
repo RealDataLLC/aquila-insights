@@ -528,28 +528,66 @@ df['SIZE_RANGE'] = pd.cut(
 **Key Fields:**
 - `rentable_building_area` - Building size (used for binning and weighting)
 - `occupancy_pct_total` - Building occupancy percentage
-- `costar_rental_rate` - Office rental rate ($/SF)
+- `rental_rate` - Office rental rate ($/SF) - primary field used
 - `survey_rental_rate` - Industrial rental rate ($/SF)
-- `quarter` or `report_date` - Time dimension
+- `quarter` - Quarter string (e.g., "2025 Q4") requiring parsing to datetime
 
 **Connection Method:**
 ```python
 from aquila_graphing_tools import initialize_supabase_connection
 supabase = initialize_supabase_connection()
 
-# Query with filters
-response = supabase.table('quarterly_report_data_office') \
-    .select('*') \
-    .eq('aquila_competitive_set', True) \
-    .eq('building_status', 'Existing') \
-    .execute()
+# Query with pagination (Supabase limits to 1000 records by default)
+all_records = []
+page = 0
+page_size = 1000
 
-df = pd.DataFrame(response.data)
+while True:
+    response = supabase.table('quarterly_report_data_office') \
+        .select('*') \
+        .eq('aquila_competitive_set', True) \
+        .eq('building_status', 'Existing') \
+        .range(page * page_size, (page + 1) * page_size - 1) \
+        .execute()
+
+    batch = response.data
+    all_records.extend(batch)
+
+    if len(batch) < page_size:
+        break
+    page += 1
+
+df = pd.DataFrame(all_records)
 ```
+
+**Important:** The quarterly report tables contain thousands of records (12,000+ office, 26,000+ industrial). Supabase's REST API limits responses to 1000 records by default. Always use pagination with `.range()` to fetch all records.
 
 ---
 
 **Data Processing:**
+
+**0. Quarter String Parsing:**
+The `quarter` column contains strings like "2025 Q4" that need to be converted to datetime objects:
+
+```python
+import re
+
+def quarter_string_to_date(q_str):
+    """
+    Convert 'YYYY Qn' to a datetime representing the first day of that quarter.
+    Example: '2025 Q4' -> datetime(2025, 10, 1)
+    """
+    match = re.match(r"(\d{4})\s*[Qq](\d)", str(q_str))
+    if match:
+        year = int(match.group(1))
+        quarter = int(match.group(2))
+        month = 3 * (quarter - 1) + 1
+        return pd.Timestamp(year=year, month=month, day=1)
+    return pd.NaT
+
+# Apply to dataframe
+df['date'] = df['quarter'].apply(quarter_string_to_date)
+```
 
 **1. Size Binning:**
 - Automatically creates 5 bins per property type based on data distribution
@@ -587,23 +625,27 @@ All metrics are weighted by `rentable_building_area` to reflect the market reali
 **Weighted Occupancy:**
 ```python
 # Group by date and size bin, then calculate weighted average
-weighted_occ = df.groupby(['date', 'size_bin']).apply(
+# observed=False suppresses FutureWarning about categorical groupby behavior
+weighted_occ = df.groupby(['date', 'size_bin'], observed=False).apply(
     lambda x: np.average(
         x['occupancy_pct_total'].dropna(),
         weights=x.loc[x['occupancy_pct_total'].notna(), 'rentable_building_area']
-    )
-)
+    ) if len(x['occupancy_pct_total'].dropna()) > 0 else np.nan
+).reset_index(name='weighted_occupancy_pct')
 ```
 
 **Weighted Average Rent:**
 ```python
-# Office uses costar_rental_rate, Industrial uses survey_rental_rate
-weighted_rent = df.groupby(['date', 'size_bin']).apply(
+# Office uses 'rental_rate', Industrial uses 'survey_rental_rate'
+weighted_rent = df.groupby(['date', 'size_bin'], observed=False).apply(
     lambda x: np.average(
-        x['rental_rate'].dropna(),  # costar_rental_rate or survey_rental_rate
+        x['rental_rate'].dropna(),
         weights=x.loc[x['rental_rate'].notna(), 'rentable_building_area']
-    )
-)
+    ) if len(x['rental_rate'].dropna()) > 0 else np.nan
+).reset_index(name='weighted_avg_rent')
+
+# For industrial rent chart, drop NaN values before plotting
+weighted_rent_clean = weighted_rent.dropna(subset=['date', 'weighted_avg_rent'])
 ```
 
 **3. Time Series:**
@@ -625,7 +667,7 @@ weighted_rent = df.groupby(['date', 'size_bin']).apply(
 
 **2. office_rent_by_size.html**
 - **Type:** Multi-line chart
-- **Metric:** Weighted average rent (costar_rental_rate) by building size bin
+- **Metric:** Weighted average rent (rental_rate) by building size bin
 - **Y-axis:** Rent ($/SF, formatted as currency)
 - **X-axis:** Quarter
 - **Legend:** 5 size bins
@@ -1532,9 +1574,11 @@ python3 update_building_performance_charts.py   # 4 building performance by size
 - Filters for Aquila competitive set buildings with "Existing" status
 - Automatically creates 5 rounded size bins for each property type based on data distribution
 - Calculates weighted metrics (by rentable_building_area) for occupancy and rent
+- Uses pagination to fetch all records (12,000+ office, 26,000+ industrial)
+- Parses quarter strings (e.g., "2025 Q4") to datetime objects
 - Generates 4 charts:
   - `office_occupancy_by_size.html` - Office occupancy rate by building size (weighted)
-  - `office_rent_by_size.html` - Office weighted average rent by building size (uses costar_rental_rate)
+  - `office_rent_by_size.html` - Office weighted average rent by building size (uses rental_rate)
   - `industrial_occupancy_by_size.html` - Industrial occupancy rate by building size (weighted)
   - `industrial_rent_by_size.html` - Industrial weighted average rent by building size (uses survey_rental_rate)
 - Shows full historical data to visualize pandemic impacts

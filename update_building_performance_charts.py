@@ -26,11 +26,26 @@ Usage:
 
 import sys
 import argparse
+import re
 from datetime import datetime
 from dotenv import load_dotenv
 from aquila_graphing_tools import initialize_supabase_connection, aquila_styled_line_chart
 import pandas as pd
 import numpy as np
+
+
+def quarter_string_to_date(q_str):
+    """
+    Convert 'YYYY Qn' to a datetime representing the first day of that quarter.
+    Example: '2025 Q4' -> datetime(2025, 10, 1)
+    """
+    match = re.match(r"(\d{4})\s*[Qq](\d)", str(q_str))
+    if match:
+        year = int(match.group(1))
+        quarter = int(match.group(2))
+        month = 3 * (quarter - 1) + 1
+        return pd.Timestamp(year=year, month=month, day=1)
+    return pd.NaT
 
 
 def round_to_readable(value):
@@ -46,21 +61,35 @@ def round_to_readable(value):
 
 
 def fetch_and_clean_data(supabase, table_name, property_type):
-    """Fetch and clean data from Supabase table"""
+    """Fetch and clean data from Supabase table with pagination"""
     print(f"\nFetching {property_type} data from {table_name}...")
 
-    response = supabase.table(table_name) \
-        .select('*') \
-        .eq('aquila_competitive_set', True) \
-        .eq('building_status', 'Existing') \
-        .execute()
+    all_records = []
+    page = 0
+    page_size = 1000  # Default Supabase page size
 
-    df = pd.DataFrame(response.data)
-    print(f"  Loaded {len(df):,} {property_type} records")
+    while True:
+        response = supabase.table(table_name) \
+            .select('*') \
+            .eq('aquila_competitive_set', True) \
+            .eq('building_status', 'Existing') \
+            .range(page * page_size, (page + 1) * page_size - 1) \
+            .execute()
 
-    # Identify and parse date column
+        batch = response.data
+        all_records.extend(batch)
+        print(f"  Fetched {len(batch):,} {property_type} records from page {page+1}")
+
+        if len(batch) < page_size:
+            break
+        page += 1
+
+    df = pd.DataFrame(all_records)
+    print(f"  Loaded {len(df):,} {property_type} records (all pages)")
+
+    # Identify and parse date column (handle quarter strings like '2025 Q4')
     if 'quarter' in df.columns:
-        df['date'] = pd.to_datetime(df['quarter'], errors='coerce')
+        df['date'] = df['quarter'].apply(quarter_string_to_date)
     elif 'report_date' in df.columns:
         df['date'] = pd.to_datetime(df['report_date'], errors='coerce')
     else:
@@ -77,7 +106,11 @@ def fetch_and_clean_data(supabase, table_name, property_type):
 
     # Property-specific rental rate column
     if property_type == 'office':
-        df['rental_rate'] = pd.to_numeric(df['costar_rental_rate'], errors='coerce')
+        # Use 'rental_rate' column if it exists, otherwise fall back to 'costar_rental_rate'
+        if 'rental_rate' in df.columns:
+            df['rental_rate'] = pd.to_numeric(df['rental_rate'], errors='coerce')
+        else:
+            df['rental_rate'] = pd.to_numeric(df['costar_rental_rate'], errors='coerce')
     else:  # industrial
         df['rental_rate'] = pd.to_numeric(df['survey_rental_rate'], errors='coerce')
 
@@ -131,7 +164,7 @@ def calculate_weighted_metrics(df):
     """Calculate weighted occupancy and rent by date and size bin"""
 
     # Weighted occupancy rate
-    occ_by_size = df.groupby(['date', 'size_bin']).apply(
+    occ_by_size = df.groupby(['date', 'size_bin'], observed=False).apply(
         lambda x: np.average(
             x['occupancy_pct_total'].dropna(),
             weights=x.loc[x['occupancy_pct_total'].notna(), 'rentable_building_area']
@@ -139,7 +172,7 @@ def calculate_weighted_metrics(df):
     ).reset_index(name='weighted_occupancy_pct')
 
     # Weighted average rent
-    rent_by_size = df.groupby(['date', 'size_bin']).apply(
+    rent_by_size = df.groupby(['date', 'size_bin'], observed=False).apply(
         lambda x: np.average(
             x['rental_rate'].dropna(),
             weights=x.loc[x['rental_rate'].notna(), 'rentable_building_area']
@@ -166,10 +199,11 @@ def generate_charts(occ_data, rent_data, property_type):
     fig_occ.write_html(occ_filename)
     print(f"  ✓ Saved {occ_filename}")
 
-    # Rent chart
+    # Rent chart - drop NaN values before plotting
+    rent_data_clean = rent_data.dropna(subset=['date', 'weighted_avg_rent'])
     rent_filename = f'charts/{property_type}_rent_by_size.html'
     fig_rent = aquila_styled_line_chart(
-        rent_data,
+        rent_data_clean,
         x='date',
         y='weighted_avg_rent',
         color='size_bin',
