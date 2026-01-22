@@ -43,6 +43,27 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 [Industrial Weighted Average Rent by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/industrial_rent_by_size.html)
 
+## Economic Indicators
+
+### Employment
+[Austin Employment - Office Sectors [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_employment_office_sectors.html)
+
+[Austin Employment - Industrial Sector [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_employment_industrial.html)
+
+[Austin Employment - Retail Sector [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_employment_retail.html)
+
+[Austin vs National Tech Employment Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_vs_national_tech_employment.html)
+
+### Demographics & Wages
+[Austin Population Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_population_growth.html)
+
+[Austin vs National Wage Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_vs_national_wage_growth.html)
+
+### Financial Indicators
+[Interest Rates - Treasury & Mortgage [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/interest_rates_treasury_mortgage.html)
+
+[Inflation - Core CPI vs Rent CPI [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/inflation_core_vs_rent_cpi.html)
+
 ## General Economy
 [Austin Housing Starts (Monthly) [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
 
