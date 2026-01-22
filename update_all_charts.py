@@ -12,7 +12,7 @@ This script runs:
 2. update_supabase_charts.py (1 chart)
 3. update_fred_charts.py (1 chart)
 4. update_building_performance_charts.py (4 charts)
-5. update_fred_economic_indicators.py (8 charts)
+5. update_fred_economic_indicators.py (7 charts)
 """
 
 import subprocess
@@ -77,7 +77,7 @@ def main():
     # 5. FRED Economic Indicators
     results['fred_economic'] = run_script(
         'update_fred_economic_indicators.py',
-        'FRED Economic Indicators (8 charts)'
+        'FRED Economic Indicators (7 charts)'
     )
 
     # Summary
@@ -112,7 +112,6 @@ def main():
         print("  • austin_employment_industrial.html")
         print("  • austin_employment_retail.html")
         print("  • austin_vs_national_tech_employment.html")
-        print("  • austin_population_growth.html")
         print("  • austin_vs_national_wage_growth.html")
         print("  • interest_rates_treasury_mortgage.html")
         print("  • inflation_core_vs_rent_cpi.html")

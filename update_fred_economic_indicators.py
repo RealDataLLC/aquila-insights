@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Update FRED Economic Indicators Charts
-Regenerates 8 economic indicator charts from Federal Reserve Economic Data
+Regenerates 7 economic indicator charts from Federal Reserve Economic Data
 
 Usage:
     python3 update_fred_economic_indicators.py
@@ -209,62 +209,9 @@ def generate_tech_comparison_chart():
         print("    Warning: No overlapping data for tech employment comparison")
 
 
-def generate_population_chart():
-    """Generate Austin Population Growth chart"""
-    print("\n[5/8] Generating: Austin Population Growth...")
-
-    # Fetch both population series
-    df_pop1 = fetch_fred_series('AUST448POP', 'Population')
-    df_pop2 = fetch_fred_series('METRO12420MM428SCEN', 'Population')
-
-    # Select the series with the most recent data
-    if not df_pop1.empty and not df_pop2.empty:
-        max_date1 = df_pop1['date'].max()
-        max_date2 = df_pop2['date'].max()
-
-        if max_date1 >= max_date2:
-            df_population = df_pop1
-            selected_series = 'AUST448POP'
-        else:
-            df_population = df_pop2
-            selected_series = 'METRO12420MM428SCEN'
-
-        print(f"    Selected series {selected_series} with data through {df_population['date'].max().strftime('%Y-%m-%d')}")
-
-    elif not df_pop1.empty:
-        df_population = df_pop1
-        selected_series = 'AUST448POP'
-        print(f"    Using AUST448POP (only available series)")
-
-    elif not df_pop2.empty:
-        df_population = df_pop2
-        selected_series = 'METRO12420MM428SCEN'
-        print(f"    Using METRO12420MM428SCEN (only available series)")
-
-    else:
-        print("    Error: No population data available")
-        return
-
-    # Create chart
-    fig = aquila_styled_line_chart(
-        df_population,
-        x='date',
-        y='Population',
-        title='Austin Metro Population Growth',
-        height=800
-    )
-
-    fig.update_yaxes(rangemode='tozero', title='Population (thousands)')
-
-    # Save chart
-    os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/austin_population_growth.html')
-    print("    ✓ Saved: charts/austin_population_growth.html")
-
-
 def generate_wage_comparison_chart():
     """Generate Austin vs National Wage Growth chart"""
-    print("\n[6/8] Generating: Austin vs National Wage Growth...")
+    print("\n[5/7] Generating: Austin vs National Wage Growth...")
 
     # Fetch wage data
     df_austin_wage = fetch_fred_series('AUST448AVGW', 'Austin Weekly Wage')
@@ -314,7 +261,7 @@ def generate_wage_comparison_chart():
 
 def generate_interest_rates_chart():
     """Generate Interest Rates - Treasury & Mortgage chart"""
-    print("\n[7/8] Generating: Interest Rates - Treasury & Mortgage...")
+    print("\n[6/7] Generating: Interest Rates - Treasury & Mortgage...")
 
     # Fetch interest rate data
     df_treasury = fetch_fred_series('DGS10', '10-Year Treasury')
@@ -350,7 +297,7 @@ def generate_interest_rates_chart():
 
 def generate_inflation_chart():
     """Generate Inflation - Core CPI vs Rent CPI chart"""
-    print("\n[8/8] Generating: Inflation - Core CPI vs Rent CPI...")
+    print("\n[7/7] Generating: Inflation - Core CPI vs Rent CPI...")
 
     # Fetch inflation data
     df_core_cpi = fetch_fred_series('CPILFESL', 'Core CPI')
@@ -395,7 +342,7 @@ def generate_inflation_chart():
 
 
 def update_readme_dates():
-    """Update README.md with today's date for all 8 FRED economic indicator charts"""
+    """Update README.md with today's date for all 7 FRED economic indicator charts"""
     print("\nUpdating README.md dates...")
 
     today = datetime.now().strftime('%Y-%m-%d')
@@ -404,13 +351,12 @@ def update_readme_dates():
     with open('README.md', 'r') as f:
         content = f.read()
 
-    # Define regex patterns for all 8 charts
+    # Define regex patterns for all 7 charts
     patterns = [
         (r'(\[Austin Employment - Office Sectors\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin Employment - Industrial Sector\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin Employment - Retail Sector\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin vs National Tech Employment Growth\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
-        (r'(\[Austin Population Growth\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin vs National Wage Growth\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Interest Rates - Treasury & Mortgage\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Inflation - Core CPI vs Rent CPI\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
@@ -446,18 +392,17 @@ def main():
 
         print(f"✓ API key loaded")
 
-        # Generate all 8 charts
+        # Generate all 7 charts
         generate_office_employment_chart()
         generate_industrial_employment_chart()
         generate_retail_employment_chart()
         generate_tech_comparison_chart()
-        generate_population_chart()
         generate_wage_comparison_chart()
         generate_interest_rates_chart()
         generate_inflation_chart()
 
         print("\n" + "=" * 70)
-        print("✓ SUCCESS: All 8 FRED economic indicator charts updated")
+        print("✓ SUCCESS: All 7 FRED economic indicator charts updated")
         print("=" * 70)
 
         # Update README if requested
@@ -469,7 +414,6 @@ def main():
         print("  • austin_employment_industrial.html")
         print("  • austin_employment_retail.html")
         print("  • austin_vs_national_tech_employment.html")
-        print("  • austin_population_growth.html")
         print("  • austin_vs_national_wage_growth.html")
         print("  • interest_rates_treasury_mortgage.html")
         print("  • inflation_core_vs_rent_cpi.html")

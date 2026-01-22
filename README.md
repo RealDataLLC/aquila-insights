@@ -54,9 +54,7 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 [Austin vs National Tech Employment Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_vs_national_tech_employment.html)
 
-### Demographics & Wages
-[Austin Population Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_population_growth.html)
-
+### Wages
 [Austin vs National Wage Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_vs_national_wage_growth.html)
 
 ### Financial Indicators
@@ -64,7 +62,7 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 [Inflation - Core CPI vs Rent CPI [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/inflation_core_vs_rent_cpi.html)
 
-## General Economy
+### Housing Indicators
 [Austin Housing Starts (Monthly) [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
 
 Todo:
