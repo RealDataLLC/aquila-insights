@@ -85,7 +85,7 @@ def generate_housing_starts_chart(fred_api_key):
 
     # Save
     os.makedirs("charts", exist_ok=True)
-    fig.write_html("charts/austin_housing_starts.html")
+    fig.write_html("charts/economic-indicators/austin_housing_starts.html")
     print("  ✓ Saved: charts/austin_housing_starts.html")
 
 def update_readme_dates():

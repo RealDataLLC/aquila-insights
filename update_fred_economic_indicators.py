@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Update FRED Economic Indicators Charts
-Regenerates 8 economic indicator charts from Federal Reserve Economic Data
+Regenerates 7 economic indicator charts from Federal Reserve Economic Data
 
 Usage:
     python3 update_fred_economic_indicators.py
@@ -111,7 +111,7 @@ def generate_office_employment_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/austin_employment_office_sectors.html')
+    fig.write_html('charts/economic-indicators/austin_employment_office_sectors.html')
     print("    ✓ Saved: charts/austin_employment_office_sectors.html")
 
 
@@ -135,7 +135,7 @@ def generate_industrial_employment_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/austin_employment_industrial.html')
+    fig.write_html('charts/economic-indicators/austin_employment_industrial.html')
     print("    ✓ Saved: charts/austin_employment_industrial.html")
 
 
@@ -159,7 +159,7 @@ def generate_retail_employment_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/austin_employment_retail.html')
+    fig.write_html('charts/economic-indicators/austin_employment_retail.html')
     print("    ✓ Saved: charts/austin_employment_retail.html")
 
 
@@ -203,90 +203,37 @@ def generate_tech_comparison_chart():
 
         # Save chart
         os.makedirs("charts", exist_ok=True)
-        fig.write_html('charts/austin_vs_national_tech_employment.html')
+        fig.write_html('charts/economic-indicators/austin_vs_national_tech_employment.html')
         print("    ✓ Saved: charts/austin_vs_national_tech_employment.html")
     else:
         print("    Warning: No overlapping data for tech employment comparison")
 
 
-def generate_population_chart():
-    """Generate Austin Population Growth chart"""
-    print("\n[5/8] Generating: Austin Population Growth...")
-
-    # Fetch both population series
-    df_pop1 = fetch_fred_series('AUST448POP', 'Population')
-    df_pop2 = fetch_fred_series('METRO12420MM428SCEN', 'Population')
-
-    # Select the series with the most recent data
-    if not df_pop1.empty and not df_pop2.empty:
-        max_date1 = df_pop1['date'].max()
-        max_date2 = df_pop2['date'].max()
-
-        if max_date1 >= max_date2:
-            df_population = df_pop1
-            selected_series = 'AUST448POP'
-        else:
-            df_population = df_pop2
-            selected_series = 'METRO12420MM428SCEN'
-
-        print(f"    Selected series {selected_series} with data through {df_population['date'].max().strftime('%Y-%m-%d')}")
-
-    elif not df_pop1.empty:
-        df_population = df_pop1
-        selected_series = 'AUST448POP'
-        print(f"    Using AUST448POP (only available series)")
-
-    elif not df_pop2.empty:
-        df_population = df_pop2
-        selected_series = 'METRO12420MM428SCEN'
-        print(f"    Using METRO12420MM428SCEN (only available series)")
-
-    else:
-        print("    Error: No population data available")
-        return
-
-    # Create chart
-    fig = aquila_styled_line_chart(
-        df_population,
-        x='date',
-        y='Population',
-        title='Austin Metro Population Growth',
-        height=800
-    )
-
-    fig.update_yaxes(rangemode='tozero', title='Population (thousands)')
-
-    # Save chart
-    os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/austin_population_growth.html')
-    print("    ✓ Saved: charts/austin_population_growth.html")
-
-
 def generate_wage_comparison_chart():
-    """Generate Austin vs National Wage Growth chart"""
-    print("\n[6/8] Generating: Austin vs National Wage Growth...")
+    """Generate Austin vs Dallas vs National Wage Growth chart"""
+    print("\n[5/7] Generating: Austin vs Dallas vs National Wage Growth...")
 
-    # Fetch wage data
-    df_austin_wage = fetch_fred_series('AUST448AVGW', 'Austin Weekly Wage')
+    # Fetch hourly wage data for Austin, Dallas, and Nation
+    df_austin_wage = fetch_fred_series('SMU48124200500000003', 'Austin Hourly Wage')
+    df_dallas_wage = fetch_fred_series('SMU48191000500000003', 'Dallas Hourly Wage')
     df_national_wage = fetch_fred_series('CES0500000003', 'National Hourly Wage')
 
-    # Convert national hourly to weekly (×40 hours)
-    df_national_wage['National Weekly Wage'] = df_national_wage['National Hourly Wage'] * 40
-    df_national_wage = df_national_wage[['date', 'National Weekly Wage']]
+    # Merge all three on date
+    df_wage = df_austin_wage.merge(df_dallas_wage, on='date', how='inner')
+    df_wage = df_wage.merge(df_national_wage, on='date', how='inner')
 
-    # Merge on date
-    df_wage = df_austin_wage.merge(df_national_wage, on='date', how='inner')
-
-    # Index both series to 100 at earliest common date
+    # Index all three series to 100 at earliest common date
     if len(df_wage) > 0:
-        base_austin = df_wage['Austin Weekly Wage'].iloc[0]
-        base_national = df_wage['National Weekly Wage'].iloc[0]
+        base_austin = df_wage['Austin Hourly Wage'].iloc[0]
+        base_dallas = df_wage['Dallas Hourly Wage'].iloc[0]
+        base_national = df_wage['National Hourly Wage'].iloc[0]
 
-        df_wage['Austin Wage (Index)'] = (df_wage['Austin Weekly Wage'] / base_austin) * 100
-        df_wage['National Wage (Index)'] = (df_wage['National Weekly Wage'] / base_national) * 100
+        df_wage['Austin Wage (Index)'] = (df_wage['Austin Hourly Wage'] / base_austin) * 100
+        df_wage['Dallas Wage (Index)'] = (df_wage['Dallas Hourly Wage'] / base_dallas) * 100
+        df_wage['National Wage (Index)'] = (df_wage['National Hourly Wage'] / base_national) * 100
 
         # Convert to long format
-        df_wage_long = df_wage[['date', 'Austin Wage (Index)', 'National Wage (Index)']].melt(
+        df_wage_long = df_wage[['date', 'Austin Wage (Index)', 'Dallas Wage (Index)', 'National Wage (Index)']].melt(
             id_vars=['date'],
             var_name='Region',
             value_name='Wage Index (Base 100)'
@@ -298,7 +245,7 @@ def generate_wage_comparison_chart():
             x='date',
             y='Wage Index (Base 100)',
             color='Region',
-            title='Austin vs National Wage Growth',
+            title='Austin vs Dallas vs National Wage Growth',
             height=800
         )
 
@@ -306,15 +253,15 @@ def generate_wage_comparison_chart():
 
         # Save chart
         os.makedirs("charts", exist_ok=True)
-        fig.write_html('charts/austin_vs_national_wage_growth.html')
-        print("    ✓ Saved: charts/austin_vs_national_wage_growth.html")
+        fig.write_html('charts/economic-indicators/austin_vs_dallas_vs_national_wage_growth.html')
+        print("    ✓ Saved: charts/austin_vs_dallas_vs_national_wage_growth.html")
     else:
         print("    Warning: No overlapping data for wage comparison")
 
 
 def generate_interest_rates_chart():
     """Generate Interest Rates - Treasury & Mortgage chart"""
-    print("\n[7/8] Generating: Interest Rates - Treasury & Mortgage...")
+    print("\n[6/7] Generating: Interest Rates - Treasury & Mortgage...")
 
     # Fetch interest rate data
     df_treasury = fetch_fred_series('DGS10', '10-Year Treasury')
@@ -344,43 +291,62 @@ def generate_interest_rates_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/interest_rates_treasury_mortgage.html')
+    fig.write_html('charts/economic-indicators/interest_rates_treasury_mortgage.html')
     print("    ✓ Saved: charts/interest_rates_treasury_mortgage.html")
 
 
 def generate_inflation_chart():
-    """Generate Inflation - Core CPI vs Rent CPI chart"""
-    print("\n[8/8] Generating: Inflation - Core CPI vs Rent CPI...")
+    """Generate Inflation & PPI - CPI and Office Construction Costs chart"""
+    print("\n[7/7] Generating: Inflation & PPI - CPI and Office Construction Costs...")
 
-    # Fetch inflation data
+    # Fetch inflation and price index data
     df_core_cpi = fetch_fred_series('CPILFESL', 'Core CPI')
     df_rent_cpi = fetch_fred_series('CUUR0000SEHC', 'Rent CPI')
+    df_ppi_new_office = fetch_fred_series('PCU236223236223', 'PPI - New Office Construction')
+    df_ppi_office_rent = fetch_fred_series('WPU43110101', 'PPI - Office Rent')
+    df_ppi_multi_construction = fetch_fred_series('WPUIP231120', 'PPI - Multifamily Construction (ex cap/labor/imports)')
 
-    # Merge on date
-    df_inflation = df_core_cpi.merge(df_rent_cpi, on='date', how='inner')
+    # Merge all on date (inner join keeps only overlapping dates)
+    df_inflation = df_core_cpi.merge(df_rent_cpi, on='date', how='inner') \
+        .merge(df_ppi_new_office, on='date', how='inner') \
+        .merge(df_ppi_office_rent, on='date', how='inner') \
+        .merge(df_ppi_multi_construction, on='date', how='inner')
 
-    # Index both series to 100 at earliest common date
+    # Index all series to 100 at earliest common date
     if len(df_inflation) > 0:
         base_core = df_inflation['Core CPI'].iloc[0]
         base_rent = df_inflation['Rent CPI'].iloc[0]
+        base_ppi_new_office = df_inflation['PPI - New Office Construction'].iloc[0]
+        base_ppi_office_rent = df_inflation['PPI - Office Rent'].iloc[0]
+        base_ppi_multi_construction = df_inflation['PPI - Multifamily Construction (ex cap/labor/imports)'].iloc[0]
 
         df_inflation['Core CPI (Index)'] = (df_inflation['Core CPI'] / base_core) * 100
         df_inflation['Rent CPI (Index)'] = (df_inflation['Rent CPI'] / base_rent) * 100
+        df_inflation['PPI - New Office Construction (Index)'] = (df_inflation['PPI - New Office Construction'] / base_ppi_new_office) * 100
+        df_inflation['PPI - Office Rent (Index)'] = (df_inflation['PPI - Office Rent'] / base_ppi_office_rent) * 100
+        df_inflation['PPI - Multifamily Construction (Index)'] = (df_inflation['PPI - Multifamily Construction (ex cap/labor/imports)'] / base_ppi_multi_construction) * 100
 
         # Convert to long format
-        df_inflation_long = df_inflation[['date', 'Core CPI (Index)', 'Rent CPI (Index)']].melt(
+        df_inflation_long = df_inflation[
+            ['date',
+             'Core CPI (Index)',
+             'Rent CPI (Index)',
+             'PPI - New Office Construction (Index)',
+             'PPI - Office Rent (Index)',
+             'PPI - Multifamily Construction (Index)']
+        ].melt(
             id_vars=['date'],
             var_name='Inflation Type',
-            value_name='CPI Index (Base 100)'
+            value_name='Index (Base 100)'
         )
 
         # Create chart
         fig = aquila_styled_line_chart(
             df_inflation_long,
             x='date',
-            y='CPI Index (Base 100)',
+            y='Index (Base 100)',
             color='Inflation Type',
-            title='Inflation - Core CPI vs Rent CPI',
+            title='Inflation & PPI - Core CPI, Rent CPI, New Office, Multifamily, Office Rent (Indexed)',
             height=800
         )
 
@@ -388,14 +354,14 @@ def generate_inflation_chart():
 
         # Save chart
         os.makedirs("charts", exist_ok=True)
-        fig.write_html('charts/inflation_core_vs_rent_cpi.html')
-        print("    ✓ Saved: charts/inflation_core_vs_rent_cpi.html")
+        fig.write_html('charts/economic-indicators/inflation_cpi_ppi_office.html')
+        print("    ✓ Saved: charts/inflation_cpi_ppi_office.html")
     else:
-        print("    Warning: No overlapping data for inflation comparison")
+        print("    Warning: No overlapping data for inflation/ppi comparison")
 
 
 def update_readme_dates():
-    """Update README.md with today's date for all 8 FRED economic indicator charts"""
+    """Update README.md with today's date for all 7 FRED economic indicator charts"""
     print("\nUpdating README.md dates...")
 
     today = datetime.now().strftime('%Y-%m-%d')
@@ -404,16 +370,15 @@ def update_readme_dates():
     with open('README.md', 'r') as f:
         content = f.read()
 
-    # Define regex patterns for all 8 charts
+    # Define regex patterns for all 7 charts
     patterns = [
         (r'(\[Austin Employment - Office Sectors\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin Employment - Industrial Sector\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin Employment - Retail Sector\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin vs National Tech Employment Growth\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
-        (r'(\[Austin Population Growth\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
-        (r'(\[Austin vs National Wage Growth\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
+        (r'(\[Austin vs Dallas vs National Wage Growth\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Interest Rates - Treasury & Mortgage\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
-        (r'(\[Inflation - Core CPI vs Rent CPI\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
+        (r'(\[Inflation & PPI - CPI and Office Construction Costs\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
     ]
 
     updated_count = 0
@@ -446,18 +411,17 @@ def main():
 
         print(f"✓ API key loaded")
 
-        # Generate all 8 charts
+        # Generate all 7 charts
         generate_office_employment_chart()
         generate_industrial_employment_chart()
         generate_retail_employment_chart()
         generate_tech_comparison_chart()
-        generate_population_chart()
         generate_wage_comparison_chart()
         generate_interest_rates_chart()
         generate_inflation_chart()
 
         print("\n" + "=" * 70)
-        print("✓ SUCCESS: All 8 FRED economic indicator charts updated")
+        print("✓ SUCCESS: All 7 FRED economic indicator charts updated")
         print("=" * 70)
 
         # Update README if requested
@@ -469,10 +433,9 @@ def main():
         print("  • austin_employment_industrial.html")
         print("  • austin_employment_retail.html")
         print("  • austin_vs_national_tech_employment.html")
-        print("  • austin_population_growth.html")
-        print("  • austin_vs_national_wage_growth.html")
+        print("  • austin_vs_dallas_vs_national_wage_growth.html")
         print("  • interest_rates_treasury_mortgage.html")
-        print("  • inflation_core_vs_rent_cpi.html")
+        print("  • inflation_cpi_ppi_office.html")
         print("\nNext steps:")
         print("  1. Review charts in browser")
         print("  2. Commit: git add charts/ README.md && git commit -m 'Update FRED economic indicator charts'")
