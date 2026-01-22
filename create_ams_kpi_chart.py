@@ -110,7 +110,7 @@ fig.update_yaxes(
 fig.update_annotations(font=dict(size=14, family=AQUILA_FONT, color='#00325a'))
 
 # Save to charts directory
-output_file = 'charts/ams_managed_properties_kpi.html'
+output_file = 'charts/property-management/ams_managed_properties_kpi.html'
 fig.write_html(output_file)
 print(f"✓ Chart saved to {output_file}")
 

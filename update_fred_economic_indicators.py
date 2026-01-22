@@ -111,7 +111,7 @@ def generate_office_employment_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/austin_employment_office_sectors.html')
+    fig.write_html('charts/economic-indicators/austin_employment_office_sectors.html')
     print("    ✓ Saved: charts/austin_employment_office_sectors.html")
 
 
@@ -135,7 +135,7 @@ def generate_industrial_employment_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/austin_employment_industrial.html')
+    fig.write_html('charts/economic-indicators/austin_employment_industrial.html')
     print("    ✓ Saved: charts/austin_employment_industrial.html")
 
 
@@ -159,7 +159,7 @@ def generate_retail_employment_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/austin_employment_retail.html')
+    fig.write_html('charts/economic-indicators/austin_employment_retail.html')
     print("    ✓ Saved: charts/austin_employment_retail.html")
 
 
@@ -203,7 +203,7 @@ def generate_tech_comparison_chart():
 
         # Save chart
         os.makedirs("charts", exist_ok=True)
-        fig.write_html('charts/austin_vs_national_tech_employment.html')
+        fig.write_html('charts/economic-indicators/austin_vs_national_tech_employment.html')
         print("    ✓ Saved: charts/austin_vs_national_tech_employment.html")
     else:
         print("    Warning: No overlapping data for tech employment comparison")
@@ -253,7 +253,7 @@ def generate_wage_comparison_chart():
 
         # Save chart
         os.makedirs("charts", exist_ok=True)
-        fig.write_html('charts/austin_vs_dallas_vs_national_wage_growth.html')
+        fig.write_html('charts/economic-indicators/austin_vs_dallas_vs_national_wage_growth.html')
         print("    ✓ Saved: charts/austin_vs_dallas_vs_national_wage_growth.html")
     else:
         print("    Warning: No overlapping data for wage comparison")
@@ -291,7 +291,7 @@ def generate_interest_rates_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/interest_rates_treasury_mortgage.html')
+    fig.write_html('charts/economic-indicators/interest_rates_treasury_mortgage.html')
     print("    ✓ Saved: charts/interest_rates_treasury_mortgage.html")
 
 
@@ -354,7 +354,7 @@ def generate_inflation_chart():
 
         # Save chart
         os.makedirs("charts", exist_ok=True)
-        fig.write_html('charts/inflation_cpi_ppi_office.html')
+        fig.write_html('charts/economic-indicators/inflation_cpi_ppi_office.html')
         print("    ✓ Saved: charts/inflation_cpi_ppi_office.html")
     else:
         print("    Warning: No overlapping data for inflation/ppi comparison")

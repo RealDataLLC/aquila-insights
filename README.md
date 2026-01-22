@@ -18,52 +18,52 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 
 ## Property Management
-[AMS Managed Properties KPIs [2026-01-20]](https://realdatallc.github.io/aquila-insights/charts/ams_managed_properties_kpi.html)
+[AMS Managed Properties KPIs [2026-01-20]](https://realdatallc.github.io/aquila-insights/charts/property-management/ams_managed_properties_kpi.html)
 
 ## Office
-[Requirements Total SF [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_total.html)
+[Requirements Total SF [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html)
 
-[Requirements Average SF [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg.html)
+[Requirements Average SF [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg.html)
 
-[Tenant Demand by Industry [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg_by_industry.html)
+[Tenant Demand by Industry [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg_by_industry.html)
 
-[Tenant Demand by Size Range and Number [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_by_size_range.html)
+[Tenant Demand by Size Range and Number [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_by_size_range.html)
 
-[Asking vs Effective Rent by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office_asking_vs_effective_rent_by_submarket.html)
+[Asking vs Effective Rent by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_asking_vs_effective_rent_by_submarket.html)
 
-[Office Occupancy Rate by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/office_occupancy_by_size.html)
+[Office Occupancy Rate by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/office/office_occupancy_by_size.html)
 
-[Office Weighted Average Rent by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/office_rent_by_size.html)
+[Office Weighted Average Rent by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/office/office_rent_by_size.html)
 
 
 ## Industrial
-[Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+[Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/industrial/vacancy_rate_industrial.html)
 
-[Industrial Occupancy Rate by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/industrial_occupancy_by_size.html)
+[Industrial Occupancy Rate by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_occupancy_by_size.html)
 
-[Industrial Weighted Average Rent by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/industrial_rent_by_size.html)
+[Industrial Weighted Average Rent by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_rent_by_size.html)
 
 ## Economic Indicators
 
 ### Employment
-[Austin Employment - Office Sectors [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_employment_office_sectors.html)
+[Austin Employment - Office Sectors [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_employment_office_sectors.html)
 
-[Austin Employment - Industrial Sector [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_employment_industrial.html)
+[Austin Employment - Industrial Sector [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_employment_industrial.html)
 
-[Austin Employment - Retail Sector [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_employment_retail.html)
+[Austin Employment - Retail Sector [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_employment_retail.html)
 
-[Austin vs National Tech Employment Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_vs_national_tech_employment.html)
+[Austin vs National Tech Employment Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_vs_national_tech_employment.html)
 
 ### Wages
-[Austin vs Dallas vs National Wage Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/austin_vs_dallas_vs_national_wage_growth.html)
+[Austin vs Dallas vs National Wage Growth [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_vs_dallas_vs_national_wage_growth.html)
 
 ### Financial Indicators
-[Interest Rates - Treasury & Mortgage [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/interest_rates_treasury_mortgage.html)
+[Interest Rates - Treasury & Mortgage [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/interest_rates_treasury_mortgage.html)
 
-[Inflation & PPI - CPI and Office Construction Costs [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/inflation_cpi_ppi_office.html)
+[Inflation & PPI - CPI and Office Construction Costs [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/inflation_cpi_ppi_office.html)
 
 ### Housing Indicators
-[Austin Housing Starts (Monthly) [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
+[Austin Housing Starts (Monthly) [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_housing_starts.html)
 
 Todo:
 - Requirements vs Absorption (Office)

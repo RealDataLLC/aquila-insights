@@ -78,7 +78,7 @@ def generate_industrial_vacancy_chart(df):
 
     # Save
     os.makedirs("charts", exist_ok=True)
-    fig.write_html("charts/vacancy_rate_industrial.html")
+    fig.write_html("charts/industrial/vacancy_rate_industrial.html")
     print("  ✓ Saved: charts/vacancy_rate_industrial.html")
 
 def update_readme_dates():
