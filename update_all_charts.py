@@ -112,9 +112,9 @@ def main():
         print("  • austin_employment_industrial.html")
         print("  • austin_employment_retail.html")
         print("  • austin_vs_national_tech_employment.html")
-        print("  • austin_vs_national_wage_growth.html")
+        print("  • austin_vs_dallas_vs_national_wage_growth.html")
         print("  • interest_rates_treasury_mortgage.html")
-        print("  • inflation_core_vs_rent_cpi.html")
+        print("  • inflation_cpi_ppi_office.html")
 
         if '--update-readme' in sys.argv:
             print("\n✓ README.md dates updated")
