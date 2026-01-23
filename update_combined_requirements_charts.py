@@ -660,6 +660,128 @@ if absorption_quarterly is not None:
     print("    ✓ Saved charts/office/requirements_vs_absorption_office.html")
 
 # ============================================================================
+# CHART 6: Rolling 12-Month Requirements with YoY Comparison
+# ============================================================================
+print("\n6. Generating Rolling 12-Month Requirements YoY chart...")
+
+# Calculate rolling 12-month metrics
+# Set index to date for rolling calculations
+monthly_data_indexed = monthly_data.set_index('date').sort_index()
+
+# Calculate rolling 12-month sum for average SF
+# For average SF, we want the rolling mean (not sum)
+rolling_data = pd.DataFrame()
+rolling_data['current_avg_sf'] = monthly_data_indexed['sf_avg_mean'].rolling(window=12, min_periods=1).mean()
+rolling_data['current_count'] = monthly_data_indexed['count'].rolling(window=12, min_periods=1).sum()
+
+# Shift data by 12 months to get prior year
+rolling_data['prior_avg_sf'] = rolling_data['current_avg_sf'].shift(12)
+rolling_data['prior_count'] = rolling_data['current_count'].shift(12)
+
+# Reset index for plotting
+rolling_data = rolling_data.reset_index()
+
+# Only show data where we have at least 12 months of history
+rolling_data = rolling_data[rolling_data['date'] >= '2019-01-31'].copy()
+
+print(f"  Rolling 12-month data: {len(rolling_data)} points")
+print(f"  Date range: {rolling_data['date'].min()} to {rolling_data['date'].max()}")
+
+# Create dual-axis chart
+fig6 = go.Figure()
+
+# Current year - Average SF (line, left axis)
+fig6.add_trace(go.Scatter(
+    x=rolling_data['date'],
+    y=rolling_data['current_avg_sf'],
+    mode='lines',
+    name='Current Year Avg SF (12M Rolling)',
+    line=dict(color=AQUILA_COLORS[0], width=2.5),  # Navy
+    yaxis='y'
+))
+
+# Prior year - Average SF (line, left axis)
+fig6.add_trace(go.Scatter(
+    x=rolling_data['date'],
+    y=rolling_data['prior_avg_sf'],
+    mode='lines',
+    name='Prior Year Avg SF (12M Rolling)',
+    line=dict(color=AQUILA_COLORS[1], width=2.5, dash='dash'),  # Gold, dashed
+    yaxis='y'
+))
+
+# Current year - Count (bar, right axis)
+fig6.add_trace(go.Bar(
+    x=rolling_data['date'],
+    y=rolling_data['current_count'],
+    name='Current Year Count (12M Rolling)',
+    marker_color=AQUILA_COLORS[0],  # Navy
+    opacity=0.3,
+    yaxis='y2'
+))
+
+# Prior year - Count (bar, right axis)
+fig6.add_trace(go.Bar(
+    x=rolling_data['date'],
+    y=rolling_data['prior_count'],
+    name='Prior Year Count (12M Rolling)',
+    marker_color=AQUILA_COLORS[1],  # Gold
+    opacity=0.3,
+    yaxis='y2'
+))
+
+fig6.update_layout(
+    title={
+        'text': 'Rolling 12-Month Requirements: Year-over-Year Comparison',
+        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
+    },
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
+    xaxis=dict(
+        title='Date',
+        gridcolor='#e9e9ea',
+        showgrid=True,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=2
+    ),
+    yaxis=dict(
+        title='Average Square Feet (12M Rolling Mean)',
+        gridcolor='#e9e9ea',
+        showgrid=True,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=2,
+        tickformat=','
+    ),
+    yaxis2=dict(
+        title='Count of Requirements (12M Rolling Sum)',
+        overlaying='y',
+        side='right',
+        showgrid=False,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=2
+    ),
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-0.3,
+        xanchor="center",
+        x=0.5,
+        font=dict(size=12)
+    ),
+    hovermode='x unified',
+    height=650,
+    margin=dict(t=100, b=120, l=80, r=80),
+    barmode='overlay'
+)
+
+fig6.write_html('charts/office/requirements_yoy_rolling_12m.html')
+print('  ✓ Saved charts/office/requirements_yoy_rolling_12m.html')
+
+# ============================================================================
 # SUMMARY
 # ============================================================================
 print("\n" + "="*80)
@@ -679,6 +801,7 @@ print(f"  ✓ charts/office/requirements_sf_avg_by_industry.html")
 print(f"  ✓ charts/office/requirements_by_size_range.html")
 if absorption_quarterly is not None:
     print(f"  ✓ charts/office/requirements_vs_absorption_office.html")
+print(f"  ✓ charts/office/requirements_yoy_rolling_12m.html")
 
 print("\n" + "="*80)
 print("✓ Complete!")
