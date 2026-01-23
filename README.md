@@ -21,14 +21,19 @@ Simply replace the `src` URL with the link to your own chart if needed.
 [AMS Managed Properties KPIs [2026-01-20]](https://realdatallc.github.io/aquila-insights/charts/property-management/ams_managed_properties_kpi.html)
 
 ## Office
-[Requirements Total SF [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html)
 
-[Requirements Average SF [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg.html)
+### Tenant Requirements
+[Requirements Total SF [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html) - Combined historical data from 2018+
 
-[Tenant Demand by Industry [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg_by_industry.html)
+[Requirements Average SF [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg.html) - Combined historical data from 2018+
 
-[Tenant Demand by Size Range and Number [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_by_size_range.html)
+[Tenant Demand by Industry [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg_by_industry.html) - Combined historical data from 2018+
 
+[Tenant Demand by Size Range and Number [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_by_size_range.html) - Combined historical data from 2018+
+
+[Requirements vs Absorption (Quarterly) [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_vs_absorption_office.html) - Compares tenant requirements against market absorption
+
+### Market Metrics
 [Asking vs Effective Rent by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_asking_vs_effective_rent_by_submarket.html)
 
 [Office Occupancy Rate by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/office/office_occupancy_by_size.html)
@@ -66,7 +71,6 @@ Simply replace the `src` URL with the link to your own chart if needed.
 [Austin Housing Starts (Monthly) [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_housing_starts.html)
 
 Todo:
-- Requirements vs Absorption (Office)
 - Requirements vs Absorption (Industrial)
 - Sales Taxes in Austin (Retail)
-- Inflation adjusted
+- Inflation adjusted metrics
