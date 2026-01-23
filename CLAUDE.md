@@ -61,35 +61,51 @@
 /home/user/aquila-insights/
 ├── .git/                                    # Git version control
 ├── __pycache__/                             # Python bytecode cache
-├── charts/                                  # OUTPUT: Generated HTML visualizations (31MB)
+├── charts/                                  # OUTPUT: Generated HTML visualizations (organized by category)
+│   ├── property-management/                 # Property management charts
+│   │   └── ams_managed_properties_kpi.html  # AMS: Property management portfolio KPIs
 │   ├── office/                              # Office market charts
 │   │   ├── requirements_sf_total.html       # Total SF requirements (combined historical)
 │   │   ├── requirements_sf_avg.html         # Average SF requirements (dual-axis)
 │   │   ├── requirements_sf_avg_by_industry.html # Tenant demand by industry (donut)
 │   │   ├── requirements_by_size_range.html  # Tenant demand by size category
 │   │   ├── requirements_vs_absorption_office.html # Requirements vs absorption comparison
+│   │   ├── requirements_yoy_rolling_12m.html # Rolling 12-month YoY comparison
+│   │   ├── office_asking_vs_effective_rent_by_submarket.html # Rent comparison by submarket
 │   │   ├── office_occupancy_by_size.html    # Office occupancy by building size
 │   │   └── office_rent_by_size.html         # Office rent by building size
 │   ├── industrial/                          # Industrial market charts
 │   │   ├── vacancy_rate_industrial.html     # Industrial vacancy rates by submarket
 │   │   ├── industrial_occupancy_by_size.html # Industrial occupancy by building size
 │   │   └── industrial_rent_by_size.html     # Industrial rent by building size
-│   ├── economic-indicators/                 # Economic indicator charts
-│   │   └── austin_housing_starts.html       # FRED: Austin housing starts
-│   └── property-management/                 # Property management charts
-│       └── ams_managed_properties_kpi.html  # AMS property management KPIs
+│   └── economic-indicators/                 # Economic indicator charts
+│       ├── austin_employment_office_sectors.html # Employment in office sectors
+│       ├── austin_employment_industrial.html     # Industrial employment
+│       ├── austin_employment_retail.html         # Retail employment
+│       ├── austin_vs_national_tech_employment.html # Tech employment growth comparison
+│       ├── austin_vs_dallas_vs_national_wage_growth.html # Wage growth comparison (3 metros)
+│       ├── interest_rates_treasury_mortgage.html # Interest rates
+│       ├── inflation_cpi_ppi_office.html         # Inflation & PPI (5 series)
+│       └── austin_housing_starts.html            # Housing starts
 ├── data/                                    # INPUT: Data files
 │   └── AMS- Property Split List.xlsx        # AMS property management portfolio
 ├── .gitignore                               # Excludes: aquila_graph.env, *.json
 ├── README.md                                # User-facing documentation with chart links
 ├── SQL.ipynb                                # PostgreSQL queries → industrial vacancy charts
 ├── supabase-graphs.ipynb                    # Supabase → example graphing notebook
-├── api-graphs.ipynb                         # FRED API → economic indicator charts
+├── api-graphs.ipynb                         # FRED API → housing starts chart (legacy)
+├── fred-economic-indicators.ipynb           # FRED API → 7 economic indicator charts
 ├── googlesheets.ipynb                       # Google Sheets → tenant demand charts
 ├── googlesheets_combined.ipynb              # Google Sheets (combined tabs) → requirements + absorption
 ├── building-performance-by-size.ipynb       # Supabase → building performance by size charts
 ├── create_ams_kpi_chart.py                  # Script: Generate AMS property management KPIs
 ├── update_combined_requirements_charts.py   # Script: Generate combined requirements + absorption charts
+├── update_all_charts.py                     # Master script: Run all chart updates
+├── update_google_sheets_charts.py           # Script: Update 4 tenant demand charts
+├── update_supabase_charts.py                # Script: Update 1 industrial vacancy chart
+├── update_fred_charts.py                    # Script: Update housing starts chart
+├── update_fred_economic_indicators.py       # Script: Update 7 economic indicator charts
+├── update_building_performance_charts.py    # Script: Update 4 building performance charts
 ├── aquila_graph.env                         # CREDENTIALS (FRED API, Google, Supabase)
 └── aquila_graphing_tools.py                 # Shared utilities (styling, git automation)
 ```
@@ -102,10 +118,11 @@
 **Jupyter Notebooks:**
 1. `SQL.ipynb` (1,897 lines) - PostgreSQL → Industrial vacancy charts
 2. `supabase-graphs.ipynb` - Supabase → Example notebook for querying and graphing
-3. `api-graphs.ipynb` (2,020 lines) - FRED API → Economic indicator charts
-4. `googlesheets.ipynb` (2,463 lines) - Google Sheets → 4 tenant demand charts
-5. `googlesheets_combined.ipynb` - Google Sheets (multi-tab) + Supabase → 5 requirements charts including requirements vs absorption
-6. `building-performance-by-size.ipynb` - Supabase → 4 building performance by size charts (office and industrial)
+3. `api-graphs.ipynb` (2,020 lines) - FRED API → Housing starts chart (legacy)
+4. `fred-economic-indicators.ipynb` - FRED API → 7 economic indicator charts
+5. `googlesheets.ipynb` (2,463 lines) - Google Sheets → 4 tenant demand charts
+6. `googlesheets_combined.ipynb` - Google Sheets (multi-tab) + Supabase → 6 requirements charts including requirements vs absorption and rolling 12-month YoY
+7. `building-performance-by-size.ipynb` - Supabase → 4 building performance by size charts (office and industrial)
 
 **Configuration:**
 - `aquila_graph.env` - API keys and OAuth2 credentials (SENSITIVE)
@@ -377,11 +394,170 @@ df['value'] = pd.to_numeric(df['value'])
 - `AUST448BPPRIV` - Austin Private Housing Units Authorized by Building Permits
 
 **Output Charts:**
-- `austin_housing_starts.html` - Monthly housing starts line chart
+- `charts/economic-indicators/austin_housing_starts.html` - Monthly housing starts line chart
 
 ---
 
-### 4. googlesheets.ipynb (Google Sheets Integration)
+### 5. fred-economic-indicators.ipynb (FRED Economic Indicators)
+
+**Purpose:** Fetch 7 economic indicators from Federal Reserve Economic Data (FRED) and create trend charts with base 100 indexing for comparison.
+
+**Key Features:**
+- Base 100 indexing for comparing series with different magnitudes
+- Multiple series per chart (e.g., Austin vs Dallas vs National)
+- Automatic data merging and transformation
+- Aquila brand styling throughout
+
+**FRED Series Used:**
+
+**Employment Charts:**
+- Chart 1: Austin Employment - Office Sectors
+  - `SMU48124206056220001` - Professional and Business Services
+  - `SMU48124205552000001` - Financial Activities
+  - `SMU48124205500000001` - Information
+- Chart 2: Austin Employment - Industrial
+  - `SMU48124203133600001` - Manufacturing
+  - `SMU48124204200000001` - Trade, Transportation, and Utilities
+- Chart 3: Austin Employment - Retail
+  - `SMU48124204200000001` - Trade, Transportation, and Utilities (subset)
+- Chart 4: Austin vs National Tech Employment
+  - `SMS48124605054160001SA` - Austin Professional/Scientific/Tech Services
+  - `CES6054000001` - National Professional/Scientific/Tech Services
+
+**Wage Chart:**
+- Chart 5: Austin vs Dallas vs National Wage Growth
+  - `SMU48124200500000003` - Austin Average Hourly Earnings
+  - `SMU48191000500000003` - Dallas Average Hourly Earnings
+  - `CES0500000003` - National Average Hourly Earnings
+  - **Note:** Uses hourly wages directly (not weekly), indexed to base 100
+
+**Financial Indicators:**
+- Chart 6: Interest Rates - Treasury & Mortgage
+  - `DGS10` - 10-Year Treasury Constant Maturity Rate
+  - `MORTGAGE30US` - 30-Year Fixed Rate Mortgage Average
+- Chart 7: Inflation & PPI - CPI and Office Construction Costs
+  - `CPILFESL` - Consumer Price Index: Core CPI (excluding food & energy)
+  - `CUUR0000SEHC` - CPI: Rent of Primary Residence
+  - `PCU236223236223` - PPI: New Office Building Construction
+  - `WPU43110101` - PPI: Office Space Rental
+  - `WPUIP231120` - PPI: Multifamily Residential Construction
+
+**Data Processing Pattern:**
+
+**1. Fetch FRED Series:**
+```python
+def fetch_fred_series(series_id, series_name):
+    """Fetch a FRED series and return as DataFrame with date index"""
+    url = "https://api.stlouisfed.org/fred/series/observations"
+    params = {
+        "series_id": series_id,
+        "api_key": fred_api_key,
+        "file_type": "json"
+    }
+    response = requests.get(url, params=params)
+    data = response.json()
+    df = pd.DataFrame(data['observations'])
+    df['date'] = pd.to_datetime(df['date'])
+    df['value'] = pd.to_numeric(df['value'], errors='coerce')
+    df = df.rename(columns={'value': series_name})
+    return df[['date', series_name]].set_index('date')
+```
+
+**2. Merge Multiple Series:**
+```python
+# Example: Austin vs Dallas vs National wage comparison
+df_austin = fetch_fred_series('SMU48124200500000003', 'Austin Hourly Wage')
+df_dallas = fetch_fred_series('SMU48191000500000003', 'Dallas Hourly Wage')
+df_national = fetch_fred_series('CES0500000003', 'National Hourly Wage')
+
+# Merge on date index
+df_combined = df_austin.join([df_dallas, df_national], how='outer')
+```
+
+**3. Index to Base 100:**
+```python
+# Find earliest non-null value for each series as base
+for col in df_combined.columns:
+    first_valid_idx = df_combined[col].first_valid_index()
+    if first_valid_idx is not None:
+        base_value = df_combined.loc[first_valid_idx, col]
+        df_combined[col] = (df_combined[col] / base_value) * 100
+```
+
+**4. Melt for Plotly:**
+```python
+df_melted = df_combined.reset_index().melt(
+    id_vars='date',
+    var_name='Series',
+    value_name='Indexed Value'
+)
+```
+
+**Output Charts:**
+
+**1. charts/economic-indicators/austin_employment_office_sectors.html**
+- **Type:** Multi-line chart (3 series)
+- **Metrics:** Employment indexed to base 100
+- **Purpose:** Track office sector employment trends
+
+**2. charts/economic-indicators/austin_employment_industrial.html**
+- **Type:** Multi-line chart (2 series)
+- **Metrics:** Manufacturing and T&U employment indexed to base 100
+- **Purpose:** Track industrial sector employment
+
+**3. charts/economic-indicators/austin_employment_retail.html**
+- **Type:** Line chart
+- **Metrics:** Trade, Transportation, and Utilities employment
+- **Purpose:** Track retail sector employment
+
+**4. charts/economic-indicators/austin_vs_national_tech_employment.html**
+- **Type:** Dual-line comparison (Austin vs National)
+- **Metrics:** Tech employment indexed to base 100
+- **Purpose:** Compare Austin tech growth to national average
+
+**5. charts/economic-indicators/austin_vs_dallas_vs_national_wage_growth.html**
+- **Type:** 3-line comparison
+- **Metrics:** Average hourly wages indexed to base 100
+- **Purpose:** Compare wage growth across 3 markets
+
+**6. charts/economic-indicators/interest_rates_treasury_mortgage.html**
+- **Type:** Dual-line chart
+- **Metrics:** Interest rates (%)
+- **Purpose:** Track borrowing costs for real estate
+
+**7. charts/economic-indicators/inflation_cpi_ppi_office.html**
+- **Type:** 5-line chart
+- **Metrics:** Core CPI, Rent CPI, and 3 PPI series indexed to base 100
+- **Purpose:** Track inflation and construction cost trends
+
+**Key Techniques:**
+
+**Base 100 Indexing:**
+- Allows comparison of series with different magnitudes (e.g., Austin employment vs National employment)
+- First non-null value for each series = 100
+- All subsequent values calculated as: (current_value / base_value) * 100
+- Shows relative growth rates clearly
+
+**Error Handling:**
+```python
+# Handle missing data gracefully
+df['value'] = pd.to_numeric(df['value'], errors='coerce')
+
+# Check for empty results
+if df.empty or df['value'].isna().all():
+    print(f"Warning: No valid data for series {series_id}")
+    return None
+```
+
+**Date Filtering:**
+```python
+# Optional: Filter to recent years only
+df_filtered = df[df['date'] >= '2015-01-01']
+```
+
+---
+
+### 6. googlesheets.ipynb (Google Sheets Integration)
 
 **Purpose:** Fetch tenant requirement data from Google Sheets and generate 4 analytics charts.
 
@@ -499,19 +675,19 @@ df['SIZE_RANGE'] = pd.cut(
 
 **Output Charts:**
 
-**1. requirements_sf_total.html**
+**1. charts/office/requirements_sf_total.html**
 - **Type:** Line chart (dual lines)
 - **Metrics:** Monthly LOW vs HIGH square footage totals
 - **Purpose:** Show range of tenant demand over time
 
-**2. requirements_sf_avg.html**
+**2. charts/office/requirements_sf_avg.html**
 - **Type:** Dual-axis chart (lines + bars)
 - **Metrics:**
   - Lines: Mean and Median SF
   - Bars: Count of requirements
 - **Purpose:** Trend + volume visualization
 
-**3. requirements_sf_avg_by_industry.html**
+**3. charts/office/requirements_sf_avg_by_industry.html**
 - **Type:** Donut chart
 - **Metrics:** Tenant demand by industry
 - **Processing:**
@@ -519,7 +695,7 @@ df['SIZE_RANGE'] = pd.cut(
   - Remaining industries grouped as "Other"
   - Extended color palette (12+ colors)
 
-**4. requirements_by_size_range.html**
+**4. charts/office/requirements_by_size_range.html**
 - **Type:** Horizontal bar chart
 - **Categories:** 0-14k, 15k-39k, 40k-99k, 100k+
 - **Metrics:**
@@ -529,7 +705,7 @@ df['SIZE_RANGE'] = pd.cut(
 
 ---
 
-### 4.5. googlesheets_combined.ipynb (Combined Historical Requirements Analysis)
+### 6.5. googlesheets_combined.ipynb (Combined Historical Requirements Analysis)
 
 **Purpose:** Combines tenant requirement data from two Google Sheets tabs (current 2025+ data and historical through-2024 data) to create comprehensive analytics charts with full historical context. Also generates a new requirements vs absorption comparison chart.
 
@@ -694,11 +870,18 @@ df_absorption['quarter'] = df_absorption['quarter'].apply(parse_quarter)
 - Horizontal bars by size category
 - Inside labels with count
 
-**5. requirements_vs_absorption_office.html** *(NEW)*
+**5. requirements_vs_absorption_office.html**
 - Quarterly comparison chart
 - Requirements (avg SF) vs Absorption (total SF)
 - Time period: 2018+
 - Uses Aquila colors (Gold for requirements, Navy for absorption)
+
+**6. requirements_yoy_rolling_12m.html** *(NEW)*
+- Rolling 12-month window analysis
+- Dual-axis chart: Average SF (line, left) and Count (bars, right)
+- Shows current year vs prior year comparison
+- 4 traces total: current/prior year for both metrics
+- Height: 650px
 
 **Performance Tips:**
 - `get_all_values()` is faster than `get_all_records()` for large sheets
@@ -714,7 +897,7 @@ python3 update_combined_requirements_charts.py
 
 ---
 
-### 5. building-performance-by-size.ipynb (Building Performance Analysis)
+### 7. building-performance-by-size.ipynb (Building Performance Analysis)
 
 **Purpose:** Analyze building performance metrics (occupancy and rental rates) segmented by building size for both office and industrial properties.
 
@@ -860,7 +1043,7 @@ weighted_rent_clean = weighted_rent.dropna(subset=['date', 'weighted_avg_rent'])
 
 **Output Charts:**
 
-**1. office_occupancy_by_size.html**
+**1. charts/office/office_occupancy_by_size.html**
 - **Type:** Multi-line chart
 - **Metric:** Weighted occupancy rate by building size bin
 - **Y-axis:** Occupancy percentage (formatted as %)
@@ -868,7 +1051,7 @@ weighted_rent_clean = weighted_rent.dropna(subset=['date', 'weighted_avg_rent'])
 - **Legend:** 5 size bins (e.g., "0-25k SF", "25k-50k SF", etc.)
 - **Purpose:** Track how occupancy varies by building size over time
 
-**2. office_rent_by_size.html**
+**2. charts/office/office_rent_by_size.html**
 - **Type:** Multi-line chart
 - **Metric:** Weighted average rent (rental_rate) by building size bin
 - **Y-axis:** Rent ($/SF, formatted as currency)
@@ -876,7 +1059,7 @@ weighted_rent_clean = weighted_rent.dropna(subset=['date', 'weighted_avg_rent'])
 - **Legend:** 5 size bins
 - **Purpose:** Track rental rate trends by building size
 
-**3. industrial_occupancy_by_size.html**
+**3. charts/industrial/industrial_occupancy_by_size.html**
 - **Type:** Multi-line chart
 - **Metric:** Weighted occupancy rate by building size bin
 - **Y-axis:** Occupancy percentage (formatted as %)
@@ -884,7 +1067,7 @@ weighted_rent_clean = weighted_rent.dropna(subset=['date', 'weighted_avg_rent'])
 - **Legend:** 5 size bins
 - **Purpose:** Track industrial occupancy by building size
 
-**4. industrial_rent_by_size.html**
+**4. charts/industrial/industrial_rent_by_size.html**
 - **Type:** Multi-line chart
 - **Metric:** Weighted average rent (survey_rental_rate) by building size bin
 - **Y-axis:** Rent ($/SF, formatted as currency)
@@ -908,7 +1091,10 @@ This analysis enables:
 - Are smaller industrial buildings seeing faster rent growth?
 - Did pandemic impact large vs small buildings differently?
 - Which size segment recovered fastest post-pandemic?
-### 5. create_ams_kpi_chart.py (AMS Property Management KPIs)
+
+---
+
+### 8. create_ams_kpi_chart.py (AMS Property Management KPIs)
 
 **Purpose:** Generate KPI visualization from Excel data showing properties managed by Aquila Management Services (AMS).
 
@@ -1025,7 +1211,7 @@ fig.update_layout(
 
 **Output Chart:**
 
-**File:** `charts/ams_managed_properties_kpi.html`
+**File:** `charts/property-management/ams_managed_properties_kpi.html`
 
 **Metrics Displayed:**
 - **Left Panel:** Total square footage by property type (navy blue bars)
@@ -1048,7 +1234,7 @@ fig.update_layout(
 python3 create_ams_kpi_chart.py
 
 # Output:
-# ✓ Chart saved to charts/ams_managed_properties_kpi.html
+# ✓ Chart saved to charts/property-management/ams_managed_properties_kpi.html
 # [Displays summary table with metrics by property type]
 ```
 
@@ -1151,7 +1337,7 @@ Context: BUILDINGS SENT, SOURCE, INTERNAL NOTES
 
 ### Standard Chart Generation Workflow
 
-1. **Open Jupyter Notebook** (SQL.ipynb, api-graphs.ipynb, or googlesheets.ipynb)
+1. **Open Jupyter Notebook** (SQL.ipynb, fred-economic-indicators.ipynb, googlesheets.ipynb, etc.)
 2. **Load Environment Variables**
    ```python
    from dotenv import load_dotenv
@@ -1169,28 +1355,30 @@ Context: BUILDINGS SENT, SOURCE, INTERNAL NOTES
    fig.update_traces(mode='lines+markers')
    fig.update_yaxes(tickformat='.1%')  # For percentages
    ```
-7. **Export to HTML**
+7. **Export to HTML** (use categorized subdirectories)
    ```python
-   fig.write_html('charts/chart_name.html')
+   fig.write_html('charts/category/chart_name.html')
+   # Categories: property-management, office, industrial, economic-indicators
    ```
 8. **Update README.md** (REQUIRED)
    - Add a link to your new chart in the appropriate section
    - **Naming Convention:** `[Descriptive Chart Name [YYYY-MM-DD]](chart_url)`
    - **Date Format:** Use ISO format (YYYY-MM-DD) for the date the chart was last updated
-   - Place the link under the appropriate category (Office, Industrial, General Economy)
+   - Place the link under the appropriate category (Property Management, Office, Industrial, Economic Indicators)
 
    **Examples:**
    ```markdown
    ## Office
-   [Austin Office Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office_vacancy_by_submarket.html)
+   [Austin Office Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_by_submarket.html)
 
-   [Tenant Requirements Total SF [2026-01-15]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_total.html)
+   [Tenant Requirements Total SF [2026-01-15]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html)
 
    ## Industrial
-   [Industrial Vacancy Rate Trends [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+   [Industrial Vacancy Rate Trends [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/industrial/vacancy_rate_industrial.html)
 
-   ## General Economy
-   [Austin Housing Starts (Monthly) [2026-01-10]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
+   ## Economic Indicators
+   ### Housing Indicators
+   [Austin Housing Starts (Monthly) [2026-01-10]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_housing_starts.html)
    ```
 9. **Commit and Push**
    ```python
@@ -1200,7 +1388,7 @@ Context: BUILDINGS SENT, SOURCE, INTERNAL NOTES
    - Or manually: `git add . && git commit -m "Add new chart" && git push`
 10. **Verify Deployment**
     - Wait 1-2 minutes for GitHub Pages to rebuild
-    - Visit: `https://realdatallc.github.io/aquila-insights/charts/chart_name.html`
+    - Visit: `https://realdatallc.github.io/aquila-insights/charts/category/chart_name.html`
     - Check that the chart loads and is interactive
     - Verify README.md link works
 
@@ -1306,13 +1494,20 @@ df['value'].fillna(0, inplace=True)
 
 **Standard Export:**
 ```python
-fig.write_html('charts/descriptive_filename.html')
+# Use categorized subdirectories based on chart type
+fig.write_html('charts/category/descriptive_filename.html')
 ```
 
 **File Naming Convention:**
 - Use underscores (not hyphens or spaces)
 - Be descriptive: `requirements_sf_avg_by_industry.html` ✓
 - Not generic: `chart1.html` ✗
+
+**Chart Categories and Subdirectories:**
+- `charts/property-management/` - Property management charts (AMS KPIs)
+- `charts/office/` - Office market charts (tenant demand, occupancy, rent)
+- `charts/industrial/` - Industrial market charts (vacancy, occupancy, rent)
+- `charts/economic-indicators/` - Economic indicator charts (employment, wages, interest rates, inflation)
 
 **README.md Link Format (REQUIRED):**
 - **Format:** `[Descriptive Chart Name [YYYY-MM-DD]](chart_url)`
@@ -1381,8 +1576,10 @@ fig = aquila_styled_line_chart(
 1. **Identify Source Notebook:**
    - Supabase → Edit `supabase-graphs.ipynb` (recommended for new Supabase charts)
    - PostgreSQL → Edit `SQL.ipynb` (legacy, uses external aquila_tools)
-   - FRED API → Edit `api-graphs.ipynb`
+   - FRED API (housing) → Edit `api-graphs.ipynb` (legacy single-chart notebook)
+   - FRED API (economic indicators) → Edit `fred-economic-indicators.ipynb` (7 charts)
    - Google Sheets → Edit `googlesheets.ipynb`
+   - Building performance → Edit `building-performance-by-size.ipynb`
 
 2. **Add New Cell(s):**
    ```python
@@ -1398,8 +1595,9 @@ fig = aquila_styled_line_chart(
        title='Descriptive Title'
    )
 
-   # Export
-   fig.write_html('charts/new_chart_name.html')
+   # Export to appropriate category subdirectory
+   fig.write_html('charts/category/new_chart_name.html')
+   # Categories: property-management, office, industrial, economic-indicators
    ```
 
 3. **Update README.md:**
@@ -1410,7 +1608,7 @@ fig = aquila_styled_line_chart(
    **Example:**
    ```markdown
    ## Office
-   [New Office Metric [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/new_chart_name.html)
+   [New Office Metric [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/new_chart_name.html)
    ```
 
 4. **Commit:**
@@ -1464,35 +1662,53 @@ fig.update_yaxes(tickformat=',.0f')
    - Search for economic indicator
    - Copy series ID (e.g., "AUST448BPPRIV")
 
-2. **Add to api-graphs.ipynb:**
+2. **Add to fred-economic-indicators.ipynb:**
    ```python
-   series_id = "NEW_SERIES_ID"
+   # Use the fetch_fred_series helper function
+   def fetch_fred_series(series_id, series_name):
+       """Fetch a FRED series and return as DataFrame with date index"""
+       url = "https://api.stlouisfed.org/fred/series/observations"
+       params = {
+           "series_id": series_id,
+           "api_key": fred_api_key,
+           "file_type": "json"
+       }
+       response = requests.get(url, params=params)
+       data = response.json()
+       df = pd.DataFrame(data['observations'])
+       df['date'] = pd.to_datetime(df['date'])
+       df['value'] = pd.to_numeric(df['value'], errors='coerce')
+       df = df.rename(columns={'value': series_name})
+       return df[['date', series_name]].set_index('date')
 
-   url = "https://api.stlouisfed.org/fred/series/observations"
-   params = {
-       "series_id": series_id,
-       "api_key": fred_api_key,
-       "file_type": "json"
-   }
+   # Fetch and chart new series
+   df_new = fetch_fred_series('NEW_SERIES_ID', 'New Indicator')
 
-   response = requests.get(url, params=params)
-   data = response.json()
-   df = pd.DataFrame(data['observations'])
+   # Optional: Index to base 100 for comparison charts
+   first_valid_idx = df_new['New Indicator'].first_valid_index()
+   if first_valid_idx is not None:
+       base_value = df_new.loc[first_valid_idx, 'New Indicator']
+       df_new['New Indicator'] = (df_new['New Indicator'] / base_value) * 100
 
-   df['date'] = pd.to_datetime(df['date'])
-   df['value'] = pd.to_numeric(df['value'])
-
+   # Generate chart
+   df_melted = df_new.reset_index().melt(id_vars='date', var_name='Series', value_name='Value')
    fig = aquila_styled_line_chart(
-       df,
+       df_melted,
        x='date',
-       y='value',
+       y='Value',
+       color='Series',
        title='New Economic Indicator'
    )
 
-   fig.write_html('charts/new_indicator.html')
+   fig.write_html('charts/economic-indicators/new_indicator.html')
    ```
 
-3. **Update README.md** with new chart link
+3. **Add to update_fred_economic_indicators.py:**
+   - Create a new generation function for the chart
+   - Add to the main execution block
+   - Test the script
+
+4. **Update README.md** with new chart link
 
 ---
 
@@ -1553,15 +1769,16 @@ df = df[
 **Examples:**
 ```markdown
 ## Office
-[Tenant Demand by Industry [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/requirements_sf_avg_by_industry.html)
+[Tenant Demand by Industry [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg_by_industry.html)
 
-[Austin Office Vacancy Rate Trends [2026-01-15]](https://realdatallc.github.io/aquila-insights/charts/office_vacancy_trends.html)
+[Austin Office Vacancy Rate Trends [2026-01-15]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_trends.html)
 
 ## Industrial
-[Industrial Vacancy by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/vacancy_rate_industrial.html)
+[Industrial Vacancy by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/industrial/vacancy_rate_industrial.html)
 
-## General Economy
-[Austin Housing Starts [2026-01-10]](https://realdatallc.github.io/aquila-insights/charts/austin_housing_starts.html)
+## Economic Indicators
+### Housing Indicators
+[Austin Housing Starts [2026-01-10]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_housing_starts.html)
 ```
 
 ---
@@ -1849,6 +2066,10 @@ pip install X
 
 ### File Paths
 - **Charts output:** `/home/user/aquila-insights/charts/`
+  - `charts/property-management/` - AMS KPI charts
+  - `charts/office/` - Office market charts
+  - `charts/industrial/` - Industrial market charts
+  - `charts/economic-indicators/` - Economic indicator charts
 - **Data files:** `/home/user/aquila-insights/data/`
 - **Shared utilities:** `/home/user/aquila-insights/aquila_graphing_tools.py`
 - **Environment config:** `/home/user/aquila-insights/aquila_graph.env`
@@ -1871,15 +2092,18 @@ pip install X
 ### Public URLs
 - **Repository:** https://github.com/realdatallc/aquila-insights
 - **GitHub Pages:** https://realdatallc.github.io/aquila-insights/
-- **Chart pattern:** https://realdatallc.github.io/aquila-insights/charts/{filename}.html
+- **Chart pattern:** https://realdatallc.github.io/aquila-insights/charts/{category}/{filename}.html
+- **Chart categories:** property-management, office, industrial, economic-indicators
 
 ### Automation Scripts
-- **Update all charts:** `python3 update_all_charts.py`
-- **Update Google Sheets charts:** `python3 update_google_sheets_charts.py`
-- **Update Supabase charts:** `python3 update_supabase_charts.py`
-- **Update FRED charts:** `python3 update_fred_charts.py`
-- **Generate AMS KPIs:** `python3 create_ams_kpi_chart.py`
-- **Auto-update README dates:** Add `--update-readme` flag
+- **Update all charts:** `python3 update_all_charts.py` (runs all 5 data sources below)
+- **Update Google Sheets charts:** `python3 update_google_sheets_charts.py` (4 tenant demand charts)
+- **Update Supabase charts:** `python3 update_supabase_charts.py` (1 industrial vacancy chart)
+- **Update FRED housing chart:** `python3 update_fred_charts.py` (1 housing starts chart)
+- **Update FRED economic indicators:** `python3 update_fred_economic_indicators.py` (7 economic indicator charts)
+- **Update building performance charts:** `python3 update_building_performance_charts.py` (4 charts)
+- **Generate AMS KPIs:** `python3 create_ams_kpi_chart.py` (1 property management chart)
+- **Auto-update README dates:** Add `--update-readme` flag to any script
 
 ---
 
@@ -1902,6 +2126,7 @@ python3 update_all_charts.py --update-readme    # Update all + README dates
 python3 update_google_sheets_charts.py          # 4 tenant demand charts
 python3 update_supabase_charts.py               # 1 industrial vacancy chart
 python3 update_fred_charts.py                   # 1 housing starts chart
+python3 update_fred_economic_indicators.py      # 7 economic indicator charts
 python3 update_building_performance_charts.py   # 4 building performance by size charts
 ```
 
@@ -1927,10 +2152,24 @@ python3 update_building_performance_charts.py   # 4 building performance by size
 - Fetches Austin housing data from Federal Reserve API
 - Series: AUST448BPPRIV (Private Housing Units Authorized)
 - Generates 1 chart:
-  - `austin_housing_starts.html` - Monthly housing starts (line chart)
+  - `charts/economic-indicators/austin_housing_starts.html` - Monthly housing starts (line chart)
 - Uses FRED API key from `aquila_graph.env`
 
-**4. update_building_performance_charts.py**
+**4. update_fred_economic_indicators.py**
+- Fetches 7 economic indicator datasets from Federal Reserve API
+- Includes employment, wages, interest rates, and inflation data
+- Uses base 100 indexing for comparison charts
+- Generates 7 charts in `charts/economic-indicators/`:
+  - `austin_employment_office_sectors.html` - Office sector employment (3 series)
+  - `austin_employment_industrial.html` - Industrial employment (2 series)
+  - `austin_employment_retail.html` - Retail employment
+  - `austin_vs_national_tech_employment.html` - Tech employment comparison
+  - `austin_vs_dallas_vs_national_wage_growth.html` - Wage growth comparison (3 metros)
+  - `interest_rates_treasury_mortgage.html` - Interest rates (2 series)
+  - `inflation_cpi_ppi_office.html` - Inflation & PPI (5 series)
+- Uses FRED API key from `aquila_graph.env`
+
+**5. update_building_performance_charts.py**
 - Queries Supabase `quarterly_report_data_office` and `quarterly_report_data_industrial` tables
 - Filters for Aquila competitive set buildings with "Existing" status
 - Automatically creates 5 rounded size bins for each property type based on data distribution
@@ -1946,9 +2185,10 @@ python3 update_building_performance_charts.py   # 4 building performance by size
 - Requires Supabase credentials in `aquila_graph.env`
 - **Note:** May fail with 403 if RLS policies block anon key
 
-**5. update_all_charts.py**
+**6. update_all_charts.py**
 - Orchestrates all chart update scripts
-- Runs sequentially: Google Sheets → Supabase → FRED → Building Performance
+- Runs sequentially: Google Sheets → Supabase → FRED Housing → FRED Economic Indicators → Building Performance
+- Runs 5 data sources, generating 19 total charts
 - Shows summary of successes/failures
 - Exit code 0 if all succeed, 1 if any fail
 
@@ -2052,6 +2292,27 @@ ERROR: 400 Bad Request
 
 ---
 
-**Last Updated:** 2026-01-15
-**Document Version:** 1.0.0
+**Last Updated:** 2026-01-23
+**Document Version:** 1.1.0
 **Repository Status:** Active development on feature branches, merges to main
+
+---
+
+## Changelog
+
+### Version 1.1.0 (2026-01-23)
+- Added `fred-economic-indicators.ipynb` - new notebook for 7 economic indicator charts
+- Added `update_fred_economic_indicators.py` - automation script for economic indicators
+- Reorganized `charts/` directory into categorized subdirectories:
+  - `property-management/` - 1 chart
+  - `office/` - 7 charts
+  - `industrial/` - 3 charts
+  - `economic-indicators/` - 8 charts
+- Updated all chart output paths in notebooks and automation scripts
+- Updated `update_all_charts.py` to include FRED economic indicators as 5th data source
+- Documented base 100 indexing technique for comparison charts
+- Documented quarter string parsing technique for building performance charts
+- Updated README structure: Economic Indicators now has subsections (Employment, Wages, Financial Indicators, Housing Indicators)
+
+### Version 1.0.0 (2026-01-15)
+- Initial comprehensive documentation
