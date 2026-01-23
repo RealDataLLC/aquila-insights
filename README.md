@@ -33,6 +33,8 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 [Requirements vs Absorption (Quarterly) [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_vs_absorption_office.html) - Compares tenant requirements against market absorption
 
+[Requirements YoY Rolling 12-Month [2026-01-23]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_yoy_rolling_12m.html) - Rolling 12-month average SF and count with prior year comparison
+
 ### Market Metrics
 [Asking vs Effective Rent by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_asking_vs_effective_rent_by_submarket.html)
 

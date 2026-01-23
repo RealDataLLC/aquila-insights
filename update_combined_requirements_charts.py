@@ -81,10 +81,16 @@ tab0 = sheet.get_worksheet(0)
 df_2025_plus = pd.DataFrame(tab0.get_all_records())
 print(f"    - Loaded {len(df_2025_plus)} rows, {len(df_2025_plus.columns)} columns")
 
-# Tab 1: Through 2024 data
+# Tab 1: Through 2024 data (use get_all_values for better performance with large sheets)
 print("  Reading Tab 1: 'Through 2024' data...")
-tab1 = sheet.get_worksheet(1)
-df_through_2024 = pd.DataFrame(tab1.get_all_records())
+tab1 = sheet.get_worksheet(2)  # Index 2, not 1
+rows = tab1.get_all_values()
+df_through_2024 = pd.DataFrame(rows[1:], columns=rows[0])  # Skip header row for data
+
+# Filter to office-only data
+if "USE" in df_through_2024.columns:
+    df_through_2024 = df_through_2024[df_through_2024["USE"].str.lower().str.contains("office", na=False)]
+
 print(f"    - Loaded {len(df_through_2024)} rows, {len(df_through_2024.columns)} columns")
 
 # ============================================================================
@@ -269,9 +275,19 @@ fig1 = px.line(
     x='date',
     y=['sf_low_sum', 'sf_high_sum'],
     title='Monthly Total Square Footage Requirements (Combined Historical Data)',
-    labels={'value': 'Square Footage', 'date': 'Date'},
+    labels={
+        'value': 'Square Footage',
+        'date': 'Date',
+        'sf_low_sum': 'Low Requirement (sqft)',
+        'sf_high_sum': 'High Requirement (sqft)'
+    },
     color_discrete_sequence=[COLORS['orange'], COLORS['blue']]
 )
+
+# Manually update the legend names
+for i, trace_name in enumerate(['Low Requirement (sqft)', 'High Requirement (sqft)']):
+    fig1.data[i].name = trace_name
+
 fig1.update_layout(
     plot_bgcolor=COLORS['background'],
     paper_bgcolor=COLORS['background'],
@@ -295,10 +311,11 @@ fig1.update_layout(
         xanchor="center",
         x=0.5
     ),
-    margin=dict(t=100, b=50, l=50, r=50)
+    margin=dict(t=100, b=50, l=50, r=50),
+    height=550  # Increased height
 )
-fig1.write_html("charts/requirements_sf_total.html")
-print("    ✓ Saved charts/requirements_sf_total.html")
+fig1.write_html("charts/office/requirements_sf_total.html")
+print("    ✓ Saved charts/office/requirements_sf_total.html")
 
 # 5c. Chart 2: Average SF with Count (dual-axis)
 print("  Creating Chart 2: Average SF Metrics...")
@@ -359,8 +376,8 @@ fig2.update_layout(
     legend=dict(orientation="h", y=-0.2),
     margin=dict(t=100, b=50, l=50, r=50)
 )
-fig2.write_html("charts/requirements_sf_avg.html")
-print("    ✓ Saved charts/requirements_sf_avg.html")
+fig2.write_html("charts/office/requirements_sf_avg.html")
+print("    ✓ Saved charts/office/requirements_sf_avg.html")
 
 # 5d. Chart 3: Demand by Industry (donut chart)
 print("  Creating Chart 3: Demand by Industry...")
@@ -372,6 +389,14 @@ industry_data = (
 )
 industry_data = industry_data[industry_data['sf_avg'] > 0]
 industry_data = industry_data[industry_data['industry'].astype(str).str.strip() != '']
+
+# Note how far back the data goes
+if 'date' in df_combined.columns:
+    min_date = df_combined['date'].min()
+    max_date = df_combined['date'].max()
+    date_range_note = f"(Data from {min_date:%b %Y} to {max_date:%b %Y})"
+else:
+    date_range_note = ""
 
 # Top 7 + Other
 industry_data_sorted = industry_data.sort_values(by='sf_avg', ascending=False)
@@ -408,19 +433,19 @@ fig3 = go.Figure(
 )
 fig3.update_layout(
     title={
-        'text': 'Tenant Demand by Industry (Combined Historical Data)',
+        'text': f'Tenant Demand by Industry (Combined Historical Data) {date_range_note}',
         'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
     },
     plot_bgcolor=COLORS['background'],
     paper_bgcolor=COLORS['background'],
     font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
     showlegend=False,
-    width=820,
+    width=1000,  # Increased from 820
     height=650,
     margin=dict(t=100, b=80, l=50, r=50)
 )
-fig3.write_html("charts/requirements_sf_avg_by_industry.html")
-print("    ✓ Saved charts/requirements_sf_avg_by_industry.html")
+fig3.write_html("charts/office/requirements_sf_avg_by_industry.html")
+print("    ✓ Saved charts/office/requirements_sf_avg_by_industry.html")
 
 # 5e. Chart 4: Requirements by Size Range
 print("  Creating Chart 4: Requirements by Size Range...")
@@ -481,8 +506,8 @@ fig4.update_layout(
     height=500,
     margin=dict(t=80, b=80, l=120, r=50)
 )
-fig4.write_html("charts/requirements_by_size_range.html")
-print("    ✓ Saved charts/requirements_by_size_range.html")
+fig4.write_html("charts/office/requirements_by_size_range.html")
+print("    ✓ Saved charts/office/requirements_by_size_range.html")
 
 # ============================================================================
 # STEP 6: Fetch Supabase absorption data
@@ -501,8 +526,8 @@ try:
 
     while True:
         response = supabase.table('market_tables_office') \
-            .select('quarter, total_absorption') \
-            .gte('quarter', '2018-01-01') \
+            .select('quarter, total_net_absorption') \
+            .gte('quarter', '2018 Q1') \
             .range(page * page_size, (page + 1) * page_size - 1) \
             .execute()
 
@@ -516,12 +541,23 @@ try:
     df_absorption = pd.DataFrame(all_records)
     print(f"    - Loaded {len(df_absorption)} records")
 
-    # Convert quarter to datetime
-    df_absorption['quarter'] = pd.to_datetime(df_absorption['quarter'])
-    df_absorption['total_absorption'] = pd.to_numeric(df_absorption['total_absorption'], errors='coerce')
+    # Parse 'quarter' column like "2018 Q1" robustly
+    def parse_quarter(qstr):
+        import re
+        m = re.match(r'(\d{4})\s*[Qq](\d)', str(qstr))
+        if m:
+            year = int(m.group(1))
+            q = int(m.group(2))
+            # pandas period to timestamp defaults to START of quarter
+            return pd.Timestamp(f"{year}-{(q-1)*3+1:02d}-01")
+        else:
+            raise ValueError(f"Unknown quarter format: {qstr}")
+
+    df_absorption['quarter'] = df_absorption['quarter'].apply(parse_quarter)
+    df_absorption['total_net_absorption'] = pd.to_numeric(df_absorption['total_net_absorption'], errors='coerce')
 
     # Aggregate by quarter
-    absorption_quarterly = df_absorption.groupby('quarter')['total_absorption'].sum().reset_index()
+    absorption_quarterly = df_absorption.groupby('quarter')['total_net_absorption'].sum().reset_index()
     absorption_quarterly.columns = ['quarter', 'absorption_sf']
 
     print(f"    - Quarterly data points: {len(absorption_quarterly)}")
@@ -620,8 +656,130 @@ if absorption_quarterly is not None:
         margin=dict(t=100, b=100, l=80, r=50)
     )
 
-    fig5.write_html("charts/requirements_vs_absorption_office.html")
-    print("    ✓ Saved charts/requirements_vs_absorption_office.html")
+    fig5.write_html("charts/office/requirements_vs_absorption_office.html")
+    print("    ✓ Saved charts/office/requirements_vs_absorption_office.html")
+
+# ============================================================================
+# CHART 6: Rolling 12-Month Requirements with YoY Comparison
+# ============================================================================
+print("\n6. Generating Rolling 12-Month Requirements YoY chart...")
+
+# Calculate rolling 12-month metrics
+# Set index to date for rolling calculations
+monthly_data_indexed = monthly_data.set_index('date').sort_index()
+
+# Calculate rolling 12-month sum for average SF
+# For average SF, we want the rolling mean (not sum)
+rolling_data = pd.DataFrame()
+rolling_data['current_avg_sf'] = monthly_data_indexed['sf_avg_mean'].rolling(window=12, min_periods=1).mean()
+rolling_data['current_count'] = monthly_data_indexed['count'].rolling(window=12, min_periods=1).sum()
+
+# Shift data by 12 months to get prior year
+rolling_data['prior_avg_sf'] = rolling_data['current_avg_sf'].shift(12)
+rolling_data['prior_count'] = rolling_data['current_count'].shift(12)
+
+# Reset index for plotting
+rolling_data = rolling_data.reset_index()
+
+# Only show data where we have at least 12 months of history
+rolling_data = rolling_data[rolling_data['date'] >= '2019-01-31'].copy()
+
+print(f"  Rolling 12-month data: {len(rolling_data)} points")
+print(f"  Date range: {rolling_data['date'].min()} to {rolling_data['date'].max()}")
+
+# Create dual-axis chart
+fig6 = go.Figure()
+
+# Current year - Average SF (line, left axis)
+fig6.add_trace(go.Scatter(
+    x=rolling_data['date'],
+    y=rolling_data['current_avg_sf'],
+    mode='lines',
+    name='Current Year Avg SF (12M Rolling)',
+    line=dict(color=AQUILA_COLORS[0], width=2.5),  # Navy
+    yaxis='y'
+))
+
+# Prior year - Average SF (line, left axis)
+fig6.add_trace(go.Scatter(
+    x=rolling_data['date'],
+    y=rolling_data['prior_avg_sf'],
+    mode='lines',
+    name='Prior Year Avg SF (12M Rolling)',
+    line=dict(color=AQUILA_COLORS[1], width=2.5, dash='dash'),  # Gold, dashed
+    yaxis='y'
+))
+
+# Current year - Count (bar, right axis)
+fig6.add_trace(go.Bar(
+    x=rolling_data['date'],
+    y=rolling_data['current_count'],
+    name='Current Year Count (12M Rolling)',
+    marker_color=AQUILA_COLORS[0],  # Navy
+    opacity=0.3,
+    yaxis='y2'
+))
+
+# Prior year - Count (bar, right axis)
+fig6.add_trace(go.Bar(
+    x=rolling_data['date'],
+    y=rolling_data['prior_count'],
+    name='Prior Year Count (12M Rolling)',
+    marker_color=AQUILA_COLORS[1],  # Gold
+    opacity=0.3,
+    yaxis='y2'
+))
+
+fig6.update_layout(
+    title={
+        'text': 'Rolling 12-Month Requirements: Year-over-Year Comparison',
+        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
+    },
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
+    xaxis=dict(
+        title='Date',
+        gridcolor='#e9e9ea',
+        showgrid=True,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=2
+    ),
+    yaxis=dict(
+        title='Average Square Feet (12M Rolling Mean)',
+        gridcolor='#e9e9ea',
+        showgrid=True,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=2,
+        tickformat=','
+    ),
+    yaxis2=dict(
+        title='Count of Requirements (12M Rolling Sum)',
+        overlaying='y',
+        side='right',
+        showgrid=False,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=2
+    ),
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-0.3,
+        xanchor="center",
+        x=0.5,
+        font=dict(size=12)
+    ),
+    hovermode='x unified',
+    height=650,
+    margin=dict(t=100, b=120, l=80, r=80),
+    barmode='overlay'
+)
+
+fig6.write_html('charts/office/requirements_yoy_rolling_12m.html')
+print('  ✓ Saved charts/office/requirements_yoy_rolling_12m.html')
 
 # ============================================================================
 # SUMMARY
@@ -637,12 +795,13 @@ print(f"  - Tab 1 (Through 2024) records: {len(df_std_2024)}")
 print(f"  - Total requirements SF (avg): {df_combined['sf_avg'].sum():,.0f}")
 
 print(f"\nCharts generated:")
-print(f"  ✓ charts/requirements_sf_total.html")
-print(f"  ✓ charts/requirements_sf_avg.html")
-print(f"  ✓ charts/requirements_sf_avg_by_industry.html")
-print(f"  ✓ charts/requirements_by_size_range.html")
+print(f"  ✓ charts/office/requirements_sf_total.html")
+print(f"  ✓ charts/office/requirements_sf_avg.html")
+print(f"  ✓ charts/office/requirements_sf_avg_by_industry.html")
+print(f"  ✓ charts/office/requirements_by_size_range.html")
 if absorption_quarterly is not None:
-    print(f"  ✓ charts/requirements_vs_absorption_office.html")
+    print(f"  ✓ charts/office/requirements_vs_absorption_office.html")
+print(f"  ✓ charts/office/requirements_yoy_rolling_12m.html")
 
 print("\n" + "="*80)
 print("✓ Complete!")
