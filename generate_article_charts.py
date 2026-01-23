@@ -79,8 +79,8 @@ try:
             text=f"Peak: {peak_rate:.1%}",
             showarrow=True,
             arrowhead=2,
-            arrowcolor="#00325a",
-            font=dict(size=12, color="#00325a", family=AQUILA_FONT)
+            arrowcolor="#172344",
+            font=dict(size=12, color="#172344", family=AQUILA_FONT)
         )
 
         fig.write_html('charts/office_vacancy_trend_2019_2025.html')
@@ -133,7 +133,7 @@ try:
             height=max(400, len(df_sub_avg) * 30),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            font=dict(family=AQUILA_FONT, color='#00325a'),
+            font=dict(family=AQUILA_FONT, color='#172344'),
             xaxis=dict(
                 title='Vacancy Rate',
                 showgrid=True,
@@ -223,7 +223,7 @@ try:
             height=max(500, len(df_ind_sub) * 30),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            font=dict(family=AQUILA_FONT, color='#00325a'),
+            font=dict(family=AQUILA_FONT, color='#172344'),
             xaxis=dict(
                 title='Vacancy Rate',
                 showgrid=True,
@@ -349,7 +349,7 @@ try:
         height=500,
         plot_bgcolor='white',
         paper_bgcolor='white',
-        font=dict(family=AQUILA_FONT, color='#00325a'),
+        font=dict(family=AQUILA_FONT, color='#172344'),
         xaxis=dict(
             title='Rent ($/SF)',
             showgrid=True,
