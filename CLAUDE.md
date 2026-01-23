@@ -62,17 +62,22 @@
 ├── .git/                                    # Git version control
 ├── __pycache__/                             # Python bytecode cache
 ├── charts/                                  # OUTPUT: Generated HTML visualizations (31MB)
-│   ├── ams_managed_properties_kpi.html      # AMS: Property management portfolio KPIs
-│   ├── austin_housing_starts.html           # FRED: Austin housing starts
-│   ├── requirements_by_size_range.html      # Tenant demand by size category
-│   ├── requirements_sf_avg.html             # Average SF requirements (dual-axis)
-│   ├── requirements_sf_avg_by_industry.html # Tenant demand by industry (donut)
-│   ├── requirements_sf_total.html           # Total SF requirements (line chart)
-│   ├── vacancy_rate_industrial.html         # Industrial vacancy rates by submarket
-│   ├── office_occupancy_by_size.html        # Office occupancy by building size
-│   ├── office_rent_by_size.html             # Office rent by building size
-│   ├── industrial_occupancy_by_size.html    # Industrial occupancy by building size
-│   └── industrial_rent_by_size.html         # Industrial rent by building size
+│   ├── office/                              # Office market charts
+│   │   ├── requirements_sf_total.html       # Total SF requirements (combined historical)
+│   │   ├── requirements_sf_avg.html         # Average SF requirements (dual-axis)
+│   │   ├── requirements_sf_avg_by_industry.html # Tenant demand by industry (donut)
+│   │   ├── requirements_by_size_range.html  # Tenant demand by size category
+│   │   ├── requirements_vs_absorption_office.html # Requirements vs absorption comparison
+│   │   ├── office_occupancy_by_size.html    # Office occupancy by building size
+│   │   └── office_rent_by_size.html         # Office rent by building size
+│   ├── industrial/                          # Industrial market charts
+│   │   ├── vacancy_rate_industrial.html     # Industrial vacancy rates by submarket
+│   │   ├── industrial_occupancy_by_size.html # Industrial occupancy by building size
+│   │   └── industrial_rent_by_size.html     # Industrial rent by building size
+│   ├── economic-indicators/                 # Economic indicator charts
+│   │   └── austin_housing_starts.html       # FRED: Austin housing starts
+│   └── property-management/                 # Property management charts
+│       └── ams_managed_properties_kpi.html  # AMS property management KPIs
 ├── data/                                    # INPUT: Data files
 │   └── AMS- Property Split List.xlsx        # AMS property management portfolio
 ├── .gitignore                               # Excludes: aquila_graph.env, *.json
@@ -81,8 +86,10 @@
 ├── supabase-graphs.ipynb                    # Supabase → example graphing notebook
 ├── api-graphs.ipynb                         # FRED API → economic indicator charts
 ├── googlesheets.ipynb                       # Google Sheets → tenant demand charts
+├── googlesheets_combined.ipynb              # Google Sheets (combined tabs) → requirements + absorption
 ├── building-performance-by-size.ipynb       # Supabase → building performance by size charts
 ├── create_ams_kpi_chart.py                  # Script: Generate AMS property management KPIs
+├── update_combined_requirements_charts.py   # Script: Generate combined requirements + absorption charts
 ├── aquila_graph.env                         # CREDENTIALS (FRED API, Google, Supabase)
 └── aquila_graphing_tools.py                 # Shared utilities (styling, git automation)
 ```
@@ -97,14 +104,19 @@
 2. `supabase-graphs.ipynb` - Supabase → Example notebook for querying and graphing
 3. `api-graphs.ipynb` (2,020 lines) - FRED API → Economic indicator charts
 4. `googlesheets.ipynb` (2,463 lines) - Google Sheets → 4 tenant demand charts
-5. `building-performance-by-size.ipynb` - Supabase → 4 building performance by size charts (office and industrial)
+5. `googlesheets_combined.ipynb` - Google Sheets (multi-tab) + Supabase → 5 requirements charts including requirements vs absorption
+6. `building-performance-by-size.ipynb` - Supabase → 4 building performance by size charts (office and industrial)
 
 **Configuration:**
 - `aquila_graph.env` - API keys and OAuth2 credentials (SENSITIVE)
 - `.gitignore` - Should exclude credentials (verification recommended)
 
 **Generated Output:**
-- `charts/*.html` - Self-contained Plotly charts (committed to repo)
+- `charts/office/*.html` - Office market charts
+- `charts/industrial/*.html` - Industrial market charts
+- `charts/economic-indicators/*.html` - Economic indicator charts
+- `charts/property-management/*.html` - Property management KPI charts
+- All charts are self-contained HTML files (committed to repo)
 
 ---
 
@@ -514,6 +526,191 @@ df['SIZE_RANGE'] = pd.cut(
   - Bar length: Total cumulative SF requested
   - Inside labels: Count of requirements
 - **Purpose:** Size distribution analysis
+
+---
+
+### 4.5. googlesheets_combined.ipynb (Combined Historical Requirements Analysis)
+
+**Purpose:** Combines tenant requirement data from two Google Sheets tabs (current 2025+ data and historical through-2024 data) to create comprehensive analytics charts with full historical context. Also generates a new requirements vs absorption comparison chart.
+
+**Key Improvements Over Standard googlesheets.ipynb:**
+- Combines data from multiple worksheet tabs for complete historical view
+- Filters historical data to office-only requirements
+- Uses `get_all_values()` for better performance with large sheets (6,000+ rows)
+- Adds requirements vs absorption comparison using Supabase market data
+- Enhanced chart styling with date ranges and better legend labels
+
+**Data Sources:**
+
+**Spreadsheet ID:** `1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec`
+
+**Tab 0 (Index 0):** "2025 +" - Current/recent tenant requirements (739 rows)
+**Tab 1 (Index 2):** "DITM & Crab Trap MASTER Report (Through 2024)" - Historical data (6,971 rows)
+
+**IMPORTANT:** The historical tab is at worksheet index 2, not 1! Use `sheet.get_worksheet(2)` to access it.
+
+**Connection Pattern:**
+```python
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+credentials = ServiceAccountCredentials.from_json_keyfile_name(
+    'aquilacommercialsheets-923494a59a4b.json', scope
+)
+client = gspread.authorize(credentials)
+spreadsheet_id = '1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec'
+sheet = client.open_by_key(spreadsheet_id)
+
+# Tab 0: Current data
+tab0 = sheet.get_worksheet(0)
+df_2025_plus = pd.DataFrame(tab0.get_all_records())
+
+# Tab 1: Historical data (use get_all_values for performance)
+tab1 = sheet.get_worksheet(2)  # Index 2, not 1!
+rows = tab1.get_all_values()
+df_through_2024 = pd.DataFrame(rows[1:], columns=rows[0])
+
+# Filter to office-only
+if "USE" in df_through_2024.columns:
+    df_through_2024 = df_through_2024[
+        df_through_2024["USE"].str.lower().str.contains("office", na=False)
+    ]
+```
+
+**Data Processing:**
+
+**1. Column Standardization:**
+Both tabs have slightly different column names, so data is standardized into a common format:
+
+```python
+def standardize_tab0(df):
+    """Standardize Tab 0 (2025+) data"""
+    df_std = pd.DataFrame()
+    df_std['date'] = pd.to_datetime(df['DATE OF REQUIREMENT'], errors='coerce')
+    df_std['sf_low'] = pd.to_numeric(df['REQUIRED SF (LOW)'], errors='coerce')
+    df_std['sf_high'] = pd.to_numeric(df['REQUIRED SF (HIGH)'], errors='coerce')
+    df_std['industry'] = df.get('INDUSTRY', '')
+    df_std['market'] = df.get('MARKET', '')
+    df_std['source_tab'] = '2025+'
+    return df_std
+
+def standardize_tab1(df):
+    """Standardize Tab 1 (Through 2024) data"""
+    df_std = pd.DataFrame()
+    # Find SF columns dynamically
+    sf_low_col = next((col for col in df.columns
+                      if 'SF' in col.upper() and 'LOW' in col.upper()), None)
+    if sf_low_col:
+        df_std['sf_low'] = pd.to_numeric(
+            df[sf_low_col].astype(str).str.replace(',', ''),
+            errors='coerce'
+        )
+    # Similar processing for other columns...
+    df_std['source_tab'] = 'Through 2024'
+    return df_std
+```
+
+**2. Data Combination:**
+```python
+df_combined = pd.concat([df_std_2024, df_std_2025], ignore_index=True)
+df_combined['sf_avg'] = (df_combined['sf_low'] + df_combined['sf_high']) / 2
+df_combined = df_combined[df_combined['date'] >= '2018-01-01']  # Filter to 2018+
+```
+
+**3. Enhanced Chart Styling:**
+
+**Chart 1 - Better Legend Labels:**
+```python
+fig1 = px.line(...)
+# Manually update legend names for clarity
+for i, trace_name in enumerate(['Low Requirement (sqft)', 'High Requirement (sqft)']):
+    fig1.data[i].name = trace_name
+fig1.update_layout(height=550)  # Increased height
+```
+
+**Chart 3 - Date Range in Title:**
+```python
+min_date = df_combined['date'].min()
+max_date = df_combined['date'].max()
+date_range_note = f"(Data from {min_date:%b %Y} to {max_date:%b %Y})"
+
+fig3.update_layout(
+    title={'text': f'Tenant Demand by Industry {date_range_note}'},
+    width=1000  # Increased width
+)
+```
+
+**4. Requirements vs Absorption Analysis:**
+
+Fetches office absorption data from Supabase and compares with requirements:
+
+```python
+from aquila_graphing_tools import initialize_supabase_connection
+
+supabase = initialize_supabase_connection()
+
+# Query absorption data
+response = supabase.table('market_tables_office') \
+    .select('quarter, total_net_absorption') \
+    .gte('quarter', '2018 Q1') \
+    .execute()
+
+# Parse quarter strings like "2018 Q1"
+def parse_quarter(qstr):
+    import re
+    m = re.match(r'(\d{4})\s*[Qq](\d)', str(qstr))
+    if m:
+        year = int(m.group(1))
+        q = int(m.group(2))
+        return pd.Timestamp(f"{year}-{(q-1)*3+1:02d}-01")
+    return pd.NaT
+
+df_absorption['quarter'] = df_absorption['quarter'].apply(parse_quarter)
+```
+
+**Key Supabase Notes:**
+- Use `total_net_absorption` field (not `total_absorption`)
+- Quarter strings are formatted as "2018 Q1" (not dates)
+- Use `.gte('quarter', '2018 Q1')` for filtering (not date format)
+- Robust quarter parsing is essential for string-to-datetime conversion
+
+**Output Charts (saved to `charts/office/`):**
+
+**1. requirements_sf_total.html**
+- Combined historical data from 2018+
+- Improved legend labels
+- Height: 550px
+
+**2. requirements_sf_avg.html**
+- Dual-axis with mean, median, and count
+- Monthly aggregation
+
+**3. requirements_sf_avg_by_industry.html**
+- Top 7 industries + Other
+- Date range note in title
+- Width: 1000px
+
+**4. requirements_by_size_range.html**
+- Horizontal bars by size category
+- Inside labels with count
+
+**5. requirements_vs_absorption_office.html** *(NEW)*
+- Quarterly comparison chart
+- Requirements (avg SF) vs Absorption (total SF)
+- Time period: 2018+
+- Uses Aquila colors (Gold for requirements, Navy for absorption)
+
+**Performance Tips:**
+- `get_all_values()` is faster than `get_all_records()` for large sheets
+- Filter data early to reduce memory usage
+- Use `observed=False` in groupby to suppress FutureWarnings
+
+**Automation Script:**
+A standalone Python script (`update_combined_requirements_charts.py`) mirrors this notebook for automated updates:
+
+```bash
+python3 update_combined_requirements_charts.py
+```
 
 ---
 
