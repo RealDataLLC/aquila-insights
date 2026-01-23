@@ -222,16 +222,33 @@ fig.write_html('charts/vacancy_rate_industrial.html')
 
 #### Brand Constants
 
-**Colors:**
+**Colors (2026 Updated Palette):**
+
+For maps, charts, and graphs, use the primary (AQUILA Navy) and secondary (Glass Blue) colors as the foundation. For larger data sets, add tertiary colors (Copper, Brass, Greenspace, Concrete) to maintain clarity and balance. Extended colors may be added sparingly for very large datasets. Avoid unapproved colors and low-contrast combinations that reduce readability.
+
 ```python
+# Aquila Brand Colors (2026 Updated Palette)
 AQUILA_COLORS = [
-    "#00325a",  # Deep navy blue (primary brand color)
-    "#e6b40a",  # Gold (accent)
-    "#8c8c8c",  # Gray
-    "#18a0CF",  # Light blue
-    "#D05325"   # Orange-red
+    "#172344",  # AQUILA Navy (primary)
+    "#C2DAF1",  # Glass Blue (secondary)
+    "#AB6D3A",  # Copper (tertiary)
+    "#DEB76D",  # Brass (tertiary)
+    "#556B30",  # Greenspace (tertiary)
+    "#AAA9A8",  # Concrete (tertiary)
+    "#BF4040",  # Signal (extended)
+    "#D6B69C",  # Pennybacker (extended)
+    "#FFDB99",  # Texas Sun (extended)
+    "#B2C48C",  # Zilker (extended)
+    "#E8E8E8",  # Mopac Gray (extended)
+    "#F2ACAC",  # SoCo (extended)
 ]
 ```
+
+**Color Usage Guidelines:**
+- **Primary (AQUILA Navy #172344):** Main brand color for chart elements, text, and single-series visualizations
+- **Secondary (Glass Blue #C2DAF1):** Secondary data series, accents, highlights
+- **Tertiary (4 colors):** Foundation for multi-series charts with 3-6 data series
+- **Extended (6 colors):** Use sparingly for charts with 7+ data series to maintain readability
 
 **Font:**
 ```python
@@ -244,7 +261,7 @@ AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"
 - Left and bottom borders only (minimalist design)
 - Horizontal legend below chart
 - 90-degree rotated x-axis labels
-- Navy blue text (`#00325a`)
+- AQUILA Navy text (`#172344`)
 
 ---
 
@@ -1448,7 +1465,7 @@ fig = px.bar(df, x='category', y='value', color_discrete_sequence=AQUILA_COLORS)
 fig.update_layout(
     plot_bgcolor='white',
     paper_bgcolor='white',
-    font=dict(family=AQUILA_FONT, color='#00325a')
+    font=dict(family=AQUILA_FONT, color='#172344')  # AQUILA Navy
 )
 ```
 
@@ -2079,8 +2096,12 @@ pip install X
 - **Styled line chart:** `aquila_styled_line_chart(df, x, y, color, facet_row, title, height)`
 - **Git automation:** `commit_and_push_all(commit_message)`
 
-### Brand Assets
-- **Colors:** `AQUILA_COLORS = ["#00325a", "#e6b40a", "#8c8c8c", "#18a0CF", "#D05325"]`
+### Brand Assets (2026 Updated)
+- **Colors:** `AQUILA_COLORS = ["#172344", "#C2DAF1", "#AB6D3A", "#DEB76D", "#556B30", "#AAA9A8", "#BF4040", "#D6B69C", "#FFDB99", "#B2C48C", "#E8E8E8", "#F2ACAC"]`
+  - Primary: AQUILA Navy (#172344)
+  - Secondary: Glass Blue (#C2DAF1)
+  - Tertiary: Copper, Brass, Greenspace, Concrete
+  - Extended: Signal, Pennybacker, Texas Sun, Zilker, Mopac Gray, SoCo
 - **Font:** `AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"`
 
 ### Data Sources
@@ -2293,12 +2314,22 @@ ERROR: 400 Bad Request
 ---
 
 **Last Updated:** 2026-01-23
-**Document Version:** 1.1.0
+**Document Version:** 1.2.0
 **Repository Status:** Active development on feature branches, merges to main
 
 ---
 
 ## Changelog
+
+### Version 1.2.0 (2026-01-23)
+- **BREAKING CHANGE:** Updated Aquila brand color palette (2026 rebrand)
+  - New primary color: AQUILA Navy (#172344, previously #00325a)
+  - New secondary color: Glass Blue (#C2DAF1)
+  - Added tertiary colors: Copper (#AB6D3A), Brass (#DEB76D), Greenspace (#556B30), Concrete (#AAA9A8)
+  - Added extended colors for large datasets: Signal (#BF4040), Pennybacker (#D6B69C), Texas Sun (#FFDB99), Zilker (#B2C48C), Mopac Gray (#E8E8E8), SoCo (#F2ACAC)
+- Updated `aquila_graphing_tools.py` with new 12-color palette
+- Updated documentation with color usage guidelines
+- All existing charts will need to be regenerated to reflect new brand colors
 
 ### Version 1.1.0 (2026-01-23)
 - Added `fred-economic-indicators.ipynb` - new notebook for 7 economic indicator charts

@@ -80,12 +80,12 @@ fig.add_trace(
 fig.update_layout(
     title={
         'text': 'AMS Property Management KPIs',
-        'font': {'size': 24, 'family': AQUILA_FONT, 'color': '#00325a'}
+        'font': {'size': 24, 'family': AQUILA_FONT, 'color': '#172344'}
     },
     height=600,
     plot_bgcolor='white',
     paper_bgcolor='white',
-    font=dict(family=AQUILA_FONT, color='#00325a', size=12),
+    font=dict(family=AQUILA_FONT, color='#172344', size=12),
     margin=dict(l=150, r=50, t=100, b=80)
 )
 
@@ -94,7 +94,7 @@ fig.update_xaxes(
     showgrid=True,
     gridcolor='#e9e9ea',
     showline=True,
-    linecolor='#00325a',
+    linecolor='#172344',
     linewidth=1
 )
 
@@ -102,12 +102,12 @@ fig.update_xaxes(
 fig.update_yaxes(
     showgrid=False,
     showline=True,
-    linecolor='#00325a',
+    linecolor='#172344',
     linewidth=1
 )
 
 # Update subplot titles styling
-fig.update_annotations(font=dict(size=14, family=AQUILA_FONT, color='#00325a'))
+fig.update_annotations(font=dict(size=14, family=AQUILA_FONT, color='#172344'))
 
 # Save to charts directory
 output_file = 'charts/property-management/ams_managed_properties_kpi.html'

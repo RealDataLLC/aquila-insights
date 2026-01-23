@@ -17,23 +17,18 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 import sys
+from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 
 # Load environment
 load_dotenv('aquila_graph.env')
 
-# Colors
+# Additional styling colors
 COLORS = {
     'background': '#FFFFFF',
-    'text': '#2C3E50',
-    'blue': '#00008B',
-    'orange': '#DAA520',
+    'text': '#172344',  # AQUILA Navy
+    'gridcolor': '#e9e9ea',
     'light_gray': '#F8F9F9'
 }
-
-AQUILA_COLORS = [
-    "#002A5C", "#005BAB", "#69A3D2", "#F2B134", "#FFD166", "#EDC87A",
-    "#184D82", "#33658A", "#F6D266", "#114477", "#E7A932", "#DA993A"
-]
 
 def get_google_credentials():
     """Build Google credentials from environment variables"""

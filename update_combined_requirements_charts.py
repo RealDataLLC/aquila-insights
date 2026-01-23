@@ -248,9 +248,8 @@ os.makedirs("charts", exist_ok=True)
 # Chart styling constants
 COLORS = {
     'background': '#FFFFFF',
-    'text': '#2C3E50',
-    'blue': '#00008B',
-    'orange': '#DAA520',
+    'text': '#172344',  # AQUILA Navy
+    'gridcolor': '#e9e9ea',
     'light_gray': '#F8F9F9'
 }
 
