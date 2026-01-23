@@ -5,7 +5,23 @@ import subprocess
 import plotly.express as px
 from datetime import datetime
 
-AQUILA_COLORS = ["#00325a", "#e6b40a", "#8c8c8c", "#18a0CF", "#D05325"]
+# Aquila Brand Colors (2026 Updated Palette)
+# For charts: Use Primary + Secondary as foundation, add Tertiary for larger datasets,
+# and Extended colors sparingly for very large datasets to maintain clarity.
+AQUILA_COLORS = [
+    "#172344",  # AQUILA Navy (primary)
+    "#C2DAF1",  # Glass Blue (secondary)
+    "#AB6D3A",  # Copper (tertiary)
+    "#DEB76D",  # Brass (tertiary)
+    "#556B30",  # Greenspace (tertiary)
+    "#AAA9A8",  # Concrete (tertiary)
+    "#BF4040",  # Signal (extended)
+    "#D6B69C",  # Pennybacker (extended)
+    "#FFDB99",  # Texas Sun (extended)
+    "#B2C48C",  # Zilker (extended)
+    "#E8E8E8",  # Mopac Gray (extended)
+    "#F2ACAC",  # SoCo (extended)
+]
 AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"
 
 def initialize_supabase_connection():
@@ -116,7 +132,7 @@ def aquila_styled_line_chart(
         height=height,
         plot_bgcolor="white",
         paper_bgcolor="white",
-        font=dict(family=AQUILA_FONT, color="#00325a"),
+        font=dict(family=AQUILA_FONT, color="#172344"),
         title_font_family=AQUILA_FONT,
         legend=dict(
             title_font_family=AQUILA_FONT,
