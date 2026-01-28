@@ -62,7 +62,7 @@
 ├── .git/                                    # Git version control
 ├── __pycache__/                             # Python bytecode cache
 ├── charts/                                  # OUTPUT: Generated HTML visualizations (organized by category)
-│   ├── property-management/                 # Property management charts
+│   ├── property-management/                 # Aquila Operating KPIs
 │   │   └── ams_managed_properties_kpi.html  # AMS: Property management portfolio KPIs
 │   ├── office/                              # Office market charts
 │   │   ├── requirements_sf_total.html       # Total SF requirements (combined historical)
@@ -71,6 +71,7 @@
 │   │   ├── requirements_by_size_range.html  # Tenant demand by size category
 │   │   ├── requirements_vs_absorption_office.html # Requirements vs absorption comparison
 │   │   ├── requirements_yoy_rolling_12m.html # Rolling 12-month YoY comparison
+│   │   ├── transaction_sf_by_quarter.html   # Transaction volume by quarter and platform (stacked bar)
 │   │   ├── office_asking_vs_effective_rent_by_submarket.html # Rent comparison by submarket
 │   │   ├── office_occupancy_by_size.html    # Office occupancy by building size
 │   │   └── office_rent_by_size.html         # Office rent by building size
@@ -99,6 +100,7 @@
 ├── googlesheets_combined.ipynb              # Google Sheets (combined tabs) → requirements + absorption
 ├── building-performance-by-size.ipynb       # Supabase → building performance by size charts
 ├── create_ams_kpi_chart.py                  # Script: Generate AMS property management KPIs
+├── create_transaction_form_chart.py         # Script: Generate transaction SF by quarter chart
 ├── update_combined_requirements_charts.py   # Script: Generate combined requirements + absorption charts
 ├── update_all_charts.py                     # Master script: Run all chart updates
 ├── update_google_sheets_charts.py           # Script: Update 4 tenant demand charts
@@ -1269,6 +1271,87 @@ python3 create_ams_kpi_chart.py
 
 ---
 
+### 9. create_transaction_form_chart.py (Transaction Volume by Platform)
+
+**Purpose:** Generate a stacked bar chart showing quarterly transaction volume (total SF) broken down by platform/service type from the Transaction Request Form Excel data.
+
+**Data Source:**
+
+**File Location:** `data/TransactionRequestForm_Data_16668082_1769632373.xlsx`
+
+**Key Columns:**
+- `When was the lease executed?` - Date used to determine quarter
+- `Total SF / Total Acreage if Land ` - Square footage (requires extensive cleaning)
+- `Platform` - Service type (Asset Services, Corporate Services, Industrial Services, etc.)
+- `Is this Land?` - Used to filter out land-only transactions
+
+**Data Cleaning:**
+
+The script includes a robust `clean_sf_value()` function that handles various input formats:
+
+| Input Format | Cleaning Applied |
+|-------------|-----------------|
+| `1,135 SF` | Remove "SF" suffix and comma |
+| `5,333` | Remove comma |
+| `2.87 acres` | Convert to SF (× 43,560) |
+| `13,443 SF (expansion) & 29,621 SF (extension) = 43,064 SF` | Extract total after "=" |
+| `38.669 ac or 1,684,410sf` | Prefer SF value over acres |
+| `Suite 238 (894 SF) & Suite 234 (1,750 SF)` | Sum suite values |
+| `for a total of 5,900 SF` | Extract total |
+| `United States`, `N/A`, `-` | Set to null |
+
+**Filters Applied:**
+- Excludes rows where "Is this Land?" is "Yes" or contains "Land"
+- Only includes rows with both valid date and SF values
+
+**Chart Generation:**
+
+```python
+from create_transaction_form_chart import main
+
+# Run to generate chart
+main()
+```
+
+**Output Chart:**
+
+**File:** `charts/office/transaction_sf_by_quarter.html`
+
+**Chart Type:** Stacked bar chart
+
+**Features:**
+- X-axis: Quarters (e.g., "2024 Q4", "2025 Q1")
+- Y-axis: Total square footage
+- Stacked segments: Each platform shown as different colored segment
+- Platforms include: Asset Services (Office), Industrial Services - Asset, Corporate Services, Retail Services, etc.
+- Aquila brand styling applied
+
+**Script Usage:**
+```bash
+python3 create_transaction_form_chart.py
+
+# Output:
+# Loaded 896 rows
+# Filtered out 40 land transactions, 856 rows remaining
+# Cleaning Total SF column...
+#   Successfully cleaned: 815
+# Chart saved to: charts/office/transaction_sf_by_quarter.html
+```
+
+**Requirements:**
+- `pandas` - Data manipulation
+- `openpyxl` - Excel file reading
+- `plotly` - Interactive chart generation
+- `aquila_graphing_tools` - Aquila brand styling
+
+**Use Case:** This chart provides visibility into Aquila's transaction activity, useful for:
+- Tracking quarterly transaction volume trends
+- Understanding platform/service type mix
+- Identifying seasonal patterns
+- Executive reporting and dashboards
+
+---
+
 ## Data Models
 
 ### PostgreSQL Schema (Partial)
@@ -2108,13 +2191,13 @@ pip install X
 - **Supabase:** PostgreSQL database hosted on Supabase (market tables: office, industrial, retail)
 - **Google Sheets:** Tenant requirements (ID: 1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec)
 - **FRED API:** Economic indicators (https://api.stlouisfed.org/fred/series/observations)
-- **Excel Files:** AMS property management data (data/AMS- Property Split List.xlsx)
+- **Excel Files:** AMS property management data (data/AMS- Property Split List.xlsx), Transaction Request Form data (data/TransactionRequestForm_Data_*.xlsx)
 
 ### Public URLs
 - **Repository:** https://github.com/realdatallc/aquila-insights
 - **GitHub Pages:** https://realdatallc.github.io/aquila-insights/
 - **Chart pattern:** https://realdatallc.github.io/aquila-insights/charts/{category}/{filename}.html
-- **Chart categories:** property-management, office, industrial, economic-indicators
+- **Chart categories:** property-management (Aquila Operating KPIs), office, industrial, economic-indicators
 
 ### Automation Scripts
 - **Update all charts:** `python3 update_all_charts.py` (runs all 5 data sources below)
@@ -2124,6 +2207,7 @@ pip install X
 - **Update FRED economic indicators:** `python3 update_fred_economic_indicators.py` (7 economic indicator charts)
 - **Update building performance charts:** `python3 update_building_performance_charts.py` (4 charts)
 - **Generate AMS KPIs:** `python3 create_ams_kpi_chart.py` (1 property management chart)
+- **Generate Transaction Chart:** `python3 create_transaction_form_chart.py` (1 transaction volume chart)
 - **Auto-update README dates:** Add `--update-readme` flag to any script
 
 ---
