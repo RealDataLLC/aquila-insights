@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Generate quarterly transaction SF chart from Transaction Request Form data.
+Generate quarterly transaction charts from Transaction Request Form data.
 
 Reads Excel data, cleans the 'Total SF / Total Acreage if Land' column,
-aggregates by quarter based on 'When was the lease executed?', and creates
-a line chart showing total SF per quarter.
+aggregates by quarter based on 'Time' (form submission date), and creates
+two stacked bar charts:
+1. Total SF by quarter and platform
+2. Transaction count by quarter and platform
 """
 
 import pandas as pd
@@ -16,7 +18,8 @@ from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 # Constants
 SQFT_PER_ACRE = 43560
 INPUT_FILE = 'data/TransactionRequestForm_Data_16668082_1769632373.xlsx'
-OUTPUT_FILE = 'charts/office/transaction_sf_by_quarter.html'
+OUTPUT_FILE_SF = 'charts/office/transaction_sf_by_quarter.html'
+OUTPUT_FILE_COUNT = 'charts/office/transaction_count_by_quarter.html'
 
 
 def clean_sf_value(val):
@@ -229,7 +232,7 @@ def main():
     # Clean the SF column
     print("\nCleaning Total SF column...")
     sf_col = 'Total SF / Total Acreage if Land '
-    date_col = 'When was the lease executed?'
+    date_col = 'Time'  # Use form submission time for quarter
 
     df['cleaned_sf'] = df[sf_col].apply(clean_sf_value)
 
@@ -253,46 +256,61 @@ def main():
     print("\nExtracting quarters from dates...")
     df['quarter'] = pd.to_datetime(df[date_col], errors='coerce').apply(get_quarter)
 
-    # Filter to rows with both valid quarter and SF
+    # Filter to rows with valid quarter (for count chart, we don't need SF)
     platform_col = 'Platform'
-    df_valid = df[(df['quarter'].notna()) & (df['cleaned_sf'].notna())].copy()
-    print(f"Rows with valid quarter and SF: {len(df_valid)}")
+    df_with_quarter = df[df['quarter'].notna()].copy()
+    print(f"Rows with valid quarter: {len(df_with_quarter)}")
 
-    # Aggregate by quarter and platform
-    print("\nAggregating by quarter and platform...")
-    quarterly = df_valid.groupby(['quarter', platform_col]).agg({
+    # For SF chart, also need valid SF
+    df_valid_sf = df_with_quarter[df_with_quarter['cleaned_sf'].notna()].copy()
+    print(f"Rows with valid quarter and SF: {len(df_valid_sf)}")
+
+    # Aggregate by quarter and platform for SF sum
+    print("\nAggregating SF by quarter and platform...")
+    quarterly_sf = df_valid_sf.groupby(['quarter', platform_col]).agg({
         'cleaned_sf': 'sum'
     }).reset_index()
-    quarterly.columns = ['Quarter', 'Platform', 'Total SF']
+    quarterly_sf.columns = ['Quarter', 'Platform', 'Total SF']
 
-    # Sort by quarter
-    quarterly['sort_key'] = quarterly['Quarter'].apply(
+    # Aggregate by quarter and platform for count
+    print("Aggregating count by quarter and platform...")
+    quarterly_count = df_with_quarter.groupby(['quarter', platform_col]).size().reset_index(name='Count')
+    quarterly_count.columns = ['Quarter', 'Platform', 'Count']
+
+    # Sort by quarter for SF
+    quarterly_sf['sort_key'] = quarterly_sf['Quarter'].apply(
         lambda x: (int(x.split()[0]), int(x.split()[1][1])) if pd.notna(x) else (0, 0)
     )
-    quarterly = quarterly.sort_values('sort_key').drop('sort_key', axis=1)
+    quarterly_sf = quarterly_sf.sort_values('sort_key').drop('sort_key', axis=1)
 
-    # Get unique quarters in order for x-axis
-    quarters_ordered = quarterly['Quarter'].unique().tolist()
+    # Sort by quarter for count
+    quarterly_count['sort_key'] = quarterly_count['Quarter'].apply(
+        lambda x: (int(x.split()[0]), int(x.split()[1][1])) if pd.notna(x) else (0, 0)
+    )
+    quarterly_count = quarterly_count.sort_values('sort_key').drop('sort_key', axis=1)
+
+    # Get unique quarters in order for x-axis (use count data as it has more rows)
+    quarters_ordered = quarterly_count['Quarter'].unique().tolist()
 
     # Get unique platforms
-    platforms = quarterly['Platform'].unique().tolist()
+    platforms = quarterly_count['Platform'].unique().tolist()
 
-    print(f"\nQuarterly totals by platform:")
+    print(f"\nQuarterly totals:")
     for quarter in quarters_ordered:
-        q_data = quarterly[quarterly['Quarter'] == quarter]
-        total = q_data['Total SF'].sum()
-        print(f"  {quarter}: {total:,.0f} SF total")
-        for _, row in q_data.iterrows():
-            print(f"    - {row['Platform']}: {row['Total SF']:,.0f} SF")
+        sf_data = quarterly_sf[quarterly_sf['Quarter'] == quarter]
+        count_data = quarterly_count[quarterly_count['Quarter'] == quarter]
+        total_sf = sf_data['Total SF'].sum() if len(sf_data) > 0 else 0
+        total_count = count_data['Count'].sum()
+        print(f"  {quarter}: {total_count} transactions, {total_sf:,.0f} SF")
 
-    # Create the stacked bar chart
-    print("\nGenerating stacked bar chart...")
+    # ========== CHART 1: Total SF by Quarter and Platform ==========
+    print("\nGenerating SF stacked bar chart...")
 
-    fig = go.Figure()
+    fig_sf = go.Figure()
 
     # Add a bar trace for each platform
     for i, platform in enumerate(platforms):
-        platform_data = quarterly[quarterly['Platform'] == platform]
+        platform_data = quarterly_sf[quarterly_sf['Platform'] == platform]
         # Create a series with all quarters, filling missing with 0
         sf_by_quarter = []
         for q in quarters_ordered:
@@ -302,7 +320,7 @@ def main():
             else:
                 sf_by_quarter.append(0)
 
-        fig.add_trace(go.Bar(
+        fig_sf.add_trace(go.Bar(
             x=quarters_ordered,
             y=sf_by_quarter,
             name=platform,
@@ -310,7 +328,7 @@ def main():
             hovertemplate='%{x}<br>' + platform + '<br>%{y:,.0f} SF<extra></extra>'
         ))
 
-    fig.update_layout(
+    fig_sf.update_layout(
         title=dict(
             text='Transaction Volume by Quarter and Platform (Total SF)',
             font=dict(family=AQUILA_FONT, size=20, color='#172344')
@@ -353,11 +371,80 @@ def main():
         hovermode='x unified'
     )
 
-    # Save chart
-    fig.write_html(OUTPUT_FILE)
-    print(f"\nChart saved to: {OUTPUT_FILE}")
+    fig_sf.write_html(OUTPUT_FILE_SF)
+    print(f"Chart saved to: {OUTPUT_FILE_SF}")
 
-    return quarterly
+    # ========== CHART 2: Transaction Count by Quarter and Platform ==========
+    print("\nGenerating count stacked bar chart...")
+
+    fig_count = go.Figure()
+
+    # Add a bar trace for each platform
+    for i, platform in enumerate(platforms):
+        platform_data = quarterly_count[quarterly_count['Platform'] == platform]
+        # Create a series with all quarters, filling missing with 0
+        count_by_quarter = []
+        for q in quarters_ordered:
+            match = platform_data[platform_data['Quarter'] == q]
+            if len(match) > 0:
+                count_by_quarter.append(match['Count'].values[0])
+            else:
+                count_by_quarter.append(0)
+
+        fig_count.add_trace(go.Bar(
+            x=quarters_ordered,
+            y=count_by_quarter,
+            name=platform,
+            marker_color=AQUILA_COLORS[i % len(AQUILA_COLORS)],
+            hovertemplate='%{x}<br>' + platform + '<br>%{y} transactions<extra></extra>'
+        ))
+
+    fig_count.update_layout(
+        title=dict(
+            text='Transaction Count by Quarter and Platform',
+            font=dict(family=AQUILA_FONT, size=20, color='#172344')
+        ),
+        barmode='stack',
+        height=650,
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family=AQUILA_FONT, color='#172344'),
+        xaxis=dict(
+            title='Quarter',
+            showline=True,
+            linecolor='#e9e9ea',
+            linewidth=0.5,
+            mirror=False,
+            showgrid=False,
+            zeroline=False,
+            tickangle=45,
+        ),
+        yaxis=dict(
+            title='Number of Transactions',
+            showline=True,
+            linecolor='#e9e9ea',
+            linewidth=0.5,
+            mirror=False,
+            showgrid=True,
+            gridcolor='#e9e9ea',
+            zeroline=True,
+        ),
+        legend=dict(
+            orientation='h',
+            yanchor='top',
+            y=-0.15,
+            xanchor='center',
+            x=0.5,
+            font=dict(size=10)
+        ),
+        margin=dict(b=180),
+        hovermode='x unified'
+    )
+
+    fig_count.write_html(OUTPUT_FILE_COUNT)
+    print(f"Chart saved to: {OUTPUT_FILE_COUNT}")
+
+    return quarterly_sf, quarterly_count
 
 
 if __name__ == '__main__':

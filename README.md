@@ -22,6 +22,8 @@ Simply replace the `src` URL with the link to your own chart if needed.
 
 [Aquila Transactions by Platform (Quarterly SF) [2026-01-28]](https://realdatallc.github.io/aquila-insights/charts/office/transaction_sf_by_quarter.html)
 
+[Aquila Transactions by Platform (Quarterly Count) [2026-01-28]](https://realdatallc.github.io/aquila-insights/charts/office/transaction_count_by_quarter.html)
+
 ## Office
 
 ### Tenant Requirements
