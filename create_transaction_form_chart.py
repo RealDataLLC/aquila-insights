@@ -254,15 +254,16 @@ def main():
     df['quarter'] = pd.to_datetime(df[date_col], errors='coerce').apply(get_quarter)
 
     # Filter to rows with both valid quarter and SF
+    platform_col = 'Platform'
     df_valid = df[(df['quarter'].notna()) & (df['cleaned_sf'].notna())].copy()
     print(f"Rows with valid quarter and SF: {len(df_valid)}")
 
-    # Aggregate by quarter
-    print("\nAggregating by quarter...")
-    quarterly = df_valid.groupby('quarter').agg({
+    # Aggregate by quarter and platform
+    print("\nAggregating by quarter and platform...")
+    quarterly = df_valid.groupby(['quarter', platform_col]).agg({
         'cleaned_sf': 'sum'
     }).reset_index()
-    quarterly.columns = ['Quarter', 'Total SF']
+    quarterly.columns = ['Quarter', 'Platform', 'Total SF']
 
     # Sort by quarter
     quarterly['sort_key'] = quarterly['Quarter'].apply(
@@ -270,31 +271,52 @@ def main():
     )
     quarterly = quarterly.sort_values('sort_key').drop('sort_key', axis=1)
 
-    print(f"\nQuarterly totals:")
-    for _, row in quarterly.iterrows():
-        print(f"  {row['Quarter']}: {row['Total SF']:,.0f} SF")
+    # Get unique quarters in order for x-axis
+    quarters_ordered = quarterly['Quarter'].unique().tolist()
 
-    # Create the chart
-    print("\nGenerating chart...")
+    # Get unique platforms
+    platforms = quarterly['Platform'].unique().tolist()
+
+    print(f"\nQuarterly totals by platform:")
+    for quarter in quarters_ordered:
+        q_data = quarterly[quarterly['Quarter'] == quarter]
+        total = q_data['Total SF'].sum()
+        print(f"  {quarter}: {total:,.0f} SF total")
+        for _, row in q_data.iterrows():
+            print(f"    - {row['Platform']}: {row['Total SF']:,.0f} SF")
+
+    # Create the stacked bar chart
+    print("\nGenerating stacked bar chart...")
 
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(
-        x=quarterly['Quarter'],
-        y=quarterly['Total SF'],
-        mode='lines+markers',
-        name='Total SF',
-        line=dict(color=AQUILA_COLORS[0], width=2),
-        marker=dict(color=AQUILA_COLORS[0], size=8),
-        hovertemplate='%{x}<br>Total SF: %{y:,.0f}<extra></extra>'
-    ))
+    # Add a bar trace for each platform
+    for i, platform in enumerate(platforms):
+        platform_data = quarterly[quarterly['Platform'] == platform]
+        # Create a series with all quarters, filling missing with 0
+        sf_by_quarter = []
+        for q in quarters_ordered:
+            match = platform_data[platform_data['Quarter'] == q]
+            if len(match) > 0:
+                sf_by_quarter.append(match['Total SF'].values[0])
+            else:
+                sf_by_quarter.append(0)
+
+        fig.add_trace(go.Bar(
+            x=quarters_ordered,
+            y=sf_by_quarter,
+            name=platform,
+            marker_color=AQUILA_COLORS[i % len(AQUILA_COLORS)],
+            hovertemplate='%{x}<br>' + platform + '<br>%{y:,.0f} SF<extra></extra>'
+        ))
 
     fig.update_layout(
         title=dict(
-            text='Transaction Volume by Quarter (Total SF)',
+            text='Transaction Volume by Quarter and Platform (Total SF)',
             font=dict(family=AQUILA_FONT, size=20, color='#172344')
         ),
-        height=550,
+        barmode='stack',
+        height=650,
         plot_bgcolor='white',
         paper_bgcolor='white',
         font=dict(family=AQUILA_FONT, color='#172344'),
@@ -319,7 +341,15 @@ def main():
             zeroline=True,
             tickformat=',',
         ),
-        margin=dict(b=100),
+        legend=dict(
+            orientation='h',
+            yanchor='top',
+            y=-0.15,
+            xanchor='center',
+            x=0.5,
+            font=dict(size=10)
+        ),
+        margin=dict(b=180),
         hovermode='x unified'
     )
 
