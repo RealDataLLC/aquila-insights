@@ -213,6 +213,19 @@ def main():
     df = pd.read_excel(INPUT_FILE)
     print(f"Loaded {len(df)} rows")
 
+    # Filter out land transactions
+    land_col = 'Is this Land?'
+    initial_count = len(df)
+    # Keep rows where Is this Land? is "No" or is null/empty
+    # Exclude rows where it's "Yes" or contains "Land"
+    df = df[
+        (df[land_col].isna()) |
+        (df[land_col] == 'No') |
+        (~df[land_col].astype(str).str.contains('Land|Yes', case=False, na=False))
+    ]
+    excluded_count = initial_count - len(df)
+    print(f"Filtered out {excluded_count} land transactions, {len(df)} rows remaining")
+
     # Clean the SF column
     print("\nCleaning Total SF column...")
     sf_col = 'Total SF / Total Acreage if Land '
