@@ -71,6 +71,7 @@
 │   │   ├── requirements_by_size_range.html  # Tenant demand by size category
 │   │   ├── requirements_vs_absorption_office.html # Requirements vs absorption comparison
 │   │   ├── requirements_yoy_rolling_12m.html # Rolling 12-month YoY comparison
+│   │   ├── requirements_demand_by_tenant_size.html # Office demand by tenant size (grouped bar + total line)
 │   │   ├── transaction_sf_by_quarter.html   # Transaction SF by quarter and platform (stacked bar)
 │   │   ├── transaction_count_by_quarter.html # Transaction count by quarter and platform (stacked bar)
 │   │   ├── office_asking_vs_effective_rent_by_submarket.html # Rent comparison by submarket
@@ -896,12 +897,22 @@ df_absorption['quarter'] = df_absorption['quarter'].apply(parse_quarter)
 - Time period: 2018+
 - Uses Aquila colors (Gold for requirements, Navy for absorption)
 
-**6. requirements_yoy_rolling_12m.html** *(NEW)*
+**6. requirements_yoy_rolling_12m.html**
 - Rolling 12-month window analysis
 - Dual-axis chart: Average SF (line, left) and Count (bars, right)
 - Shows current year vs prior year comparison
 - 4 traces total: current/prior year for both metrics
 - Height: 650px
+
+**7. requirements_demand_by_tenant_size.html**
+- **Type:** Grouped bar chart with secondary y-axis line
+- **Bars:** Annual demand (sum of avg SF) by 5 size categories:
+  - Sub 10k SF, 10k-25k SF, 25k-50k SF, 50k-100k SF, Mega Requirements (100k+)
+- **Line:** Total demand per year on secondary y-axis
+- **X-axis:** Year (2018-present)
+- **Colors:** Navy (Mega), Greenspace (50k-100k), Brass (25k-50k), Copper (10k-25k), Signal (Sub 10k)
+- **Purpose:** Shows how demand composition by tenant size has shifted over time
+- Height: 650px, Width: 1000px
 
 **Performance Tips:**
 - `get_all_values()` is faster than `get_all_records()` for large sheets
@@ -2219,6 +2230,7 @@ pip install X
 - **Update FRED housing chart:** `python3 update_fred_charts.py` (1 housing starts chart)
 - **Update FRED economic indicators:** `python3 update_fred_economic_indicators.py` (7 economic indicator charts)
 - **Update building performance charts:** `python3 update_building_performance_charts.py` (4 charts)
+- **Update combined requirements charts:** `python3 update_combined_requirements_charts.py` (7 tenant requirements charts)
 - **Generate AMS KPIs:** `python3 create_ams_kpi_chart.py` (1 property management chart)
 - **Generate Transaction Charts:** `python3 create_transaction_form_chart.py` (2 transaction charts: SF and count)
 - **Auto-update README dates:** Add `--update-readme` flag to any script
@@ -2410,13 +2422,22 @@ ERROR: 400 Bad Request
 
 ---
 
-**Last Updated:** 2026-01-23
-**Document Version:** 1.2.0
+**Last Updated:** 2026-01-30
+**Document Version:** 1.3.0
 **Repository Status:** Active development on feature branches, merges to main
 
 ---
 
 ## Changelog
+
+### Version 1.3.0 (2026-01-30)
+- Added Office Demand by Tenant Size chart (`requirements_demand_by_tenant_size.html`)
+  - Grouped bar chart with 5 size categories + total demand line on secondary y-axis
+  - Size bins: Sub 10k, 10k-25k, 25k-50k, 50k-100k, Mega (100k+)
+- Added Chart 7 cell to `googlesheets_combined.ipynb` notebook
+- Synced `update_combined_requirements_charts.py` with notebook (fixed COLORS dict bug, fillna categorical fix)
+- Updated office charts count: `office/` - 12 charts (was 11)
+- Added `update_combined_requirements_charts.py` to automation scripts documentation
 
 ### Version 1.2.0 (2026-01-23)
 - **BREAKING CHANGE:** Updated Aquila brand color palette (2026 rebrand)
@@ -2433,7 +2454,7 @@ ERROR: 400 Bad Request
 - Added `update_fred_economic_indicators.py` - automation script for economic indicators
 - Reorganized `charts/` directory into categorized subdirectories:
   - `property-management/` - 1 chart
-  - `office/` - 7 charts
+  - `office/` - 12 charts
   - `industrial/` - 3 charts
   - `economic-indicators/` - 8 charts
 - Updated all chart output paths in notebooks and automation scripts

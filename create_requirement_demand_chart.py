@@ -1,0 +1,344 @@
+"""
+Office Demand by Tenant Size - Grouped bar chart with total demand line
+Generates a chart showing annual requirement SF broken down by tenant size category,
+with a total demand line on a secondary y-axis.
+"""
+import pandas as pd
+import numpy as np
+import sys
+import os
+
+try:
+    import gspread
+    from oauth2client.service_account import ServiceAccountCredentials
+except ImportError as e:
+    print(f"Error importing required modules: {e}")
+    sys.exit(1)
+
+import plotly.graph_objects as go
+from dotenv import load_dotenv
+from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+
+# Load environment variables
+load_dotenv('aquila_graph.env')
+
+# Check if we should use JSON file or environment variables
+json_file = 'aquilacommercialsheets-923494a59a4b.json'
+use_json = os.path.exists(json_file)
+
+print("=" * 80)
+print("OFFICE DEMAND BY TENANT SIZE")
+print("=" * 80)
+
+# ============================================================================
+# STEP 1: Connect to Google Sheets
+# ============================================================================
+print("\nStep 1: Connecting to Google Sheets...")
+
+scope = [
+    'https://spreadsheets.google.com/feeds',
+    'https://www.googleapis.com/auth/drive'
+]
+
+if use_json:
+    print("  Using JSON credentials file")
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(json_file, scope)
+else:
+    print("  Using environment variables for credentials")
+    credentials_dict = {
+        "type": os.getenv("GOOGLE_SERVICE_ACCOUNT_TYPE"),
+        "project_id": os.getenv("GOOGLE_PROJECT_ID"),
+        "private_key_id": os.getenv("GOOGLE_PRIVATE_KEY_ID"),
+        "private_key": os.getenv("GOOGLE_PRIVATE_KEY").replace('\\n', '\n') if os.getenv("GOOGLE_PRIVATE_KEY") else None,
+        "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
+        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
+        "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+        "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
+        "client_x509_cert_url": os.getenv("GOOGLE_CLIENT_X509_CERT_URL"),
+        "universe_domain": os.getenv("GOOGLE_UNIVERSE_DOMAIN")
+    }
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+
+client = gspread.authorize(credentials)
+spreadsheet_id = '1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec'
+sheet = client.open_by_key(spreadsheet_id)
+
+print("  Connected successfully")
+
+# ============================================================================
+# STEP 2: Read both tabs
+# ============================================================================
+print("\nStep 2: Reading data from both tabs...")
+
+# Tab 0: 2025+ data
+print("  Reading Tab 0: '2025 +' data...")
+tab0 = sheet.get_worksheet(0)
+df_2025_plus = pd.DataFrame(tab0.get_all_records())
+print(f"    - Loaded {len(df_2025_plus)} rows")
+
+# Tab 1: Through 2024 data (index 2)
+print("  Reading Tab 1: 'Through 2024' data...")
+tab1 = sheet.get_worksheet(2)
+rows = tab1.get_all_values()
+df_through_2024 = pd.DataFrame(rows[1:], columns=rows[0])
+
+# Filter to office-only data
+if "USE" in df_through_2024.columns:
+    df_through_2024 = df_through_2024[
+        df_through_2024["USE"].str.lower().str.contains("office", na=False)
+    ]
+
+print(f"    - Loaded {len(df_through_2024)} rows (office only)")
+
+# ============================================================================
+# STEP 3: Standardize and combine data
+# ============================================================================
+print("\nStep 3: Standardizing and combining data...")
+
+
+def standardize_tab0(df):
+    """Standardize Tab 0 (2025+) data"""
+    df_std = pd.DataFrame()
+    df_std['date'] = pd.to_datetime(df['DATE OF REQUIREMENT'], errors='coerce')
+    df_std['sf_low'] = pd.to_numeric(df['REQUIRED SF (LOW)'], errors='coerce')
+    df_std['sf_high'] = pd.to_numeric(df['REQUIRED SF (HIGH)'], errors='coerce')
+    df_std['source_tab'] = '2025+'
+    return df_std
+
+
+def standardize_tab1(df):
+    """Standardize Tab 1 (Through 2024) data"""
+    df_std = pd.DataFrame()
+
+    # Find date column
+    date_candidates = [col for col in df.columns if 'DATE' in col.upper() and 'REQ' in col.upper()]
+    if date_candidates:
+        df_std['date'] = pd.to_datetime(df[date_candidates[0]], errors='coerce')
+    elif 'DATE OF REQUIREMENT' in df.columns:
+        df_std['date'] = pd.to_datetime(df['DATE OF REQUIREMENT'], errors='coerce')
+    else:
+        date_cols = [col for col in df.columns if 'DATE' in col.upper()]
+        if date_cols:
+            df_std['date'] = pd.to_datetime(df[date_cols[0]], errors='coerce')
+        else:
+            df_std['date'] = pd.NaT
+
+    # SF columns
+    if 'REQUIRED SF (LOW)' in df.columns:
+        df_std['sf_low'] = pd.to_numeric(
+            df['REQUIRED SF (LOW)'].astype(str).str.replace(',', '').str.replace('$', ''),
+            errors='coerce'
+        )
+    else:
+        df_std['sf_low'] = np.nan
+
+    if 'REQUIRED SF (HIGH)' in df.columns:
+        df_std['sf_high'] = pd.to_numeric(
+            df['REQUIRED SF (HIGH)'].astype(str).str.replace(',', '').str.replace('$', ''),
+            errors='coerce'
+        )
+    else:
+        df_std['sf_high'] = np.nan
+
+    df_std['source_tab'] = 'Through 2024'
+    return df_std
+
+
+# Standardize both datasets
+df_std_2025 = standardize_tab0(df_2025_plus)
+df_std_2024 = standardize_tab1(df_through_2024)
+
+# Combine datasets
+df_combined = pd.concat([df_std_2024, df_std_2025], ignore_index=True)
+
+# Calculate average SF
+df_combined['sf_avg'] = (df_combined['sf_low'] + df_combined['sf_high']) / 2
+
+# Filter out records with no SF data or no date
+df_combined = df_combined[df_combined['sf_avg'].notna()].copy()
+df_combined = df_combined[df_combined['date'].notna()].copy()
+
+# Filter to 2017 onwards
+df_combined = df_combined[df_combined['date'] >= '2017-01-01'].copy()
+
+# Extract year
+df_combined['year'] = df_combined['date'].dt.year
+
+# Only include complete or near-complete years (exclude current partial year if too early)
+# Keep all years that have data
+print(f"  Combined dataset: {len(df_combined)} rows")
+print(f"  Date range: {df_combined['date'].min()} to {df_combined['date'].max()}")
+print(f"  Years: {sorted(df_combined['year'].unique())}")
+
+# ============================================================================
+# STEP 4: Bin by tenant size and aggregate by year
+# ============================================================================
+print("\nStep 4: Binning by tenant size category...")
+
+# Size bins matching the reference chart
+bins = [0, 10000, 25000, 50000, 100000, float('inf')]
+labels = ['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements']
+
+df_combined['size_category'] = pd.cut(
+    df_combined['sf_avg'],
+    bins=bins,
+    labels=labels,
+    right=False
+)
+
+# Aggregate: sum of sf_avg by year and size category
+yearly_by_size = df_combined.groupby(['year', 'size_category'], observed=False).agg(
+    segment_demand=('sf_avg', 'sum'),
+    count=('sf_avg', 'count')
+).reset_index()
+
+# Also calculate total demand per year
+yearly_total = df_combined.groupby('year').agg(
+    total_demand=('sf_avg', 'sum')
+).reset_index()
+
+print(f"  Years with data: {len(yearly_total)}")
+for _, row in yearly_total.iterrows():
+    print(f"    {int(row['year'])}: {row['total_demand']:,.0f} SF total demand")
+
+# ============================================================================
+# STEP 5: Create the chart
+# ============================================================================
+print("\nStep 5: Creating Office Demand by Tenant Size chart...")
+
+os.makedirs("charts/office", exist_ok=True)
+
+# Define colors for each category (matching the visual style of the reference)
+category_colors = {
+    'Mega Requirements': AQUILA_COLORS[0],   # AQUILA Navy
+    '50k-100k SF':       AQUILA_COLORS[4],   # Greenspace
+    '25k-50k SF':        AQUILA_COLORS[3],   # Brass
+    '10k-25k SF':        AQUILA_COLORS[2],   # Copper
+    'Sub 10k SF':        AQUILA_COLORS[6],   # Signal
+}
+
+# Order categories from largest to smallest for visual hierarchy
+category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
+
+years = sorted(yearly_by_size['year'].unique())
+
+fig = go.Figure()
+
+# Add grouped bars for each size category
+for category in category_order:
+    cat_data = yearly_by_size[yearly_by_size['size_category'] == category]
+    cat_data = cat_data.set_index('year').reindex(years).fillna(0).reset_index()
+
+    fig.add_trace(go.Bar(
+        x=cat_data['year'].astype(str),
+        y=cat_data['segment_demand'],
+        name=category,
+        marker_color=category_colors[category],
+        hovertemplate=(
+            f'<b>{category}</b><br>'
+            'Year: %{x}<br>'
+            'Demand: %{y:,.0f} SF<br>'
+            '<extra></extra>'
+        ),
+    ))
+
+# Add total demand line on secondary y-axis
+total_data = yearly_total.set_index('year').reindex(years).fillna(0).reset_index()
+
+fig.add_trace(go.Scatter(
+    x=total_data['year'].astype(str),
+    y=total_data['total_demand'],
+    mode='lines+markers',
+    name='Total Demand',
+    line=dict(color=AQUILA_COLORS[0], width=3),
+    marker=dict(size=10, color=AQUILA_COLORS[0], symbol='line-ew-open', line=dict(width=3)),
+    yaxis='y2',
+    hovertemplate=(
+        '<b>Total Demand</b><br>'
+        'Year: %{x}<br>'
+        'Total: %{y:,.0f} SF<br>'
+        '<extra></extra>'
+    ),
+))
+
+# Determine date range for title
+min_year = int(min(years))
+max_year = int(max(years))
+
+fig.update_layout(
+    title={
+        'text': f'Office Demand by Tenant Size ({min_year}\u2013{max_year})',
+        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
+        'x': 0.5,
+        'xanchor': 'center',
+    },
+    barmode='group',
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
+    xaxis=dict(
+        title='',
+        showgrid=False,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=1,
+        tickfont=dict(size=13),
+    ),
+    yaxis=dict(
+        title='Segment Demand (SF)',
+        titlefont=dict(size=14),
+        showgrid=True,
+        gridcolor='#e9e9ea',
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=1,
+        tickformat=',',
+        rangemode='tozero',
+    ),
+    yaxis2=dict(
+        title='Total Demand (SF)',
+        titlefont=dict(size=14),
+        overlaying='y',
+        side='right',
+        showgrid=False,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=1,
+        tickformat=',',
+        rangemode='tozero',
+    ),
+    legend=dict(
+        orientation='h',
+        yanchor='top',
+        y=-0.1,
+        xanchor='center',
+        x=0.5,
+        font=dict(size=12),
+        traceorder='normal',
+    ),
+    height=650,
+    width=1000,
+    margin=dict(t=80, b=120, l=80, r=80),
+    hovermode='x unified',
+)
+
+output_path = 'charts/office/requirements_demand_by_tenant_size.html'
+fig.write_html(output_path)
+print(f"  Chart saved to: {output_path}")
+
+# ============================================================================
+# SUMMARY
+# ============================================================================
+print("\n" + "=" * 80)
+print("SUMMARY")
+print("=" * 80)
+print(f"\nData: {len(df_combined)} requirements from {min_year} to {max_year}")
+print(f"\nSize category breakdown:")
+for category in category_order:
+    cat_total = yearly_by_size[yearly_by_size['size_category'] == category]['segment_demand'].sum()
+    cat_count = yearly_by_size[yearly_by_size['size_category'] == category]['count'].sum()
+    print(f"  {category:25s}: {cat_total:>15,.0f} SF ({int(cat_count)} requirements)")
+print(f"\n  {'TOTAL':25s}: {yearly_total['total_demand'].sum():>15,.0f} SF")
+print(f"\nChart saved to: {output_path}")
+print("=" * 80)

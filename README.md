@@ -27,17 +27,19 @@ Simply replace the `src` URL with the link to your own chart if needed.
 ## Office
 
 ### Tenant Requirements
-[Requirements Total SF [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html) - Combined historical data from 2018+
+[Requirements Total SF [2026-01-30]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html) - Combined historical data from 2018+
 
-[Requirements Average SF [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg.html) - Combined historical data from 2018+
+[Requirements Average SF [2026-01-30]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg.html) - Combined historical data from 2018+
 
-[Tenant Demand by Industry [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg_by_industry.html) - Combined historical data from 2018+
+[Tenant Demand by Industry [2026-01-30]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_avg_by_industry.html) - Combined historical data from 2018+
 
-[Tenant Demand by Size Range and Number [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_by_size_range.html) - Combined historical data from 2018+
+[Tenant Demand by Size Range and Number [2026-01-30]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_by_size_range.html) - Combined historical data from 2018+
 
-[Requirements vs Absorption (Quarterly) [2026-01-22]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_vs_absorption_office.html) - Compares tenant requirements against market absorption
+[Requirements vs Absorption (Quarterly) [2026-01-30]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_vs_absorption_office.html) - Compares tenant requirements against market absorption
 
-[Requirements YoY Rolling 12-Month [2026-01-23]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_yoy_rolling_12m.html) - Rolling 12-month average SF and count with prior year comparison
+[Requirements YoY Rolling 12-Month [2026-01-30]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_yoy_rolling_12m.html) - Rolling 12-month average SF and count with prior year comparison
+
+[Office Demand by Tenant Size [2026-01-30]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_demand_by_tenant_size.html) - Annual demand grouped by size category with total demand line
 
 ### Market Metrics
 [Asking vs Effective Rent by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_asking_vs_effective_rent_by_submarket.html)
