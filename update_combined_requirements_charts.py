@@ -781,6 +781,152 @@ fig6.write_html('charts/office/requirements_yoy_rolling_12m.html')
 print('  ✓ Saved charts/office/requirements_yoy_rolling_12m.html')
 
 # ============================================================================
+# CHART 7: Office Demand by Tenant Size (Annual Grouped Bar + Total Line)
+# ============================================================================
+print("\n7. Generating Office Demand by Tenant Size chart...")
+
+# Filter to records with valid dates
+df_demand = df_combined[df_combined['date'].notna()].copy()
+df_demand['year'] = df_demand['date'].dt.year
+
+# Size bins matching the reference chart (5 categories)
+demand_bins = [0, 10000, 25000, 50000, 100000, float('inf')]
+demand_labels = ['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements']
+
+df_demand['size_category'] = pd.cut(
+    df_demand['sf_avg'],
+    bins=demand_bins,
+    labels=demand_labels,
+    right=False
+)
+
+# Aggregate: sum of sf_avg by year and size category
+yearly_by_size = df_demand.groupby(['year', 'size_category'], observed=False).agg(
+    segment_demand=('sf_avg', 'sum'),
+    count=('sf_avg', 'count')
+).reset_index()
+
+# Total demand per year
+yearly_total = df_demand.groupby('year').agg(
+    total_demand=('sf_avg', 'sum')
+).reset_index()
+
+years = sorted(yearly_by_size['year'].unique())
+
+# Colors for each size category
+category_colors = {
+    'Mega Requirements': AQUILA_COLORS[0],   # AQUILA Navy
+    '50k-100k SF':       AQUILA_COLORS[4],   # Greenspace
+    '25k-50k SF':        AQUILA_COLORS[3],   # Brass
+    '10k-25k SF':        AQUILA_COLORS[2],   # Copper
+    'Sub 10k SF':        AQUILA_COLORS[6],   # Signal
+}
+
+category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
+
+fig7 = go.Figure()
+
+# Grouped bars for each size category
+for category in category_order:
+    cat_data = yearly_by_size[yearly_by_size['size_category'] == category]
+    cat_data = cat_data.set_index('year').reindex(years).fillna(0).reset_index()
+
+    fig7.add_trace(go.Bar(
+        x=cat_data['year'].astype(str),
+        y=cat_data['segment_demand'],
+        name=category,
+        marker_color=category_colors[category],
+        hovertemplate=(
+            f'<b>{category}</b><br>'
+            'Year: %{x}<br>'
+            'Demand: %{y:,.0f} SF<br>'
+            '<extra></extra>'
+        ),
+    ))
+
+# Total demand line on secondary y-axis
+total_data = yearly_total.set_index('year').reindex(years).fillna(0).reset_index()
+
+fig7.add_trace(go.Scatter(
+    x=total_data['year'].astype(str),
+    y=total_data['total_demand'],
+    mode='lines+markers',
+    name='Total Demand',
+    line=dict(color=AQUILA_COLORS[0], width=3),
+    marker=dict(size=10, color=AQUILA_COLORS[0], symbol='line-ew-open', line=dict(width=3)),
+    yaxis='y2',
+    hovertemplate=(
+        '<b>Total Demand</b><br>'
+        'Year: %{x}<br>'
+        'Total: %{y:,.0f} SF<br>'
+        '<extra></extra>'
+    ),
+))
+
+min_year = int(min(years))
+max_year = int(max(years))
+
+fig7.update_layout(
+    title={
+        'text': f'Office Demand by Tenant Size ({min_year}\u2013{max_year})',
+        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
+        'x': 0.5,
+        'xanchor': 'center',
+    },
+    barmode='group',
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
+    xaxis=dict(
+        title='',
+        showgrid=False,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=1,
+        tickfont=dict(size=13),
+    ),
+    yaxis=dict(
+        title='Segment Demand (SF)',
+        titlefont=dict(size=14),
+        showgrid=True,
+        gridcolor='#e9e9ea',
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=1,
+        tickformat=',',
+        rangemode='tozero',
+    ),
+    yaxis2=dict(
+        title='Total Demand (SF)',
+        titlefont=dict(size=14),
+        overlaying='y',
+        side='right',
+        showgrid=False,
+        showline=True,
+        linecolor='lightgrey',
+        linewidth=1,
+        tickformat=',',
+        rangemode='tozero',
+    ),
+    legend=dict(
+        orientation='h',
+        yanchor='top',
+        y=-0.1,
+        xanchor='center',
+        x=0.5,
+        font=dict(size=12),
+        traceorder='normal',
+    ),
+    height=650,
+    width=1000,
+    margin=dict(t=80, b=120, l=80, r=80),
+    hovermode='x unified',
+)
+
+fig7.write_html('charts/office/requirements_demand_by_tenant_size.html')
+print('  ✓ Saved charts/office/requirements_demand_by_tenant_size.html')
+
+# ============================================================================
 # SUMMARY
 # ============================================================================
 print("\n" + "="*80)
@@ -801,6 +947,7 @@ print(f"  ✓ charts/office/requirements_by_size_range.html")
 if absorption_quarterly is not None:
     print(f"  ✓ charts/office/requirements_vs_absorption_office.html")
 print(f"  ✓ charts/office/requirements_yoy_rolling_12m.html")
+print(f"  ✓ charts/office/requirements_demand_by_tenant_size.html")
 
 print("\n" + "="*80)
 print("✓ Complete!")
