@@ -243,12 +243,14 @@ print(f"    Total SF (avg): {df_combined['sf_avg'].sum():,.0f}")
 print("\nStep 5: Generating updated requirements charts...")
 
 # Create charts directory
-os.makedirs("charts", exist_ok=True)
+os.makedirs("charts/office", exist_ok=True)
 
 # Chart styling constants
 COLORS = {
     'background': '#FFFFFF',
     'text': '#172344',  # AQUILA Navy
+    'blue': '#00008B',
+    'orange': '#DAA520',
     'gridcolor': '#e9e9ea',
     'light_gray': '#F8F9F9'
 }
@@ -829,7 +831,7 @@ fig7 = go.Figure()
 # Grouped bars for each size category
 for category in category_order:
     cat_data = yearly_by_size[yearly_by_size['size_category'] == category]
-    cat_data = cat_data.set_index('year').reindex(years).fillna(0).reset_index()
+    cat_data = cat_data[['year', 'segment_demand', 'count']].set_index('year').reindex(years).fillna(0).reset_index()
 
     fig7.add_trace(go.Bar(
         x=cat_data['year'].astype(str),
