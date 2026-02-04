@@ -215,7 +215,7 @@ category_colors = {
     '50k-100k SF':       AQUILA_COLORS[4],   # Greenspace
     '25k-50k SF':        AQUILA_COLORS[3],   # Brass
     '10k-25k SF':        AQUILA_COLORS[2],   # Copper
-    'Sub 10k SF':        AQUILA_COLORS[6],   # Signal
+    'Sub 10k SF':        AQUILA_COLORS[7],   # Pennybacker
 }
 
 # Order categories from largest to smallest for visual hierarchy
@@ -228,7 +228,9 @@ fig = go.Figure()
 # Add grouped bars for each size category
 for category in category_order:
     cat_data = yearly_by_size[yearly_by_size['size_category'] == category]
-    cat_data = cat_data.set_index('year').reindex(years).fillna(0).reset_index()
+    cat_data = cat_data.set_index('year').reindex(years).reset_index()
+    # Fill NaN values only in numeric columns
+    cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
 
     fig.add_trace(go.Bar(
         x=cat_data['year'].astype(str),
@@ -244,7 +246,8 @@ for category in category_order:
     ))
 
 # Add total demand line on secondary y-axis
-total_data = yearly_total.set_index('year').reindex(years).fillna(0).reset_index()
+total_data = yearly_total.set_index('year').reindex(years).reset_index()
+total_data['total_demand'] = total_data['total_demand'].fillna(0)
 
 fig.add_trace(go.Scatter(
     x=total_data['year'].astype(str),
