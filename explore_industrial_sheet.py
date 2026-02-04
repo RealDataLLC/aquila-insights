@@ -14,27 +14,22 @@ load_dotenv('aquila_graph.env')
 
 def get_google_credentials():
     """Build Google credentials from environment variables"""
-    # Get private key and handle escaped newlines and quotes
-    private_key = os.getenv("GOOGLE_PRIVATE_KEY", "")
-    private_key = private_key.strip('"').replace('\\n', '\n')
-
-    # Helper function to clean env vars (strip quotes)
-    def clean_env(key, default=""):
-        val = os.getenv(key, default)
-        return val.strip('"') if val else default
+    # Helper to strip quotes from env vars
+    def clean(val):
+        return val.strip('"') if val else val
 
     credentials_dict = {
-        "type": clean_env("GOOGLE_SERVICE_ACCOUNT_TYPE", "service_account"),
-        "project_id": clean_env("GOOGLE_PROJECT_ID"),
-        "private_key_id": clean_env("GOOGLE_PRIVATE_KEY_ID"),
-        "private_key": private_key,
-        "client_email": clean_env("GOOGLE_CLIENT_EMAIL"),
-        "client_id": clean_env("GOOGLE_CLIENT_ID"),
-        "auth_uri": clean_env("GOOGLE_AUTH_URI"),
-        "token_uri": clean_env("GOOGLE_TOKEN_URI"),
-        "auth_provider_x509_cert_url": clean_env("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
-        "client_x509_cert_url": clean_env("GOOGLE_CLIENT_X509_CERT_URL"),
-        "universe_domain": clean_env("GOOGLE_UNIVERSE_DOMAIN")
+        "type": clean(os.getenv("GOOGLE_SERVICE_ACCOUNT_TYPE")),
+        "project_id": clean(os.getenv("GOOGLE_PROJECT_ID")),
+        "private_key_id": clean(os.getenv("GOOGLE_PRIVATE_KEY_ID")),
+        "private_key": clean(os.getenv("GOOGLE_PRIVATE_KEY")).replace('\\n', '\n') if os.getenv("GOOGLE_PRIVATE_KEY") else None,
+        "client_email": clean(os.getenv("GOOGLE_CLIENT_EMAIL")),
+        "client_id": clean(os.getenv("GOOGLE_CLIENT_ID")),
+        "auth_uri": clean(os.getenv("GOOGLE_AUTH_URI")),
+        "token_uri": clean(os.getenv("GOOGLE_TOKEN_URI")),
+        "auth_provider_x509_cert_url": clean(os.getenv("GOOGLE_AUTH_PROVIDER_X509_CERT_URL")),
+        "client_x509_cert_url": clean(os.getenv("GOOGLE_CLIENT_X509_CERT_URL")),
+        "universe_domain": clean(os.getenv("GOOGLE_UNIVERSE_DOMAIN"))
     }
 
     scope = [
