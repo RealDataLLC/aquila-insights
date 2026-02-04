@@ -9,6 +9,7 @@ Usage:
 """
 
 import pandas as pd
+import numpy as np
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import plotly.express as px
@@ -64,44 +65,45 @@ def standardize_tab0(df):
     df_std['source_tab'] = '2025+'
     return df_std
 
-def standardize_tab1(df):
-    """Standardize Tab 1 (Through 2024) data"""
+def standardize_tab1(df, column_mapping):
+    """Standardize Tab 1 (Through 2024) data using column mapping"""
     df_std = pd.DataFrame()
 
-    # Find date column (could be DATE OF REQUIREMENT or DATE OF REQ or similar)
-    date_col = None
-    for col in df.columns:
-        if 'DATE' in col.upper() and 'REQ' in col.upper():
-            date_col = col
-            break
-
-    if date_col:
+    # Date - try multiple possible date columns
+    date_col = column_mapping.get('date')
+    if date_col and date_col in df.columns:
         df_std['date'] = pd.to_datetime(df[date_col], errors='coerce')
     else:
-        df_std['date'] = pd.NaT
+        # Try to find any date column
+        date_candidates = [col for col in df.columns if 'DATE' in col.upper()]
+        if date_candidates:
+            df_std['date'] = pd.to_datetime(df[date_candidates[0]], errors='coerce')
+        else:
+            df_std['date'] = pd.NaT
 
-    # Find SF columns
-    sf_low_col = None
-    sf_high_col = None
-    for col in df.columns:
-        if 'SF' in col.upper() and 'LOW' in col.upper():
-            sf_low_col = col
-        if 'SF' in col.upper() and 'HIGH' in col.upper():
-            sf_high_col = col
+    # SF columns - handle both numeric and string values
+    sf_low_col = column_mapping.get('sf_low', 'REQUIRED SF (LOW)')
+    sf_high_col = column_mapping.get('sf_high', 'REQUIRED SF (HIGH)')
 
-    if sf_low_col:
-        df_std['sf_low'] = pd.to_numeric(df[sf_low_col].astype(str).str.replace(',', ''), errors='coerce')
+    if sf_low_col in df.columns:
+        df_std['sf_low'] = pd.to_numeric(
+            df[sf_low_col].astype(str).str.replace(',', '').str.replace('$', ''),
+            errors='coerce'
+        )
     else:
         df_std['sf_low'] = pd.NA
 
-    if sf_high_col:
-        df_std['sf_high'] = pd.to_numeric(df[sf_high_col].astype(str).str.replace(',', ''), errors='coerce')
+    if sf_high_col in df.columns:
+        df_std['sf_high'] = pd.to_numeric(
+            df[sf_high_col].astype(str).str.replace(',', '').str.replace('$', ''),
+            errors='coerce'
+        )
     else:
         df_std['sf_high'] = pd.NA
 
     # Industry and Market
-    df_std['industry'] = df.get('INDUSTRY', '')
-    df_std['market'] = df.get('MARKET', '')
+    df_std['industry'] = df.get(column_mapping.get('industry', 'INDUSTRY'), '')
+    df_std['market'] = df.get(column_mapping.get('market', 'MARKET'), '')
     df_std['source_tab'] = 'Through 2024'
 
     return df_std
@@ -137,9 +139,37 @@ def fetch_google_sheets_data():
 
     print(f"  ✓ Loaded {len(df_through_2024)} rows (office only)")
 
+    # Map columns between tabs
+    print("Mapping columns between tabs...")
+    column_mapping = {}
+
+    key_columns_tab0 = {
+        'date': 'DATE OF REQUIREMENT',
+        'sf_low': 'REQUIRED SF (LOW)',
+        'sf_high': 'REQUIRED SF (HIGH)',
+        'industry': 'INDUSTRY',
+        'market': 'MARKET',
+    }
+
+    # Try to find matching columns in Tab 1
+    for key, tab0_col in key_columns_tab0.items():
+        # Look for exact match first
+        if tab0_col in df_through_2024.columns:
+            column_mapping[key] = tab0_col
+            print(f"  ✓ {key}: '{tab0_col}' (exact match)")
+        else:
+            # Look for similar column names
+            similar = [col for col in df_through_2024.columns
+                      if any(word in col.upper() for word in tab0_col.upper().split())]
+            if similar:
+                column_mapping[key] = similar[0]
+                print(f"  ≈ {key}: '{similar[0]}' (similar to '{tab0_col}')")
+            else:
+                print(f"  ✗ {key}: no match found for '{tab0_col}'")
+
     # Standardize and combine
     print("Standardizing and combining data...")
-    df_std_2024 = standardize_tab1(df_through_2024)
+    df_std_2024 = standardize_tab1(df_through_2024, column_mapping)
     df_std_2025 = standardize_tab0(df_2025_plus)
 
     df_combined = pd.concat([df_std_2024, df_std_2025], ignore_index=True)
@@ -147,10 +177,23 @@ def fetch_google_sheets_data():
     # Calculate average SF
     df_combined['sf_avg'] = (df_combined['sf_low'] + df_combined['sf_high']) / 2
 
+    print(f"  Tab 0 (2025+): {len(df_std_2025)} rows")
+    print(f"    Date range: {df_std_2025['date'].min()} to {df_std_2025['date'].max()}")
+    print(f"    Valid SF records: {df_std_2025['sf_low'].notna().sum()}")
+
+    print(f"  Tab 1 (Through 2024): {len(df_std_2024)} rows")
+    print(f"    Date range: {df_std_2024['date'].min()} to {df_std_2024['date'].max()}")
+    print(f"    Valid SF records: {df_std_2024['sf_low'].notna().sum()}")
+
+    # Filter out records with no SF data
+    df_combined = df_combined[df_combined['sf_avg'].notna()].copy()
+
     # Filter to 2018+ for historical context
-    df_combined = df_combined[df_combined['date'] >= '2018-01-01']
+    df_combined = df_combined[df_combined['date'] >= '2018-01-01'].copy()
 
     print(f"✓ Combined dataset: {len(df_combined)} records from 2018+")
+    print(f"  Date range: {df_combined['date'].min()} to {df_combined['date'].max()}")
+    print(f"  Total SF (avg): {df_combined['sf_avg'].sum():,.0f}")
 
     # Rename columns to match expected format
     df = pd.DataFrame()
