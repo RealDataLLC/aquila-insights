@@ -77,19 +77,33 @@ tab0 = sheet.get_worksheet(0)
 df_2025_plus = pd.DataFrame(tab0.get_all_records())
 print(f"    - Loaded {len(df_2025_plus)} rows")
 
-# Tab 1: Through 2024 data (index 2)
-print("  Reading Tab 1: 'Through 2024' data...")
-tab1 = sheet.get_worksheet(2)
+# Tab 1: Through 2024 data (find by name)
+print("  Reading Tab 1: 'DITM & Crab Trap MASTER Report (Through 2024)' data...")
+try:
+    tab1 = sheet.worksheet("DITM & Crab Trap MASTER Report (Through 2024)")
+except Exception as e:
+    print(f"    ✗ Could not find tab by name, trying index 2: {e}")
+    tab1 = sheet.get_worksheet(2)
+
 rows = tab1.get_all_values()
 df_through_2024 = pd.DataFrame(rows[1:], columns=rows[0])
+
+print(f"    - Loaded {len(df_through_2024)} rows")
+print(f"    - Columns: {len(df_through_2024.columns)}")
 
 # Filter to office-only data
 if "USE" in df_through_2024.columns:
     df_through_2024 = df_through_2024[
         df_through_2024["USE"].str.lower().str.contains("office", na=False)
     ]
-
-print(f"    - Loaded {len(df_through_2024)} rows (office only)")
+    print(f"    - After filtering to office: {len(df_through_2024)} rows")
+elif "Use" in df_through_2024.columns:
+    df_through_2024 = df_through_2024[
+        df_through_2024["Use"].str.lower().str.contains("office", na=False)
+    ]
+    print(f"    - After filtering to office: {len(df_through_2024)} rows")
+else:
+    print(f"    - No USE/Use column found, keeping all {len(df_through_2024)} rows")
 
 # ============================================================================
 # STEP 3: Standardize and combine data
@@ -111,34 +125,70 @@ def standardize_tab1(df):
     """Standardize Tab 1 (Through 2024) data"""
     df_std = pd.DataFrame()
 
-    # Find date column
-    date_candidates = [col for col in df.columns if 'DATE' in col.upper() and 'REQ' in col.upper()]
-    if date_candidates:
-        df_std['date'] = pd.to_datetime(df[date_candidates[0]], errors='coerce')
-    elif 'DATE OF REQUIREMENT' in df.columns:
-        df_std['date'] = pd.to_datetime(df['DATE OF REQUIREMENT'], errors='coerce')
-    else:
-        date_cols = [col for col in df.columns if 'DATE' in col.upper()]
-        if date_cols:
-            df_std['date'] = pd.to_datetime(df[date_cols[0]], errors='coerce')
-        else:
-            df_std['date'] = pd.NaT
+    print("  Tab 1 column names (first 20):")
+    for col in list(df.columns)[:20]:
+        print(f"    - {col}")
 
-    # SF columns
+    # Find date column with fuzzy matching
+    date_col = None
+    if 'DATE OF REQUIREMENT' in df.columns:
+        date_col = 'DATE OF REQUIREMENT'
+    else:
+        # Look for columns containing both DATE and REQ
+        date_candidates = [col for col in df.columns if 'DATE' in col.upper() and 'REQ' in col.upper()]
+        if date_candidates:
+            date_col = date_candidates[0]
+        else:
+            # Fall back to any DATE column
+            date_cols = [col for col in df.columns if 'DATE' in col.upper()]
+            if date_cols:
+                date_col = date_cols[0]
+
+    if date_col:
+        print(f"  Using date column: '{date_col}'")
+        df_std['date'] = pd.to_datetime(df[date_col], errors='coerce')
+    else:
+        print("  ✗ No date column found")
+        df_std['date'] = pd.NaT
+
+    # Find SF LOW column with fuzzy matching
+    sf_low_col = None
     if 'REQUIRED SF (LOW)' in df.columns:
+        sf_low_col = 'REQUIRED SF (LOW)'
+    else:
+        # Look for columns containing SF and LOW
+        candidates = [col for col in df.columns if 'SF' in col.upper() and 'LOW' in col.upper()]
+        if candidates:
+            sf_low_col = candidates[0]
+
+    if sf_low_col:
+        print(f"  Using SF LOW column: '{sf_low_col}'")
         df_std['sf_low'] = pd.to_numeric(
-            df['REQUIRED SF (LOW)'].astype(str).str.replace(',', '').str.replace('$', ''),
+            df[sf_low_col].astype(str).str.replace(',', '').str.replace('$', ''),
             errors='coerce'
         )
     else:
+        print("  ✗ No SF LOW column found")
         df_std['sf_low'] = np.nan
 
+    # Find SF HIGH column with fuzzy matching
+    sf_high_col = None
     if 'REQUIRED SF (HIGH)' in df.columns:
+        sf_high_col = 'REQUIRED SF (HIGH)'
+    else:
+        # Look for columns containing SF and HIGH
+        candidates = [col for col in df.columns if 'SF' in col.upper() and 'HIGH' in col.upper()]
+        if candidates:
+            sf_high_col = candidates[0]
+
+    if sf_high_col:
+        print(f"  Using SF HIGH column: '{sf_high_col}'")
         df_std['sf_high'] = pd.to_numeric(
-            df['REQUIRED SF (HIGH)'].astype(str).str.replace(',', '').str.replace('$', ''),
+            df[sf_high_col].astype(str).str.replace(',', '').str.replace('$', ''),
             errors='coerce'
         )
     else:
+        print("  ✗ No SF HIGH column found")
         df_std['sf_high'] = np.nan
 
     df_std['source_tab'] = 'Through 2024'
@@ -148,6 +198,26 @@ def standardize_tab1(df):
 # Standardize both datasets
 df_std_2025 = standardize_tab0(df_2025_plus)
 df_std_2024 = standardize_tab1(df_through_2024)
+
+# Check if Through 2024 data is empty
+print(f"\n  Validation:")
+print(f"    Tab 0 (2025+) standardized: {len(df_std_2025)} rows")
+print(f"    Tab 1 (Through 2024) standardized: {len(df_std_2024)} rows")
+
+if len(df_std_2024) == 0:
+    print("  ⚠ WARNING: Through 2024 tab produced 0 rows after standardization!")
+    print("  ⚠ Charts will only contain 2025+ data!")
+else:
+    # Check data quality
+    valid_dates_2024 = df_std_2024['date'].notna().sum()
+    valid_sf_2024 = df_std_2024['sf_low'].notna().sum()
+    print(f"    Tab 1 valid dates: {valid_dates_2024} / {len(df_std_2024)}")
+    print(f"    Tab 1 valid SF: {valid_sf_2024} / {len(df_std_2024)}")
+
+    if valid_dates_2024 == 0:
+        print("  ⚠ WARNING: No valid dates found in Through 2024 data!")
+    if valid_sf_2024 == 0:
+        print("  ⚠ WARNING: No valid SF values found in Through 2024 data!")
 
 # Combine datasets
 df_combined = pd.concat([df_std_2024, df_std_2025], ignore_index=True)
@@ -254,7 +324,7 @@ fig.add_trace(go.Scatter(
     y=total_data['total_demand'],
     mode='lines+markers',
     name='Total Demand',
-    line=dict(color=AQUILA_COLORS[0], width=3),
+    line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
     marker=dict(size=10, color=AQUILA_COLORS[0], symbol='line-ew-open', line=dict(width=3)),
     yaxis='y2',
     hovertemplate=(
