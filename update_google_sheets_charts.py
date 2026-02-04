@@ -53,8 +53,61 @@ def get_google_credentials():
 
     return ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 
+def standardize_tab0(df):
+    """Standardize Tab 0 (2025+) data"""
+    df_std = pd.DataFrame()
+    df_std['date'] = pd.to_datetime(df['DATE OF REQUIREMENT'], errors='coerce')
+    df_std['sf_low'] = pd.to_numeric(df['REQUIRED SF (LOW)'], errors='coerce')
+    df_std['sf_high'] = pd.to_numeric(df['REQUIRED SF (HIGH)'], errors='coerce')
+    df_std['industry'] = df.get('INDUSTRY', '')
+    df_std['market'] = df.get('MARKET', '')
+    df_std['source_tab'] = '2025+'
+    return df_std
+
+def standardize_tab1(df):
+    """Standardize Tab 1 (Through 2024) data"""
+    df_std = pd.DataFrame()
+
+    # Find date column (could be DATE OF REQUIREMENT or DATE OF REQ or similar)
+    date_col = None
+    for col in df.columns:
+        if 'DATE' in col.upper() and 'REQ' in col.upper():
+            date_col = col
+            break
+
+    if date_col:
+        df_std['date'] = pd.to_datetime(df[date_col], errors='coerce')
+    else:
+        df_std['date'] = pd.NaT
+
+    # Find SF columns
+    sf_low_col = None
+    sf_high_col = None
+    for col in df.columns:
+        if 'SF' in col.upper() and 'LOW' in col.upper():
+            sf_low_col = col
+        if 'SF' in col.upper() and 'HIGH' in col.upper():
+            sf_high_col = col
+
+    if sf_low_col:
+        df_std['sf_low'] = pd.to_numeric(df[sf_low_col].astype(str).str.replace(',', ''), errors='coerce')
+    else:
+        df_std['sf_low'] = pd.NA
+
+    if sf_high_col:
+        df_std['sf_high'] = pd.to_numeric(df[sf_high_col].astype(str).str.replace(',', ''), errors='coerce')
+    else:
+        df_std['sf_high'] = pd.NA
+
+    # Industry and Market
+    df_std['industry'] = df.get('INDUSTRY', '')
+    df_std['market'] = df.get('MARKET', '')
+    df_std['source_tab'] = 'Through 2024'
+
+    return df_std
+
 def fetch_google_sheets_data():
-    """Fetch tenant requirements data from Google Sheets"""
+    """Fetch tenant requirements data from Google Sheets (both tabs)"""
     print("Connecting to Google Sheets...")
 
     creds = get_google_credentials()
@@ -62,28 +115,51 @@ def fetch_google_sheets_data():
 
     # Open spreadsheet
     spreadsheet_id = '1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec'
-    sheet = client.open_by_key(spreadsheet_id).get_worksheet(0)
+    sheet = client.open_by_key(spreadsheet_id)
 
-    print("Fetching data...")
-    records = sheet.get_all_records()
-    df = pd.DataFrame(records)
+    # Tab 0: 2025+ data
+    print("Reading Tab 0: '2025 +' data...")
+    tab0 = sheet.get_worksheet(0)
+    df_2025_plus = pd.DataFrame(tab0.get_all_records())
+    print(f"  ✓ Loaded {len(df_2025_plus)} rows")
 
-    print(f"✓ Loaded {len(df)} records")
+    # Tab 1: Through 2024 data (index 2)
+    print("Reading Tab 1: 'Through 2024' data...")
+    tab1 = sheet.get_worksheet(2)
+    rows = tab1.get_all_values()
+    df_through_2024 = pd.DataFrame(rows[1:], columns=rows[0])
 
-    # Parse dates
-    df['DATE OF REQUIREMENT'] = pd.to_datetime(df['DATE OF REQUIREMENT'], format='mixed', errors='coerce')
-    df['DATE UPDATED'] = pd.to_datetime(df['DATE UPDATED'], format='mixed', errors='coerce')
-    df['EFFECTIVE_DATE'] = df['DATE OF REQUIREMENT']
+    # Filter to office-only data
+    if "USE" in df_through_2024.columns:
+        df_through_2024 = df_through_2024[
+            df_through_2024["USE"].str.lower().str.contains("office", na=False)
+        ]
 
-    # Parse numeric columns
-    df['REQUIRED SF (LOW)'] = pd.to_numeric(df['REQUIRED SF (LOW)'], errors='coerce')
-    df['REQUIRED SF (HIGH)'] = pd.to_numeric(df['REQUIRED SF (HIGH)'], errors='coerce')
-    df['REQUIRED SF (AVG)'] = (df['REQUIRED SF (LOW)'] + df['REQUIRED SF (HIGH)']) / 2
+    print(f"  ✓ Loaded {len(df_through_2024)} rows (office only)")
 
-    # Filter to recent data (since 2024-12-31)
-    df = df[df['EFFECTIVE_DATE'] >= pd.Timestamp('2024-12-31')]
+    # Standardize and combine
+    print("Standardizing and combining data...")
+    df_std_2024 = standardize_tab1(df_through_2024)
+    df_std_2025 = standardize_tab0(df_2025_plus)
 
-    print(f"✓ Filtered to {len(df)} records since 2024-12-31")
+    df_combined = pd.concat([df_std_2024, df_std_2025], ignore_index=True)
+
+    # Calculate average SF
+    df_combined['sf_avg'] = (df_combined['sf_low'] + df_combined['sf_high']) / 2
+
+    # Filter to 2018+ for historical context
+    df_combined = df_combined[df_combined['date'] >= '2018-01-01']
+
+    print(f"✓ Combined dataset: {len(df_combined)} records from 2018+")
+
+    # Rename columns to match expected format
+    df = pd.DataFrame()
+    df['EFFECTIVE_DATE'] = df_combined['date']
+    df['REQUIRED SF (LOW)'] = df_combined['sf_low']
+    df['REQUIRED SF (HIGH)'] = df_combined['sf_high']
+    df['REQUIRED SF (AVG)'] = df_combined['sf_avg']
+    df['INDUSTRY'] = df_combined['industry']
+    df['MARKET'] = df_combined['market']
 
     return df
 
@@ -110,27 +186,27 @@ def generate_chart_1_total_sf(df):
         y=['REQUIRED SF (LOW)', 'REQUIRED SF (HIGH)'],
         title='Monthly Total Square Footage Requirements',
         labels={'value': 'Square Footage', 'EFFECTIVE_DATE': 'Date'},
-        color_discrete_sequence=[COLORS['orange'], COLORS['blue']]
+        color_discrete_sequence=[AQUILA_COLORS[2], AQUILA_COLORS[1]]
     )
 
     fig.update_layout(
         plot_bgcolor=COLORS['background'],
         paper_bgcolor=COLORS['background'],
-        font=dict(family='Segoe UI', size=12),
-        title={'font': dict(family='Segoe UI', size=24)},
+        font=dict(family=AQUILA_FONT, size=12),
+        title={'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])},
         xaxis=dict(
-            gridcolor=COLORS['light_gray'],
+            gridcolor=COLORS['gridcolor'],
             tickformat='%b %Y',
             showgrid=True,
-            dtick="M1"
+            dtick="M3"
         ),
-        yaxis=dict(gridcolor=COLORS['light_gray']),
+        yaxis=dict(gridcolor=COLORS['gridcolor']),
         margin=dict(t=100, b=50, l=50, r=50)
     )
 
-    os.makedirs("charts", exist_ok=True)
-    fig.write_html("charts/requirements_sf_total.html")
-    print("  ✓ Saved: charts/requirements_sf_total.html")
+    os.makedirs("charts/office", exist_ok=True)
+    fig.write_html("charts/office/requirements_sf_total.html")
+    print("  ✓ Saved: charts/office/requirements_sf_total.html")
 
     return monthly_data
 
@@ -146,7 +222,7 @@ def generate_chart_2_avg_sf(monthly_data):
         y=monthly_data['REQUIRED SF (AVG)'],
         mode='lines+markers',
         name='Avg SF (Mean)',
-        line=dict(color=COLORS['orange'])
+        line=dict(color=AQUILA_COLORS[2])
     ))
 
     fig.add_trace(go.Scatter(
@@ -154,7 +230,7 @@ def generate_chart_2_avg_sf(monthly_data):
         y=monthly_data['REQUIRED SF (MEDIAN)'],
         mode='lines+markers',
         name='Avg SF (Median)',
-        line=dict(color=COLORS['blue'])
+        line=dict(color=AQUILA_COLORS[1])
     ))
 
     # Bars for COUNT (secondary y-axis)
@@ -163,42 +239,42 @@ def generate_chart_2_avg_sf(monthly_data):
         y=monthly_data['REQUIRED SF (COUNT)'],
         name='Record Count',
         yaxis='y2',
-        marker_color=COLORS['text'],
+        marker_color=AQUILA_COLORS[0],
         opacity=0.3
     ))
 
     fig.update_layout(
         title={
             'text': 'Monthly Average Square Footage Metrics',
-            'font': dict(family='Segoe UI', size=24)
+            'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
         },
         plot_bgcolor=COLORS['background'],
         paper_bgcolor=COLORS['background'],
-        font=dict(family='Segoe UI', size=12),
+        font=dict(family=AQUILA_FONT, size=12),
         xaxis=dict(
             title='Date',
-            gridcolor=COLORS['light_gray'],
+            gridcolor=COLORS['gridcolor'],
             tickformat='%b %Y',
-            dtick="M1",
+            dtick="M3",
             showgrid=True
         ),
         yaxis=dict(
             title="Square Footage",
-            gridcolor=COLORS['light_gray']
+            gridcolor=COLORS['gridcolor']
         ),
         yaxis2=dict(
             title="Count",
             overlaying='y',
             side='right',
-            titlefont=dict(family='Segoe UI', size=12, color=COLORS['text']),
-            tickfont=dict(family='Segoe UI', size=12, color=COLORS['text'])
+            titlefont=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
+            tickfont=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0])
         ),
         legend=dict(orientation="h", y=-0.2),
         margin=dict(t=100, b=50, l=50, r=50)
     )
 
-    fig.write_html("charts/requirements_sf_avg.html")
-    print("  ✓ Saved: charts/requirements_sf_avg.html")
+    fig.write_html("charts/office/requirements_sf_avg.html")
+    print("  ✓ Saved: charts/office/requirements_sf_avg.html")
 
 def generate_chart_3_by_industry(df):
     """Chart 3: Tenant Demand by Industry (donut chart)"""
@@ -253,19 +329,19 @@ def generate_chart_3_by_industry(df):
     fig.update_layout(
         title={
             'text': 'Tenant Demand by Industry',
-            'font': dict(family='Futura LT Pro', size=24)
+            'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
         },
         plot_bgcolor=COLORS['background'],
         paper_bgcolor=COLORS['background'],
-        font=dict(family='Futura LT Pro', size=12),
+        font=dict(family=AQUILA_FONT, size=12),
         showlegend=False,
         width=820,
         height=650,
         margin=dict(t=100, b=80, l=50, r=50)
     )
 
-    fig.write_html("charts/requirements_sf_avg_by_industry.html")
-    print("  ✓ Saved: charts/requirements_sf_avg_by_industry.html")
+    fig.write_html("charts/office/requirements_sf_avg_by_industry.html")
+    print("  ✓ Saved: charts/office/requirements_sf_avg_by_industry.html")
 
 def generate_chart_4_by_size_range(df):
     """Chart 4: Total Cumulative SF Requested by Size Range"""
@@ -312,7 +388,7 @@ def generate_chart_4_by_size_range(df):
     fig.update_layout(
         title={
             'text': 'Total Cumulative SF Requested by Size Range',
-            'font': dict(family='Segoe UI', size=22)
+            'font': dict(family=AQUILA_FONT, size=22, color=AQUILA_COLORS[0])
         },
         xaxis=dict(
             title='Total Cumulative Requested SF',
@@ -335,7 +411,7 @@ def generate_chart_4_by_size_range(df):
             mirror=False,
             ticks='outside'
         ),
-        font=dict(family='Futura LT Pro', size=12),
+        font=dict(family=AQUILA_FONT, size=12),
         plot_bgcolor=COLORS['background'],
         paper_bgcolor=COLORS['background'],
         width=820,
@@ -345,11 +421,11 @@ def generate_chart_4_by_size_range(df):
 
     fig.update_traces(
         texttemplate='%{text} reqs',
-        textfont=dict(family='Futura LT Pro', size=14)
+        textfont=dict(family=AQUILA_FONT, size=14)
     )
 
-    fig.write_html("charts/requirements_by_size_range.html")
-    print("  ✓ Saved: charts/requirements_by_size_range.html")
+    fig.write_html("charts/office/requirements_by_size_range.html")
+    print("  ✓ Saved: charts/office/requirements_by_size_range.html")
 
 def update_readme_dates():
     """Update README.md with today's date for Google Sheets charts"""
@@ -407,10 +483,10 @@ def main():
             update_readme_dates()
 
         print("\nGenerated charts:")
-        print("  • requirements_sf_total.html")
-        print("  • requirements_sf_avg.html")
-        print("  • requirements_sf_avg_by_industry.html")
-        print("  • requirements_by_size_range.html")
+        print("  • charts/office/requirements_sf_total.html")
+        print("  • charts/office/requirements_sf_avg.html")
+        print("  • charts/office/requirements_sf_avg_by_industry.html")
+        print("  • charts/office/requirements_by_size_range.html")
         print("\nNext steps:")
         print("  1. Review charts in browser")
         print("  2. Commit: git add charts/ README.md && git commit -m 'Update Google Sheets charts'")
