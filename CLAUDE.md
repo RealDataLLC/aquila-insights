@@ -131,7 +131,7 @@
 3. `api-graphs.ipynb` (2,020 lines) - FRED API → Housing starts chart (legacy)
 4. `fred-economic-indicators.ipynb` - FRED API → 7 economic indicator charts
 5. `googlesheets.ipynb` (2,463 lines) - Google Sheets → 4 tenant demand charts
-6. `googlesheets_combined.ipynb` - Google Sheets (multi-tab) + Supabase → 6 requirements charts including requirements vs absorption and rolling 12-month YoY
+6. `googlesheets_combined.ipynb` - Google Sheets (multi-tab) + Supabase → 7 requirements charts including requirements vs absorption, rolling 12-month YoY, and office demand by tenant size
 7. `building-performance-by-size.ipynb` - Supabase → 4 building performance by size charts (office and industrial)
 
 **Configuration:**
@@ -139,10 +139,10 @@
 - `.gitignore` - Should exclude credentials (verification recommended)
 
 **Generated Output:**
-- `charts/office/*.html` - Office market charts
-- `charts/industrial/*.html` - Industrial market charts
-- `charts/economic-indicators/*.html` - Economic indicator charts
-- `charts/property-management/*.html` - Property management KPI charts
+- `charts/office/*.html` - Office market charts (17 charts)
+- `charts/industrial/*.html` - Industrial market charts (3 charts)
+- `charts/economic-indicators/*.html` - Economic indicator charts (8 charts)
+- `charts/property-management/*.html` - Property management KPI charts (1 chart)
 - All charts are self-contained HTML files (committed to repo)
 
 ---
@@ -2459,10 +2459,18 @@ python3 update_all_charts.py --update-readme    # Update all + README dates
 **Individual Data Source Scripts:**
 ```bash
 python3 update_google_sheets_charts.py          # 4 tenant demand charts
+python3 update_combined_requirements_charts.py  # 7 combined requirements charts
 python3 update_supabase_charts.py               # 1 industrial vacancy chart
 python3 update_fred_charts.py                   # 1 housing starts chart
 python3 update_fred_economic_indicators.py      # 7 economic indicator charts
 python3 update_building_performance_charts.py   # 4 building performance by size charts
+```
+
+**Standalone Chart Generators:**
+```bash
+python3 create_ams_kpi_chart.py                          # 1 AMS property management KPI chart
+python3 create_transaction_form_chart.py                 # 2 transaction charts (SF + count)
+python3 create_demand_by_tenant_size_by_market.py        # 5 market-specific demand by tenant size charts
 ```
 
 ### What Each Script Does
@@ -2476,21 +2484,35 @@ python3 update_building_performance_charts.py   # 4 building performance by size
   - `requirements_by_size_range.html` - SF by size range (horizontal bars)
 - Uses OAuth2 service account credentials from `aquila_graph.env`
 
-**2. update_supabase_charts.py**
+**2. update_combined_requirements_charts.py**
+- Combines data from two Google Sheets tabs (2025+ and historical through 2024)
+- Filters historical data to office-only requirements
+- Fetches office absorption data from Supabase for comparison charts
+- Generates 7 charts:
+  - `requirements_sf_total.html` - Monthly total SF (LOW/HIGH lines, combined historical)
+  - `requirements_sf_avg.html` - Average SF with count (dual-axis, combined historical)
+  - `requirements_sf_avg_by_industry.html` - Demand by industry (donut, combined historical)
+  - `requirements_by_size_range.html` - SF by size range (horizontal bars, combined historical)
+  - `requirements_vs_absorption_office.html` - Requirements vs absorption comparison
+  - `requirements_yoy_rolling_12m.html` - Rolling 12-month YoY comparison
+  - `requirements_demand_by_tenant_size.html` - Office demand by tenant size (citywide)
+- Uses OAuth2 service account credentials and Supabase credentials from `aquila_graph.env`
+
+**3. update_supabase_charts.py**
 - Queries Supabase `market_tables_industrial` table
 - Generates 1 chart:
   - `vacancy_rate_industrial.html` - Vacancy rate by submarket (line chart)
 - Requires Supabase credentials in `aquila_graph.env`
 - **Note:** May fail with 403 if RLS policies block anon key
 
-**3. update_fred_charts.py**
+**4. update_fred_charts.py**
 - Fetches Austin housing data from Federal Reserve API
 - Series: AUST448BPPRIV (Private Housing Units Authorized)
 - Generates 1 chart:
   - `charts/economic-indicators/austin_housing_starts.html` - Monthly housing starts (line chart)
 - Uses FRED API key from `aquila_graph.env`
 
-**4. update_fred_economic_indicators.py**
+**5. update_fred_economic_indicators.py**
 - Fetches 7 economic indicator datasets from Federal Reserve API
 - Includes employment, wages, interest rates, and inflation data
 - Uses base 100 indexing for comparison charts
@@ -2504,7 +2526,7 @@ python3 update_building_performance_charts.py   # 4 building performance by size
   - `inflation_cpi_ppi_office.html` - Inflation & PPI (5 series)
 - Uses FRED API key from `aquila_graph.env`
 
-**5. update_building_performance_charts.py**
+**6. update_building_performance_charts.py**
 - Queries Supabase `quarterly_report_data_office` and `quarterly_report_data_industrial` tables
 - Filters for Aquila competitive set buildings with "Existing" status
 - Automatically creates 5 rounded size bins for each property type based on data distribution
@@ -2520,12 +2542,48 @@ python3 update_building_performance_charts.py   # 4 building performance by size
 - Requires Supabase credentials in `aquila_graph.env`
 - **Note:** May fail with 403 if RLS policies block anon key
 
-**6. update_all_charts.py**
+**7. update_all_charts.py**
 - Orchestrates all chart update scripts
 - Runs sequentially: Google Sheets → Supabase → FRED Housing → FRED Economic Indicators → Building Performance
 - Runs 5 data sources, generating 19 total charts
 - Shows summary of successes/failures
 - Exit code 0 if all succeed, 1 if any fail
+
+### Standalone Chart Generators
+
+These scripts generate specific charts on demand and are not part of the automated update workflow:
+
+**8. create_ams_kpi_chart.py**
+- Reads AMS property management portfolio data from Excel
+- File: `data/AMS- Property Split List (Updated 1.9.26).xlsx`
+- Generates 1 chart:
+  - `ams_managed_properties_kpi.html` - Dual horizontal bar chart showing total SF and building count by property type
+- Portfolio includes: Office, Industrial, Retail, Office/Retail, Office/Medical
+- See section 8 in Components for detailed documentation
+
+**9. create_transaction_form_chart.py**
+- Reads transaction data from Excel form submissions
+- File: `data/TransactionRequestForm_Data_16668082_1769632373.xlsx`
+- Includes robust SF value cleaning (handles various input formats, converts acres to SF)
+- Generates 2 charts:
+  - `transaction_sf_by_quarter.html` - Quarterly transaction volume by platform (stacked bar)
+  - `transaction_count_by_quarter.html` - Quarterly transaction count by platform (stacked bar)
+- Data range: 2022 Q1 onwards
+- Filters out land-only transactions
+- See section 9 in Components for detailed documentation
+
+**10. create_demand_by_tenant_size_by_market.py**
+- Combines data from two Google Sheets tabs (2025+ and historical through 2024)
+- Applies inclusive market mapping rules (rows can count toward multiple markets)
+- Generates 5 market-specific charts:
+  - `requirements_demand_by_tenant_size_cbd.html` - CBD market
+  - `requirements_demand_by_tenant_size_sw.html` - Southwest market
+  - `requirements_demand_by_tenant_size_nw.html` - Northwest market
+  - `requirements_demand_by_tenant_size_e.html` - East market
+  - `requirements_demand_by_tenant_size_c.html` - Central market
+- Each chart shows annual demand by 5 size categories (Sub 10k, 10k-25k, 25k-50k, 50k-100k, Mega) with total demand line
+- Market mapping handles citywide/flexible requirements, urban core splits, and submarket consolidations
+- See section 10 in Components for detailed documentation and market mapping rules
 
 ### Usage Workflow
 
