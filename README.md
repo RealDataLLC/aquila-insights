@@ -1,22 +1,6 @@
 # Welcome to aquila-insights
 These are data plots for Aquila Commercial, maintained by [Nelson Lin](mailto:nelson@subtlerealestate.com)
 
-# Embedding Instruction
-
-To embed a chart on your website, you can use the following HTML code as an example:
-
-```html
-<iframe
-  src="https://yourdomain.com/charts/revenue_by_day.html"
-  width="100%"
-  height="500"
-  frameborder="0">
-</iframe>
-```
-
-Simply replace the `src` URL with the link to your own chart if needed.
-
-
 ## Aquila Operating KPIs
 [AMS Managed Properties KPIs [2026-01-20]](https://realdatallc.github.io/aquila-insights/charts/property-management/ams_managed_properties_kpi.html)
 
@@ -82,3 +66,20 @@ Todo:
 - Requirements vs Absorption (Industrial)
 - Sales Taxes in Austin (Retail)
 - Inflation adjusted metrics
+
+---
+
+## Embedding Instructions
+
+To embed a chart on your website, you can use the following HTML code as an example:
+
+```html
+<iframe
+  src="https://yourdomain.com/charts/revenue_by_day.html"
+  width="100%"
+  height="500"
+  frameborder="0">
+</iframe>
+```
+
+Simply replace the `src` URL with the link to your own chart if needed.

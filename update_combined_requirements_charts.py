@@ -821,7 +821,7 @@ category_colors = {
     '50k-100k SF':       AQUILA_COLORS[4],   # Greenspace
     '25k-50k SF':        AQUILA_COLORS[3],   # Brass
     '10k-25k SF':        AQUILA_COLORS[2],   # Copper
-    'Sub 10k SF':        AQUILA_COLORS[6],   # Signal
+    'Sub 10k SF':        AQUILA_COLORS[7],   # Pennybacker
 }
 
 category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
