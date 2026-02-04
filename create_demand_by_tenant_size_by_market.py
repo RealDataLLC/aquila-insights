@@ -339,7 +339,10 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
     # Grouped bars for each size category
     for category in category_order:
         cat_data = yearly_by_size[yearly_by_size['size_category'] == category]
-        cat_data = cat_data[['year', 'segment_demand', 'count']].set_index('year').reindex(years).fillna(0).reset_index()
+        cat_data = cat_data[['year', 'segment_demand', 'count']].set_index('year').reindex(years).reset_index()
+        # Fill NaN values only in numeric columns
+        cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
+        cat_data['count'] = cat_data['count'].fillna(0)
 
         fig.add_trace(go.Bar(
             x=cat_data['year'].astype(str),
@@ -355,7 +358,8 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         ))
 
     # Total demand line on secondary y-axis
-    total_data = yearly_total.set_index('year').reindex(years).fillna(0).reset_index()
+    total_data = yearly_total.set_index('year').reindex(years).reset_index()
+    total_data['total_demand'] = total_data['total_demand'].fillna(0)
 
     fig.add_trace(go.Scatter(
         x=total_data['year'].astype(str),
