@@ -77,19 +77,33 @@ tab0 = sheet.get_worksheet(0)
 df_2025_plus = pd.DataFrame(tab0.get_all_records())
 print(f"    - Loaded {len(df_2025_plus)} rows")
 
-# Tab 1: Through 2024 data (index 2)
-print("  Reading Tab 1: 'Through 2024' data...")
-tab1 = sheet.get_worksheet(2)
+# Tab 1: Through 2024 data (find by name)
+print("  Reading Tab 1: 'DITM & Crab Trap MASTER Report (Through 2024)' data...")
+try:
+    tab1 = sheet.worksheet("DITM & Crab Trap MASTER Report (Through 2024)")
+except Exception as e:
+    print(f"    ✗ Could not find tab by name, trying index 2: {e}")
+    tab1 = sheet.get_worksheet(2)
+
 rows = tab1.get_all_values()
 df_through_2024 = pd.DataFrame(rows[1:], columns=rows[0])
+
+print(f"    - Loaded {len(df_through_2024)} rows")
+print(f"    - Columns: {len(df_through_2024.columns)}")
 
 # Filter to office-only data
 if "USE" in df_through_2024.columns:
     df_through_2024 = df_through_2024[
         df_through_2024["USE"].str.lower().str.contains("office", na=False)
     ]
-
-print(f"    - Loaded {len(df_through_2024)} rows (office only)")
+    print(f"    - After filtering to office: {len(df_through_2024)} rows")
+elif "Use" in df_through_2024.columns:
+    df_through_2024 = df_through_2024[
+        df_through_2024["Use"].str.lower().str.contains("office", na=False)
+    ]
+    print(f"    - After filtering to office: {len(df_through_2024)} rows")
+else:
+    print(f"    - No USE/Use column found, keeping all {len(df_through_2024)} rows")
 
 # ============================================================================
 # STEP 3: Standardize and combine data
