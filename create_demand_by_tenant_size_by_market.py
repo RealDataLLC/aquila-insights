@@ -366,7 +366,7 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         y=total_data['total_demand'],
         mode='lines+markers',
         name='Total Demand',
-        line=dict(color=AQUILA_COLORS[0], width=3),
+        line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
         marker=dict(size=10, color=AQUILA_COLORS[0], symbol='line-ew-open', line=dict(width=3)),
         yaxis='y2',
         hovertemplate=(
