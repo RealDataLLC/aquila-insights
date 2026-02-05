@@ -359,8 +359,8 @@ df_expanded['size_category'] = pd.cut(
     right=False
 )
 
-# Add year column
-df_expanded['year'] = df_expanded['date'].dt.year
+# Add quarter column
+df_expanded['quarter'] = df_expanded['date'].dt.to_period('Q').dt.to_timestamp()
 
 # Colors for each size category (replace Signal with Pennybacker)
 category_colors = {
@@ -393,21 +393,21 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         print(f"    ⚠ No data for {market_code}, skipping")
         continue
 
-    # Aggregate by year and size category
-    yearly_by_size = df_market.groupby(['year', 'size_category'], observed=False).agg(
+    # Aggregate by quarter and size category
+    quarterly_by_size = df_market.groupby(['quarter', 'size_category'], observed=False).agg(
         segment_demand=('sf_avg', 'sum'),
         count=('sf_avg', 'count')
     ).reset_index()
 
-    # Total demand per year
-    yearly_total = df_market.groupby('year').agg(
+    # Total demand per quarter
+    quarterly_total = df_market.groupby('quarter').agg(
         total_demand=('sf_avg', 'sum')
     ).reset_index()
 
-    years = sorted(yearly_by_size['year'].unique())
+    quarters = sorted(quarterly_by_size['quarter'].unique())
 
-    if len(years) == 0:
-        print(f"    ⚠ No year data for {market_code}, skipping")
+    if len(quarters) == 0:
+        print(f"    ⚠ No quarter data for {market_code}, skipping")
         continue
 
     # Create figure
@@ -415,31 +415,35 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
 
     # Grouped bars for each size category
     for category in category_order:
-        cat_data = yearly_by_size[yearly_by_size['size_category'] == category]
-        cat_data = cat_data[['year', 'segment_demand', 'count']].set_index('year').reindex(years).reset_index()
+        cat_data = quarterly_by_size[quarterly_by_size['size_category'] == category]
+        cat_data = cat_data[['quarter', 'segment_demand', 'count']].set_index('quarter').reindex(quarters).reset_index()
         # Fill NaN values only in numeric columns
         cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
         cat_data['count'] = cat_data['count'].fillna(0)
 
+        # Format quarter labels as "YYYY Qn"
+        cat_data['quarter_label'] = cat_data['quarter'].dt.to_period('Q').astype(str)
+
         fig.add_trace(go.Bar(
-            x=cat_data['year'].astype(str),
+            x=cat_data['quarter_label'],
             y=cat_data['segment_demand'],
             name=category,
             marker_color=category_colors[category],
             hovertemplate=(
                 f'<b>{category}</b><br>'
-                'Year: %{x}<br>'
+                'Quarter: %{x}<br>'
                 'Demand: %{y:,.0f} SF<br>'
                 '<extra></extra>'
             ),
         ))
 
     # Total demand line on secondary y-axis
-    total_data = yearly_total.set_index('year').reindex(years).reset_index()
+    total_data = quarterly_total.set_index('quarter').reindex(quarters).reset_index()
     total_data['total_demand'] = total_data['total_demand'].fillna(0)
+    total_data['quarter_label'] = total_data['quarter'].dt.to_period('Q').astype(str)
 
     fig.add_trace(go.Scatter(
-        x=total_data['year'].astype(str),
+        x=total_data['quarter_label'],
         y=total_data['total_demand'],
         mode='lines+markers',
         name='Total Demand',
@@ -448,18 +452,18 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         yaxis='y2',
         hovertemplate=(
             '<b>Total Demand</b><br>'
-            'Year: %{x}<br>'
+            'Quarter: %{x}<br>'
             'Total: %{y:,.0f} SF<br>'
             '<extra></extra>'
         ),
     ))
 
-    min_year = int(min(years))
-    max_year = int(max(years))
+    min_quarter = quarters[0]
+    max_quarter = quarters[-1]
 
     fig.update_layout(
         title={
-            'text': f'Office Demand by Tenant Size - {market_names[market_code]} ({min_year}–{max_year})',
+            'text': f'Office Demand by Tenant Size - {market_names[market_code]} (Quarterly: {min_quarter.to_period("Q")}–{max_quarter.to_period("Q")})',
             'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
             'x': 0.5,
             'xanchor': 'center',
@@ -474,7 +478,8 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
             showline=True,
             linecolor='lightgrey',
             linewidth=1,
-            tickfont=dict(size=13),
+            tickfont=dict(size=10),
+            tickangle=-45,
         ),
         yaxis=dict(
             title='Segment Demand (SF)',
@@ -502,15 +507,15 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         legend=dict(
             orientation='h',
             yanchor='top',
-            y=-0.1,
+            y=-0.2,
             xanchor='center',
             x=0.5,
             font=dict(size=12),
             traceorder='normal',
         ),
         height=650,
-        width=1000,
-        margin=dict(t=80, b=120, l=80, r=80),
+        width=1400,
+        margin=dict(t=80, b=140, l=80, r=80),
         hovermode='x unified',
     )
 

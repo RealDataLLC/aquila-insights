@@ -798,13 +798,13 @@ fig6.write_html('charts/office/requirements_yoy_rolling_12m.html')
 print('  ✓ Saved charts/office/requirements_yoy_rolling_12m.html')
 
 # ============================================================================
-# CHART 7: Office Demand by Tenant Size (Annual Grouped Bar + Total Line)
+# CHART 7: Office Demand by Tenant Size (Quarterly Grouped Bar + Total Line)
 # ============================================================================
 print("\n7. Generating Office Demand by Tenant Size chart...")
 
 # Filter to records with valid dates
 df_demand = df_combined[df_combined['date'].notna()].copy()
-df_demand['year'] = df_demand['date'].dt.year
+df_demand['quarter'] = df_demand['date'].dt.to_period('Q').dt.to_timestamp()
 
 # Size bins matching the reference chart (5 categories)
 demand_bins = [0, 10000, 25000, 50000, 100000, float('inf')]
@@ -817,18 +817,18 @@ df_demand['size_category'] = pd.cut(
     right=False
 )
 
-# Aggregate: sum of sf_avg by year and size category
-yearly_by_size = df_demand.groupby(['year', 'size_category'], observed=False).agg(
+# Aggregate: sum of sf_avg by quarter and size category
+quarterly_by_size = df_demand.groupby(['quarter', 'size_category'], observed=False).agg(
     segment_demand=('sf_avg', 'sum'),
     count=('sf_avg', 'count')
 ).reset_index()
 
-# Total demand per year
-yearly_total = df_demand.groupby('year').agg(
+# Total demand per quarter
+quarterly_total = df_demand.groupby('quarter').agg(
     total_demand=('sf_avg', 'sum')
 ).reset_index()
 
-years = sorted(yearly_by_size['year'].unique())
+quarters = sorted(quarterly_by_size['quarter'].unique())
 
 # Colors for each size category
 category_colors = {
@@ -845,27 +845,31 @@ fig7 = go.Figure()
 
 # Grouped bars for each size category
 for category in category_order:
-    cat_data = yearly_by_size[yearly_by_size['size_category'] == category]
-    cat_data = cat_data[['year', 'segment_demand', 'count']].set_index('year').reindex(years).fillna(0).reset_index()
+    cat_data = quarterly_by_size[quarterly_by_size['size_category'] == category]
+    cat_data = cat_data[['quarter', 'segment_demand', 'count']].set_index('quarter').reindex(quarters).fillna(0).reset_index()
+
+    # Format quarter labels as "YYYY Qn"
+    cat_data['quarter_label'] = cat_data['quarter'].dt.to_period('Q').astype(str)
 
     fig7.add_trace(go.Bar(
-        x=cat_data['year'].astype(str),
+        x=cat_data['quarter_label'],
         y=cat_data['segment_demand'],
         name=category,
         marker_color=category_colors[category],
         hovertemplate=(
             f'<b>{category}</b><br>'
-            'Year: %{x}<br>'
+            'Quarter: %{x}<br>'
             'Demand: %{y:,.0f} SF<br>'
             '<extra></extra>'
         ),
     ))
 
 # Total demand line on secondary y-axis
-total_data = yearly_total.set_index('year').reindex(years).fillna(0).reset_index()
+total_data = quarterly_total.set_index('quarter').reindex(quarters).fillna(0).reset_index()
+total_data['quarter_label'] = total_data['quarter'].dt.to_period('Q').astype(str)
 
 fig7.add_trace(go.Scatter(
-    x=total_data['year'].astype(str),
+    x=total_data['quarter_label'],
     y=total_data['total_demand'],
     mode='lines+markers',
     name='Total Demand',
@@ -874,18 +878,18 @@ fig7.add_trace(go.Scatter(
     yaxis='y2',
     hovertemplate=(
         '<b>Total Demand</b><br>'
-        'Year: %{x}<br>'
+        'Quarter: %{x}<br>'
         'Total: %{y:,.0f} SF<br>'
         '<extra></extra>'
     ),
 ))
 
-min_year = int(min(years))
-max_year = int(max(years))
+min_quarter = quarters[0]
+max_quarter = quarters[-1]
 
 fig7.update_layout(
     title={
-        'text': f'Office Demand by Tenant Size ({min_year}\u2013{max_year})',
+        'text': f'Office Demand by Tenant Size (Quarterly: {min_quarter.to_period("Q")}\u2013{max_quarter.to_period("Q")})',
         'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
         'x': 0.5,
         'xanchor': 'center',
@@ -900,7 +904,8 @@ fig7.update_layout(
         showline=True,
         linecolor='lightgrey',
         linewidth=1,
-        tickfont=dict(size=13),
+        tickfont=dict(size=10),
+        tickangle=-45,
     ),
     yaxis=dict(
         title='Segment Demand (SF)',
@@ -928,15 +933,15 @@ fig7.update_layout(
     legend=dict(
         orientation='h',
         yanchor='top',
-        y=-0.1,
+        y=-0.2,
         xanchor='center',
         x=0.5,
         font=dict(size=12),
         traceorder='normal',
     ),
     height=650,
-    width=1000,
-    margin=dict(t=80, b=120, l=80, r=80),
+    width=1400,
+    margin=dict(t=80, b=140, l=80, r=80),
     hovermode='x unified',
 )
 
