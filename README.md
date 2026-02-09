@@ -46,6 +46,19 @@ These are data plots for Aquila Commercial, maintained by [Nelson Lin](mailto:ne
 
 
 ## Industrial
+
+### Tenant Demand (TITM)
+[Industrial Demand by Tenant Size [2026-02-09]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_demand_by_tenant_size.html) - Quarterly demand grouped by size category with total demand line
+
+[Industrial Demand by Use Type [2026-02-09]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_demand_by_use_type.html) - Distribution, Manufacturing, R&D/Lab, etc.
+
+[Industrial Requirements by Size Range [2026-02-09]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_by_size_range.html) - Total cumulative SF by size category
+
+[Industrial Requirements Total SF [2026-02-09]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_sf_total.html) - Monthly total SF (Low/High)
+
+[Industrial Requirements Average SF [2026-02-09]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_sf_avg.html) - Monthly average SF with record count
+
+### Market Metrics
 [Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/industrial/vacancy_rate_industrial.html)
 
 [Industrial Occupancy Rate by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_occupancy_by_size.html)
