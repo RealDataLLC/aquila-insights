@@ -119,17 +119,19 @@ else:
 print("\nStep 3: Standardizing data...")
 
 def standardize_tab0(df):
-    """Standardize Tab 0 (2025+) data"""
+    """Standardize Tab 0 (2025+) data, include 'USE' column"""
     df_std = pd.DataFrame()
     df_std['date'] = pd.to_datetime(df['DATE OF REQUIREMENT'], errors='coerce')
     df_std['sf_low'] = pd.to_numeric(df['REQUIRED SF (LOW)'], errors='coerce')
     df_std['sf_high'] = pd.to_numeric(df['REQUIRED SF (HIGH)'], errors='coerce')
     df_std['market'] = df.get('MARKET', '').astype(str)
+    # Always include USE column, with fallback empty string if missing
+    df_std['USE'] = df.get('USE', '').astype(str)
     df_std['source_tab'] = '2025+'
     return df_std
 
 def standardize_tab1(df):
-    """Standardize Tab 1 (Through 2024) data"""
+    """Standardize Tab 1 (Through 2024) data, include 'USE' column (match on 'USE' or 'Use')"""
     df_std = pd.DataFrame()
 
     print("  Tab 1 column names (first 20):")
@@ -189,6 +191,14 @@ def standardize_tab1(df):
         print("  ✗ No MARKET column found")
         df_std['market'] = ''
 
+    # Always include USE column, fallback to 'Use' if not present, else empty string
+    if 'USE' in df.columns:
+        df_std['USE'] = df['USE'].astype(str)
+    elif 'Use' in df.columns:
+        df_std['USE'] = df['Use'].astype(str)
+    else:
+        df_std['USE'] = ''
+
     df_std['source_tab'] = 'Through 2024'
 
     return df_std
@@ -197,13 +207,17 @@ def standardize_tab1(df):
 df_std_2025 = standardize_tab0(df_2025_plus)
 df_std_2024 = standardize_tab1(df_through_2024)
 
+# Filter so that only rows where 'USE' contains the word 'office' (case-insensitive) are kept
+df_std_2025 = df_std_2025[df_std_2025['USE'].str.contains('office', case=False, na=False)].copy()
+df_std_2024 = df_std_2024[df_std_2024['USE'].str.contains('office', case=False, na=False)].copy()
+
 # Check if Through 2024 data is empty
 print(f"\n  Validation:")
-print(f"    Tab 0 (2025+) standardized: {len(df_std_2025)} rows")
-print(f"    Tab 1 (Through 2024) standardized: {len(df_std_2024)} rows")
+print(f"    Tab 0 (2025+) standardized & filtered: {len(df_std_2025)} rows")
+print(f"    Tab 1 (Through 2024) standardized & filtered: {len(df_std_2024)} rows")
 
 if len(df_std_2024) == 0:
-    print("  ⚠ WARNING: Through 2024 tab produced 0 rows after standardization!")
+    print("  ⚠ WARNING: Through 2024 tab produced 0 rows after standardization and office filtering!")
     print("  ⚠ Charts will only contain 2025+ data!")
 else:
     # Check data quality
@@ -236,6 +250,10 @@ df_combined = df_combined[df_combined['sf_avg'].notna()].copy()
 
 # Filter to 2018 onwards
 df_combined = df_combined[df_combined['date'] >= '2018-01-01'].copy()
+
+# USE column already filtered, no need to filter again
+
+
 
 print(f"\n  Combined dataset: {len(df_combined)} rows from 2018+")
 print(f"    Date range: {df_combined['date'].min()} to {df_combined['date'].max()}")
