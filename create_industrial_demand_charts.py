@@ -121,7 +121,10 @@ df['status_clean'] = df['Status'].astype(str).str.strip().str.lower()
 # Filter out rows with no valid data
 df = df[df['date'].notna() & df['sf_avg'].notna()].copy()
 
-print(f"    - Valid rows (with date and SF): {len(df)}")
+# Restrict to deals after 2021
+df = df[df['date'] >= pd.Timestamp('2022-01-01')].copy()
+
+print(f"    - Valid rows (with date and SF) after 2021: {len(df)}")
 print(f"    - Date range: {df['date'].min().date()} to {df['date'].max().date()}")
 print(f"    - SF range: {df['sf_avg'].min():,.0f} to {df['sf_avg'].max():,.0f}")
 print(f"    - Median SF: {df['sf_avg'].median():,.0f}")
