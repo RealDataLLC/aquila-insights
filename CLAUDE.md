@@ -46,8 +46,9 @@
 
 ### External Services & Data Sources
 1. **Supabase** - PostgreSQL database hosted on Supabase (commercial real estate market data)
-2. **Google Sheets API** - Tenant requirement tracking
-3. **FRED API** - Federal Reserve Economic Data (housing starts, economic indicators)
+2. **Google Sheets API** - Office tenant requirement tracking (Spreadsheet ID: `1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec`)
+3. **Google Sheets API** - Industrial tenant demand / TITM (Spreadsheet ID: `1natA0ALaQnX3U_vGC5Vrchy1QqmbW8k0zvTKwuE2wys`)
+4. **FRED API** - Federal Reserve Economic Data (housing starts, economic indicators)
 4. **Excel Files** - Property management data from Aquila Management Services (AMS)
 5. **GitHub Pages** - Static site hosting
 
@@ -85,7 +86,12 @@
 │   ├── industrial/                          # Industrial market charts
 │   │   ├── vacancy_rate_industrial.html     # Industrial vacancy rates by submarket
 │   │   ├── industrial_occupancy_by_size.html # Industrial occupancy by building size
-│   │   └── industrial_rent_by_size.html     # Industrial rent by building size
+│   │   ├── industrial_rent_by_size.html     # Industrial rent by building size
+│   │   ├── industrial_demand_by_tenant_size.html # Industrial demand by tenant size (grouped bar + total line)
+│   │   ├── industrial_demand_by_use_type.html    # Industrial demand by use type (donut)
+│   │   ├── industrial_requirements_by_size_range.html # Industrial cumulative SF by size range
+│   │   ├── industrial_requirements_sf_total.html # Industrial monthly total SF (Low/High)
+│   │   └── industrial_requirements_sf_avg.html   # Industrial monthly average SF + count
 │   └── economic-indicators/                 # Economic indicator charts
 │       ├── austin_employment_office_sectors.html # Employment in office sectors
 │       ├── austin_employment_industrial.html     # Industrial employment
@@ -109,6 +115,7 @@
 ├── create_ams_kpi_chart.py                  # Script: Generate AMS property management KPIs
 ├── create_transaction_form_chart.py         # Script: Generate transaction SF and count charts
 ├── create_demand_by_tenant_size_by_market.py # Script: Generate market-specific demand by tenant size charts
+├── create_industrial_demand_charts.py       # Script: Generate 5 industrial demand charts from TITM sheet
 ├── update_combined_requirements_charts.py   # Script: Generate combined requirements + absorption charts
 ├── update_all_charts.py                     # Master script: Run all chart updates
 ├── update_google_sheets_charts.py           # Script: Update 4 tenant demand charts
@@ -140,7 +147,7 @@
 
 **Generated Output:**
 - `charts/office/*.html` - Office market charts (17 charts)
-- `charts/industrial/*.html` - Industrial market charts (3 charts)
+- `charts/industrial/*.html` - Industrial market charts (8 charts)
 - `charts/economic-indicators/*.html` - Economic indicator charts (8 charts)
 - `charts/property-management/*.html` - Property management KPI charts (1 chart)
 - All charts are self-contained HTML files (committed to repo)
@@ -1581,6 +1588,101 @@ python3 create_demand_by_tenant_size_by_market.py
 
 ---
 
+### 11. create_industrial_demand_charts.py (Industrial Demand - TITM)
+
+**Purpose:** Generate 5 industrial demand charts from the TITM (Tenants in the Market) tab of the Industrial Google Sheet. This is the industrial counterpart to the office demand charts.
+
+**Data Source:**
+
+**Spreadsheet ID:** `1natA0ALaQnX3U_vGC5Vrchy1QqmbW8k0zvTKwuE2wys`
+
+**Tab:** Index 1 - "TITM" (Tenants in the Market)
+
+**Key Columns:**
+- `Date` - Requirement date (format: M/D/YYYY)
+- `Tenant` - Tenant/company name
+- `Size (SF) Low` - Low end of size requirement (numeric with commas)
+- `Size (SF) High` - High end of size requirement (numeric with commas)
+- `Timing` - Target timeline
+- `Submarket` - Location preference (111 unique values including Williamson, Hays, NE/SE, Citywide, Multi Market, etc.)
+- `Use` - Industrial use type (Distribution, Manufacturing, R&D/Lab, Food & Beverage, Undisclosed, etc.)
+- `Tenant Rep Broker` - Representing broker
+- `Contact` - Broker contact info
+- `Status` - Deal status (Active, Dead, Done, On Hold)
+- `Vendor?` - Vendor flag
+- `Local/New?` - Local vs. new to market
+- `Notes` - Additional notes
+- `Source` - Data source
+- `Destination` - Target destination
+- `Comp?` - Competitive flag
+
+**Data Characteristics:**
+- ~1,098 non-empty rows, ~810 with valid dates and SF values
+- Date range: 2012-2026 (bulk of data from 2022+)
+- SF range: 500 to 2,000,000 (median ~50-60k, much larger than office)
+- Status values need normalization (mixed case: "Dead", "dead", "DEad")
+- Row 1124 contains section header "Dead or Done Deals" (filtered out)
+- Submarket values are messy (111 unique) with compound strings like "N / NE", "SE / Hays"
+
+**Industrial Size Bins (different from office):**
+```python
+demand_bins = [0, 25000, 50000, 100000, 250000, float('inf')]
+demand_labels = ['Sub 25k SF', '25k-50k SF', '50k-100k SF', '100k-250k SF', 'Mega (250k+)']
+```
+
+Note: These bins are scaled up compared to office (Sub 10k, 10k-25k, etc.) because industrial requirements are significantly larger.
+
+**Output Charts:**
+
+**1. charts/industrial/industrial_demand_by_tenant_size.html**
+- **Type:** Grouped bar chart with secondary y-axis line
+- **Bars:** Quarterly demand (sum of avg SF) by 5 size categories
+- **Line:** Total demand per quarter on secondary y-axis
+- **Colors:** Navy (Mega 250k+), Greenspace (100k-250k), Brass (50k-100k), Copper (25k-50k), Pennybacker (Sub 25k)
+- **Purpose:** Shows how demand composition by tenant size has shifted over time
+
+**2. charts/industrial/industrial_demand_by_use_type.html**
+- **Type:** Donut chart
+- **Metrics:** Total SF demand by use type (top 7 + Other)
+- **Use types:** Distribution, Manufacturing, R&D/Lab, Food & Beverage, Undisclosed, etc.
+- **Purpose:** Shows composition of industrial demand by intended use
+
+**3. charts/industrial/industrial_requirements_by_size_range.html**
+- **Type:** Horizontal bar chart
+- **Categories:** Sub 25k, 25k-50k, 50k-100k, 100k-250k, Mega (250k+)
+- **Metrics:** Bar length = total cumulative SF, inside label = count of requirements
+
+**4. charts/industrial/industrial_requirements_sf_total.html**
+- **Type:** Dual-line chart
+- **Metrics:** Monthly LOW vs HIGH square footage totals
+- **Purpose:** Show range of industrial tenant demand over time
+
+**5. charts/industrial/industrial_requirements_sf_avg.html**
+- **Type:** Dual-axis chart (lines + bars)
+- **Metrics:** Lines = Mean and Median SF, Bars = Record count
+- **Purpose:** Trend + volume visualization
+
+**Script Usage:**
+```bash
+python3 create_industrial_demand_charts.py
+```
+
+**Requirements:**
+- `pandas` - Data manipulation
+- `gspread` - Google Sheets API
+- `oauth2client` - OAuth2 authentication
+- `plotly` - Interactive chart generation
+- `aquila_graphing_tools` - Aquila brand styling
+
+**Use Case:** These charts enable:
+- Analyzing industrial tenant demand trends by size and use type
+- Understanding demand composition (distribution vs manufacturing vs R&D)
+- Comparing demand patterns to office market
+- Identifying emerging industrial demand trends
+- Supporting industrial leasing and investment decisions
+
+---
+
 ## Data Models
 
 ### PostgreSQL Schema (Partial)
@@ -1610,7 +1712,7 @@ market_tables_office (
 
 ### Google Sheets Data Model
 
-**Tenant Requirements:**
+**Office Tenant Requirements (ID: 1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec):**
 ```
 Primary Key: Implicit (row number)
 Date Fields: DATE OF REQUIREMENT, DATE UPDATED
@@ -1620,6 +1722,18 @@ Categories: USE MARKET, INDUSTRY, TIMING
 Status: STATUS (Active/Inactive)
 Relationships: BROKER CONTACT, ASSIGNED BROKER
 Context: BUILDINGS SENT, SOURCE, INTERNAL NOTES
+```
+
+**Industrial TITM - Tenants in the Market (ID: 1natA0ALaQnX3U_vGC5Vrchy1QqmbW8k0zvTKwuE2wys, Tab index 1):**
+```
+Primary Key: Implicit (row number)
+Date Fields: Date (M/D/YYYY format)
+Identifiers: Tenant, Tenant Rep Broker, Contact
+Metrics: Size (SF) Low, Size (SF) High (commas in values)
+Categories: Use (Distribution, Manufacturing, R&D/Lab, etc.), Submarket (111 unique values)
+Status: Status (Active/Dead/Done/On Hold - mixed case)
+Context: Timing, Vendor?, Local/New?, Notes, Source, Destination, Comp?
+Note: Row 1124 is a section header "Dead or Done Deals" - filter out during processing
 ```
 
 ---
@@ -2418,7 +2532,8 @@ pip install X
 
 ### Data Sources
 - **Supabase:** PostgreSQL database hosted on Supabase (market tables: office, industrial, retail)
-- **Google Sheets:** Tenant requirements (ID: 1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec)
+- **Google Sheets:** Office tenant requirements (ID: 1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec)
+- **Google Sheets:** Industrial TITM - Tenants in the Market (ID: 1natA0ALaQnX3U_vGC5Vrchy1QqmbW8k0zvTKwuE2wys)
 - **FRED API:** Economic indicators (https://api.stlouisfed.org/fred/series/observations)
 - **Excel Files:** AMS property management data (data/AMS- Property Split List.xlsx), Transaction Request Form data (data/TransactionRequestForm_Data_*.xlsx)
 
@@ -2471,6 +2586,7 @@ python3 update_building_performance_charts.py   # 4 building performance by size
 python3 create_ams_kpi_chart.py                          # 1 AMS property management KPI chart
 python3 create_transaction_form_chart.py                 # 2 transaction charts (SF + count)
 python3 create_demand_by_tenant_size_by_market.py        # 5 market-specific demand by tenant size charts
+python3 create_industrial_demand_charts.py               # 5 industrial demand charts from TITM sheet
 ```
 
 ### What Each Script Does
@@ -2585,6 +2701,19 @@ These scripts generate specific charts on demand and are not part of the automat
 - Market mapping handles citywide/flexible requirements, urban core splits, and submarket consolidations
 - See section 10 in Components for detailed documentation and market mapping rules
 
+**11. create_industrial_demand_charts.py**
+- Reads industrial tenant demand data from Google Sheets TITM tab
+- Spreadsheet ID: `1natA0ALaQnX3U_vGC5Vrchy1QqmbW8k0zvTKwuE2wys`, Tab index 1 ("TITM")
+- Industrial-scaled size bins: Sub 25k, 25k-50k, 50k-100k, 100k-250k, Mega (250k+)
+- Generates 5 charts in `charts/industrial/`:
+  - `industrial_demand_by_tenant_size.html` - Quarterly grouped bar + total line (main chart)
+  - `industrial_demand_by_use_type.html` - Donut chart by use type (Distribution, Manufacturing, etc.)
+  - `industrial_requirements_by_size_range.html` - Horizontal bar chart (cumulative SF by size)
+  - `industrial_requirements_sf_total.html` - Monthly total SF Low/High lines
+  - `industrial_requirements_sf_avg.html` - Monthly average SF + record count (dual-axis)
+- Filters out section headers (e.g., "Dead or Done Deals") and empty rows
+- See section 11 in Components for detailed documentation
+
 ### Usage Workflow
 
 **When Data Updates:**
@@ -2685,13 +2814,23 @@ ERROR: 400 Bad Request
 
 ---
 
-**Last Updated:** 2026-01-30
-**Document Version:** 1.3.0
+**Last Updated:** 2026-02-09
+**Document Version:** 1.4.0
 **Repository Status:** Active development on feature branches, merges to main
 
 ---
 
 ## Changelog
+
+### Version 1.4.0 (2026-02-09)
+- Added Industrial Demand charts from TITM (Tenants in the Market) Google Sheet
+  - New data source: Industrial Google Sheet (ID: `1natA0ALaQnX3U_vGC5Vrchy1QqmbW8k0zvTKwuE2wys`)
+  - Added `create_industrial_demand_charts.py` script generating 5 charts
+  - Charts: demand by tenant size, demand by use type, requirements by size range, total SF, average SF
+  - Industrial-scaled size bins: Sub 25k, 25k-50k, 50k-100k, 100k-250k, Mega (250k+)
+- Updated industrial charts count: `industrial/` - 8 charts (was 3)
+- Added section 11 documentation for industrial TITM data source
+- Added Industrial TITM to Google Sheets Data Model
 
 ### Version 1.3.0 (2026-01-30)
 - Added Office Demand by Tenant Size chart (`requirements_demand_by_tenant_size.html`)
