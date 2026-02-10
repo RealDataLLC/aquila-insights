@@ -49,23 +49,34 @@ else:
     # Helper function to strip quotes from env vars
     def get_env_stripped(key):
         val = os.getenv(key)
-        if val:
+        if val is not None:
             return val.strip('"').strip("'")
         return val
 
     credentials_dict = {
-        "type": get_env_stripped("GOOGLE_SERVICE_ACCOUNT_TYPE"),
+        "type": get_env_stripped("GOOGLE_SERVICE_ACCOUNT_TYPE") or "service_account",
         "project_id": get_env_stripped("GOOGLE_PROJECT_ID"),
         "private_key_id": get_env_stripped("GOOGLE_PRIVATE_KEY_ID"),
-        "private_key": get_env_stripped("GOOGLE_PRIVATE_KEY").replace('\\n', '\n') if get_env_stripped("GOOGLE_PRIVATE_KEY") else None,
+        "private_key": (get_env_stripped("GOOGLE_PRIVATE_KEY") or "").replace('\\n', '\n'),
         "client_email": get_env_stripped("GOOGLE_CLIENT_EMAIL"),
         "client_id": get_env_stripped("GOOGLE_CLIENT_ID"),
         "auth_uri": get_env_stripped("GOOGLE_AUTH_URI"),
         "token_uri": get_env_stripped("GOOGLE_TOKEN_URI"),
         "auth_provider_x509_cert_url": get_env_stripped("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
         "client_x509_cert_url": get_env_stripped("GOOGLE_CLIENT_X509_CERT_URL"),
-        "universe_domain": get_env_stripped("GOOGLE_UNIVERSE_DOMAIN")
+        "universe_domain": get_env_stripped("GOOGLE_UNIVERSE_DOMAIN"),
     }
+
+    # Remove any keys with None values to avoid breaking oauth2client
+    credentials_dict = {k: v for k, v in credentials_dict.items() if v is not None}
+
+    # Defensive: ensure "type" is present and correct, else fail with friendly error
+    if credentials_dict.get("type") != "service_account":
+        raise ValueError(
+            f'GOOGLE_SERVICE_ACCOUNT_TYPE missing or incorrect in environment variables. '
+            f'Expected "service_account", got: {credentials_dict.get("type")!r}'
+        )
+
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 
 client = gspread.authorize(credentials)
@@ -366,9 +377,9 @@ for market in ['CBD', 'SW', 'NW', 'E', 'C']:
     print(f"    {market}: {count} records, {total_sf:,.0f} SF")
 
 # ============================================================================
-# STEP 6: Generate market-specific charts
+# STEP 6: Generate market-specific charts (ANNUAL, not quarterly)
 # ============================================================================
-print("\nStep 6: Generating market-specific charts...")
+print("\nStep 6: Generating market-specific charts (annual)...")
 
 # Create output directory
 os.makedirs('charts/office', exist_ok=True)
@@ -384,8 +395,8 @@ df_expanded['size_category'] = pd.cut(
     right=False
 )
 
-# Add quarter column
-df_expanded['quarter'] = df_expanded['date'].dt.to_period('Q').dt.to_timestamp()
+# Add year column (annual x-axis, replacing quarters!)
+df_expanded['year'] = df_expanded['date'].dt.year
 
 # Colors for each size category (replace Signal with Pennybacker)
 category_colors = {
@@ -407,7 +418,7 @@ market_names = {
     'C': 'Central'
 }
 
-# Generate a chart for each market
+# Generate a chart for each market, aggregating ANNUAL (not quarterly)
 for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
     print(f"\n  Generating chart for {market_names[market_code]}...")
 
@@ -418,21 +429,25 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         print(f"    ⚠ No data for {market_code}, skipping")
         continue
 
-    # Aggregate by quarter and size category
-    quarterly_by_size = df_market.groupby(['quarter', 'size_category'], observed=False).agg(
+    # Drop NA years (in case)
+    df_market = df_market[df_market['year'].notna()].copy()
+    df_market['year'] = df_market['year'].astype(int)
+
+    # Aggregate by year and size category (annual breakdown)
+    annual_by_size = df_market.groupby(['year', 'size_category'], observed=False).agg(
         segment_demand=('sf_avg', 'sum'),
         count=('sf_avg', 'count')
     ).reset_index()
 
-    # Total demand per quarter
-    quarterly_total = df_market.groupby('quarter').agg(
+    # Total demand per year
+    annual_total = df_market.groupby('year').agg(
         total_demand=('sf_avg', 'sum')
     ).reset_index()
 
-    quarters = sorted(quarterly_by_size['quarter'].unique())
+    years = sorted(annual_by_size['year'].unique())
 
-    if len(quarters) == 0:
-        print(f"    ⚠ No quarter data for {market_code}, skipping")
+    if len(years) == 0:
+        print(f"    ⚠ No annual data for {market_code}, skipping")
         continue
 
     # Create figure
@@ -440,35 +455,35 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
 
     # Grouped bars for each size category
     for category in category_order:
-        cat_data = quarterly_by_size[quarterly_by_size['size_category'] == category]
-        cat_data = cat_data[['quarter', 'segment_demand', 'count']].set_index('quarter').reindex(quarters).reset_index()
+        cat_data = annual_by_size[annual_by_size['size_category'] == category]
+        cat_data = cat_data[['year', 'segment_demand', 'count']].set_index('year').reindex(years).reset_index()
         # Fill NaN values only in numeric columns
         cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
         cat_data['count'] = cat_data['count'].fillna(0)
 
-        # Format quarter labels as "YYYY Qn"
-        cat_data['quarter_label'] = cat_data['quarter'].dt.to_period('Q').astype(str)
+        # Format year labels as string
+        cat_data['year_label'] = cat_data['year'].astype(str)
 
         fig.add_trace(go.Bar(
-            x=cat_data['quarter_label'],
+            x=cat_data['year_label'],
             y=cat_data['segment_demand'],
             name=category,
             marker_color=category_colors[category],
             hovertemplate=(
                 f'<b>{category}</b><br>'
-                'Quarter: %{x}<br>'
+                'Year: %{x}<br>'
                 'Demand: %{y:,.0f} SF<br>'
                 '<extra></extra>'
             ),
         ))
 
     # Total demand line on secondary y-axis
-    total_data = quarterly_total.set_index('quarter').reindex(quarters).reset_index()
+    total_data = annual_total.set_index('year').reindex(years).reset_index()
     total_data['total_demand'] = total_data['total_demand'].fillna(0)
-    total_data['quarter_label'] = total_data['quarter'].dt.to_period('Q').astype(str)
+    total_data['year_label'] = total_data['year'].astype(str)
 
     fig.add_trace(go.Scatter(
-        x=total_data['quarter_label'],
+        x=total_data['year_label'],
         y=total_data['total_demand'],
         mode='lines+markers',
         name='Total Demand',
@@ -477,18 +492,18 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         yaxis='y2',
         hovertemplate=(
             '<b>Total Demand</b><br>'
-            'Quarter: %{x}<br>'
+            'Year: %{x}<br>'
             'Total: %{y:,.0f} SF<br>'
             '<extra></extra>'
         ),
     ))
 
-    min_quarter = quarters[0]
-    max_quarter = quarters[-1]
+    min_year = min(years)
+    max_year = max(years)
 
     fig.update_layout(
         title={
-            'text': f'Office Demand by Tenant Size - {market_names[market_code]} (Quarterly: {min_quarter.to_period("Q")}–{max_quarter.to_period("Q")})',
+            'text': f'Office Demand by Tenant Size - {market_names[market_code]} (Annual: {min_year}–{max_year})',
             'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
             'x': 0.5,
             'xanchor': 'center',
@@ -503,7 +518,7 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
             showline=True,
             linecolor='lightgrey',
             linewidth=1,
-            tickfont=dict(size=10),
+            tickfont=dict(size=12),
             tickangle=-45,
         ),
         yaxis=dict(

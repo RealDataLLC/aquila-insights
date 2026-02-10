@@ -45,19 +45,32 @@ if use_json:
     credentials = ServiceAccountCredentials.from_json_keyfile_name(json_file, scope)
 else:
     print("  Using environment variables for credentials")
+    # Helper function to strip quotes from env vars (matches office_demand_by_market pattern)
+    def get_env_stripped(key):
+        val = os.getenv(key)
+        if val is not None:
+            return val.strip('"').strip("'")
+        return val
+
     credentials_dict = {
-        "type": os.getenv("GOOGLE_SERVICE_ACCOUNT_TYPE"),
-        "project_id": os.getenv("GOOGLE_PROJECT_ID"),
-        "private_key_id": os.getenv("GOOGLE_PRIVATE_KEY_ID"),
-        "private_key": os.getenv("GOOGLE_PRIVATE_KEY").replace('\\n', '\n') if os.getenv("GOOGLE_PRIVATE_KEY") else None,
-        "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
-        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-        "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
-        "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
-        "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
-        "client_x509_cert_url": os.getenv("GOOGLE_CLIENT_X509_CERT_URL"),
-        "universe_domain": os.getenv("GOOGLE_UNIVERSE_DOMAIN")
+        "type": get_env_stripped("GOOGLE_SERVICE_ACCOUNT_TYPE"),
+        "project_id": get_env_stripped("GOOGLE_PROJECT_ID"),
+        "private_key_id": get_env_stripped("GOOGLE_PRIVATE_KEY_ID"),
+        "private_key": get_env_stripped("GOOGLE_PRIVATE_KEY").replace('\\n', '\n') if get_env_stripped("GOOGLE_PRIVATE_KEY") else None,
+        "client_email": get_env_stripped("GOOGLE_CLIENT_EMAIL"),
+        "client_id": get_env_stripped("GOOGLE_CLIENT_ID"),
+        "auth_uri": get_env_stripped("GOOGLE_AUTH_URI"),
+        "token_uri": get_env_stripped("GOOGLE_TOKEN_URI"),
+        "auth_provider_x509_cert_url": get_env_stripped("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
+        "client_x509_cert_url": get_env_stripped("GOOGLE_CLIENT_X509_CERT_URL"),
+        "universe_domain": get_env_stripped("GOOGLE_UNIVERSE_DOMAIN")
     }
+
+    # Defensive: ensure "type" is present and correct, else fail with friendly error
+    if credentials_dict.get("type") != "service_account":
+        raise ValueError(
+            f'GOOGLE_SERVICE_ACCOUNT_TYPE missing or incorrect in environment variables. '
+        )
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
 
 client = gspread.authorize(credentials)

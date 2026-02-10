@@ -2,8 +2,17 @@
 Austin Site Plan Permits Analysis - Development Pipeline Charts
 Generates 6 interactive charts analyzing Austin's commercial development pipeline (2015-present)
 
-Data Source: Austin Open Data Portal - Site Plan Cases
-Charts: Pipeline volume, land use trends, geography, size distribution, approval timelines, density (FAR)
+Data Source: Austin Open Data Portal - Site Plan Cases (mavg-96ck)
+Available fields: permit counts, proposed_land_use, council_district, status, dates
+Note: This dataset does NOT include square footage data, so all charts use permit counts.
+
+Charts:
+1. Pipeline volume by quarter (permit count by status)
+2. Development activity by land use type
+3. Top council districts by permit activity
+4. Permit status distribution
+5. Approval timeline trends (days from application to status change)
+6. Year-over-year permit trends
 """
 import pandas as pd
 import numpy as np
@@ -19,31 +28,66 @@ except ImportError as e:
     print("Please ensure plotly is installed: pip install plotly")
     sys.exit(1)
 
+import time
+
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+
+# Base directory for output (absolute path avoids OneDrive sync issues)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_DIR = os.path.join(BASE_DIR, 'charts', 'development')
+
+
+def save_chart(fig, filename):
+    """Save chart with retry logic to handle OneDrive file locks"""
+    filepath = os.path.join(OUTPUT_DIR, filename)
+    for attempt in range(3):
+        try:
+            fig.write_html(filepath)
+            print(f"  [OK] Saved to charts/development/{filename}")
+            return
+        except OSError as e:
+            if attempt < 2:
+                print(f"  [RETRY] Write failed ({e}), retrying in 2s...")
+                time.sleep(2)
+            else:
+                raise
+
 
 print("=" * 80)
 print("AUSTIN SITE PLAN PERMITS - DEVELOPMENT PIPELINE ANALYSIS")
 print("=" * 80)
 
 # ============================================================================
-# STEP 1: Data Fetching
+# STEP 1: Data Fetching (JSON API - CSV endpoint not supported for this dataset)
 # ============================================================================
 print("\nStep 1: Fetching data from Austin Open Data API...")
 
-url = "https://data.austintexas.gov/resource/mavg-96ck.csv?$limit=25000"
+base_url = "https://data.austintexas.gov/resource/mavg-96ck.json"
+all_records = []
+offset = 0
+batch_size = 5000
 
 try:
-    # Use requests with headers to avoid 403 errors
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
-    response = requests.get(url, headers=headers, timeout=60)
-    response.raise_for_status()
+    while True:
+        params = {
+            '$limit': batch_size,
+            '$offset': offset,
+            '$order': 'application_start_date DESC'
+        }
+        response = requests.get(base_url, headers=headers, params=params, timeout=60)
+        response.raise_for_status()
+        batch = response.json()
+        if not batch:
+            break
+        all_records.extend(batch)
+        offset += batch_size
+        print(f"  Fetched {len(all_records):,} records so far...")
 
-    # Parse CSV from response
-    from io import StringIO
-    df = pd.read_csv(StringIO(response.text))
-    print(f"  OK - Fetched {len(df):,} records")
+    df = pd.DataFrame(all_records)
+    print(f"  OK - Total: {len(df):,} records")
 except Exception as e:
     print(f"  ERROR - Failed to fetch data: {e}")
     sys.exit(1)
@@ -55,26 +99,22 @@ print("\nStep 2: Cleaning and processing data...")
 
 # Parse dates
 df['application_start_date'] = pd.to_datetime(df['application_start_date'], errors='coerce')
-df['approval_date'] = pd.to_datetime(df['approval_date'], errors='coerce')
-
-# Convert numeric fields
-df['proposed_bldg_sq_footage'] = pd.to_numeric(df['proposed_bldg_sq_footage'], errors='coerce')
-df['gross_site_area_acres'] = pd.to_numeric(df['gross_site_area_acres'], errors='coerce')
-df['day_approved'] = pd.to_numeric(df['day_approved'], errors='coerce')
+df['status_date'] = pd.to_datetime(df['status_date'], errors='coerce')
 
 print(f"  - Total records before filtering: {len(df):,}")
 
-# Filter: 2015 onward (live development market view)
+# Filter: 2015 onward
 df = df[df['application_start_date'] >= '2015-01-01'].copy()
 print(f"  - Records from 2015+: {len(df):,}")
 
-# Create dataset with SF data (needed for most charts)
-df_with_sf = df[df['proposed_bldg_sq_footage'].notna() & (df['proposed_bldg_sq_footage'] > 0)].copy()
-print(f"  - Records with valid SF data: {len(df_with_sf):,}")
-
 # Print date range
-print(f"  - Date range: {df['application_start_date'].min()} to {df['application_start_date'].max()}")
-print(f"  - Total proposed SF: {df_with_sf['proposed_bldg_sq_footage'].sum() / 1_000_000:.1f}M SF")
+print(f"  - Date range: {df['application_start_date'].min().date()} to {df['application_start_date'].max().date()}")
+
+# Calculate days to status change (approval/closure/etc.)
+df['days_to_status'] = (df['status_date'] - df['application_start_date']).dt.days
+
+# Create quarter column
+df['quarter'] = df['application_start_date'].dt.to_period('Q').dt.to_timestamp()
 
 # ============================================================================
 # STEP 3: Land Use Categorization
@@ -94,388 +134,276 @@ def categorize_land_use(land_use_str):
     # Check specific categories
     if any(word in land_use_lower for word in ['office', 'medical office']):
         return 'Office'
-    if any(word in land_use_lower for word in ['retail', 'restaurant', 'shopping', 'store']):
-        return 'Retail'
+    if any(word in land_use_lower for word in ['retail', 'restaurant', 'shopping', 'store', 'commercial']):
+        return 'Retail/Commercial'
     if any(word in land_use_lower for word in ['warehouse', 'industrial', 'manufacturing', 'distribution']):
         return 'Industrial'
-    if any(word in land_use_lower for word in ['apartment', 'residential', 'condo', 'townhome', 'housing', 'dwelling']):
+    if any(word in land_use_lower for word in ['apartment', 'residential', 'condo', 'townhome',
+                                                 'housing', 'dwelling', 'single family', 'duplex',
+                                                 'multifamily', 'multi-family']):
         return 'Residential'
     if any(word in land_use_lower for word in ['hotel', 'lodging', 'hospitality']):
         return 'Hospitality'
 
     return 'Other'
 
-df_with_sf['land_use_category'] = df_with_sf['proposed_land_use'].apply(categorize_land_use)
+df['land_use_category'] = df['proposed_land_use'].apply(categorize_land_use)
 
 # Show category distribution
-category_counts = df_with_sf['land_use_category'].value_counts()
-print(f"  - Land use categories:")
+category_counts = df['land_use_category'].value_counts()
+print("  - Land use categories:")
 for cat, count in category_counts.items():
-    print(f"    {cat}: {count:,} projects ({count/len(df_with_sf)*100:.1f}%)")
+    print(f"    {cat}: {count:,} permits ({count/len(df)*100:.1f}%)")
 
 # Create output directory if needed
-os.makedirs('charts/development', exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ============================================================================
-# CHART 1: Development Pipeline Volume Over Time
+# Shared layout helper
+# ============================================================================
+def aquila_layout(title, xaxis_title='', yaxis_title='', height=650, show_legend=True):
+    """Return standard Aquila layout dict"""
+    layout = dict(
+        title=title,
+        height=height,
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family=AQUILA_FONT, color='#172344'),
+        xaxis=dict(
+            title=xaxis_title,
+            showline=True,
+            linecolor='#e9e9ea',
+            linewidth=0.5,
+            showgrid=False
+        ),
+        yaxis=dict(
+            title=yaxis_title,
+            showline=True,
+            linecolor='#e9e9ea',
+            linewidth=0.5,
+            showgrid=True,
+            gridcolor='#e9e9ea',
+            tickformat=','
+        )
+    )
+    if show_legend:
+        layout['legend'] = dict(
+            title_font_family=AQUILA_FONT,
+            orientation='h',
+            yanchor='bottom',
+            y=-0.25,
+            xanchor='center',
+            x=0.5
+        )
+    else:
+        layout['showlegend'] = False
+    return layout
+
+# ============================================================================
+# CHART 1: Development Pipeline Volume Over Time (Permit Counts by Status)
 # ============================================================================
 print("\nChart 1: Generating Pipeline Volume by Quarter...")
 
-# Group by quarter and status
-df_with_sf['quarter'] = df_with_sf['application_start_date'].dt.to_period('Q').dt.to_timestamp()
-pipeline_by_quarter = df_with_sf.groupby(['quarter', 'status'])['proposed_bldg_sq_footage'].sum().reset_index()
+pipeline_by_quarter = df.groupby(['quarter', 'status']).size().reset_index(name='permit_count')
 
-# Create stacked area chart
 fig1 = px.area(
     pipeline_by_quarter,
     x='quarter',
-    y='proposed_bldg_sq_footage',
+    y='permit_count',
     color='status',
-    title='Austin Development Pipeline Volume by Quarter (2015-Present)',
+    title='Austin Site Plan Permits by Quarter (2015-Present)',
     labels={
         'quarter': 'Quarter',
-        'proposed_bldg_sq_footage': 'Proposed Building SF',
+        'permit_count': 'Number of Permits',
         'status': 'Permit Status'
     },
     color_discrete_sequence=AQUILA_COLORS
 )
+fig1.update_layout(**aquila_layout(
+    'Austin Site Plan Permits by Quarter (2015-Present)',
+    'Quarter', 'Number of Permits'
+))
 
-fig1.update_layout(
-    height=650,
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    font=dict(family=AQUILA_FONT, color='#172344'),
-    legend=dict(
-        title_font_family=AQUILA_FONT,
-        orientation='h',
-        yanchor='bottom',
-        y=-0.25,
-        xanchor='center',
-        x=0.5
-    ),
-    xaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=False
-    ),
-    yaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=True,
-        gridcolor='#e9e9ea',
-        tickformat=','
-    )
-)
-
-output_file = 'charts/development/pipeline_volume_by_quarter.html'
-fig1.write_html(output_file)
-print(f"  ✓ Saved to {output_file}")
+save_chart(fig1, 'pipeline_volume_by_quarter.html')
 
 # ============================================================================
 # CHART 2: Development Activity by Land Use Type
 # ============================================================================
 print("\nChart 2: Generating Pipeline by Land Use Type...")
 
-# Group by quarter and land use category
-pipeline_by_use = df_with_sf.groupby(['quarter', 'land_use_category'])['proposed_bldg_sq_footage'].sum().reset_index()
+pipeline_by_use = df.groupby(['quarter', 'land_use_category']).size().reset_index(name='permit_count')
 
 fig2 = px.area(
     pipeline_by_use,
     x='quarter',
-    y='proposed_bldg_sq_footage',
+    y='permit_count',
     color='land_use_category',
     title='Austin Development Activity by Land Use Type (2015-Present)',
     labels={
         'quarter': 'Quarter',
-        'proposed_bldg_sq_footage': 'Proposed Building SF',
+        'permit_count': 'Number of Permits',
         'land_use_category': 'Land Use Category'
     },
     color_discrete_sequence=AQUILA_COLORS
 )
+fig2.update_layout(**aquila_layout(
+    'Austin Development Activity by Land Use Type (2015-Present)',
+    'Quarter', 'Number of Permits'
+))
 
-fig2.update_layout(
-    height=650,
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    font=dict(family=AQUILA_FONT, color='#172344'),
-    legend=dict(
-        title_font_family=AQUILA_FONT,
-        orientation='h',
-        yanchor='bottom',
-        y=-0.25,
-        xanchor='center',
-        x=0.5
-    ),
-    xaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=False
-    ),
-    yaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=True,
-        gridcolor='#e9e9ea',
-        tickformat=','
-    )
-)
-
-output_file = 'charts/development/pipeline_by_land_use_type.html'
-fig2.write_html(output_file)
-print(f"  ✓ Saved to {output_file}")
+save_chart(fig2, 'pipeline_by_land_use_type.html')
 
 # ============================================================================
-# CHART 3: Development Activity by Geography (Top 15 Neighborhoods)
+# CHART 3: Top Council Districts by Permit Activity
 # ============================================================================
-print("\nChart 3: Generating Pipeline by Neighborhood (Top 15)...")
+print("\nChart 3: Generating Pipeline by Council District...")
 
-# Group by neighborhood, get totals
-neighborhood_totals = df_with_sf.groupby('neighborhood_plan_name').agg({
-    'proposed_bldg_sq_footage': 'sum',
-    'case_id': 'count'
-}).reset_index()
-neighborhood_totals.columns = ['neighborhood_plan_name', 'total_sf', 'project_count']
+# Filter to records with council district data
+df_with_district = df[df['council_district'].notna()].copy()
 
-# Sort and take top 15
-neighborhood_totals = neighborhood_totals.sort_values('total_sf', ascending=True).tail(15)
+district_totals = df_with_district.groupby('council_district').size().reset_index(name='permit_count')
+district_totals = district_totals.sort_values('permit_count', ascending=True)
 
-# Create horizontal bar chart
+# Format district labels
+district_totals['district_label'] = 'District ' + district_totals['council_district'].astype(str)
+
 fig3 = go.Figure()
 
 fig3.add_trace(go.Bar(
-    y=neighborhood_totals['neighborhood_plan_name'],
-    x=neighborhood_totals['total_sf'],
+    y=district_totals['district_label'],
+    x=district_totals['permit_count'],
     orientation='h',
     marker=dict(color=AQUILA_COLORS[0]),
-    text=neighborhood_totals['project_count'],
-    texttemplate='%{text} projects',
+    text=district_totals['permit_count'],
+    texttemplate='%{text:,} permits',
     textposition='outside',
-    hovertemplate='<b>%{y}</b><br>Total SF: %{x:,.0f}<br>Projects: %{text}<extra></extra>'
+    hovertemplate='<b>%{y}</b><br>Permits: %{x:,}<extra></extra>'
 ))
 
-fig3.update_layout(
-    title='Top 15 Neighborhoods by Development Activity (2015-Present)',
-    xaxis_title='Total Proposed Building SF',
-    yaxis_title='Neighborhood Plan',
-    height=700,
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    font=dict(family=AQUILA_FONT, color='#172344'),
-    xaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=True,
-        gridcolor='#e9e9ea',
-        tickformat=','
-    ),
-    yaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=False
-    )
-)
+fig3.update_layout(**aquila_layout(
+    'Austin Site Plan Permits by Council District (2015-Present)',
+    'Number of Permits', 'Council District',
+    height=700, show_legend=False
+))
 
-output_file = 'charts/development/pipeline_by_neighborhood.html'
-fig3.write_html(output_file)
-print(f"  ✓ Saved to {output_file}")
+save_chart(fig3, 'pipeline_by_council_district.html')
 
 # ============================================================================
-# CHART 4: Project Size Distribution
+# CHART 4: Permit Status Distribution
 # ============================================================================
-print("\nChart 4: Generating Project Size Distribution...")
+print("\nChart 4: Generating Permit Status Distribution...")
 
-# Create size bins
-size_bins = [0, 50000, 250000, 500000, float('inf')]
-size_labels = ['Small (<50k SF)', 'Medium (50k-250k SF)', 'Large (250k-500k SF)', 'Mega (500k+ SF)']
-
-df_with_sf['size_category'] = pd.cut(
-    df_with_sf['proposed_bldg_sq_footage'],
-    bins=size_bins,
-    labels=size_labels,
-    include_lowest=True
-)
-
-# Count projects by size category
-size_distribution = df_with_sf['size_category'].value_counts().reindex(size_labels)
+status_counts = df['status'].value_counts().reset_index()
+status_counts.columns = ['status', 'count']
+status_counts = status_counts.sort_values('count', ascending=True)
 
 fig4 = go.Figure()
 
 fig4.add_trace(go.Bar(
-    x=size_distribution.index,
-    y=size_distribution.values,
-    marker=dict(color=AQUILA_COLORS[:4]),
-    text=size_distribution.values,
+    y=status_counts['status'],
+    x=status_counts['count'],
+    orientation='h',
+    marker=dict(color=AQUILA_COLORS[0]),
+    text=status_counts['count'],
     texttemplate='%{text:,}',
     textposition='outside',
-    hovertemplate='<b>%{x}</b><br>Projects: %{y:,}<br>% of Total: %{customdata:.1f}%<extra></extra>',
-    customdata=(size_distribution.values / size_distribution.sum() * 100)
+    hovertemplate='<b>%{y}</b><br>Permits: %{x:,}<br>% of Total: %{customdata:.1f}%<extra></extra>',
+    customdata=(status_counts['count'] / status_counts['count'].sum() * 100)
 ))
 
-fig4.update_layout(
-    title='Austin Development Projects by Size Category (2015-Present)',
-    xaxis_title='Project Size Category',
-    yaxis_title='Number of Projects',
-    height=600,
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    font=dict(family=AQUILA_FONT, color='#172344'),
-    xaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=False
-    ),
-    yaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=True,
-        gridcolor='#e9e9ea',
-        tickformat=','
-    )
-)
+fig4.update_layout(**aquila_layout(
+    'Austin Site Plan Permit Status Distribution (2015-Present)',
+    'Number of Permits', 'Permit Status',
+    height=600, show_legend=False
+))
 
-output_file = 'charts/development/project_size_distribution.html'
-fig4.write_html(output_file)
-print(f"  ✓ Saved to {output_file}")
+save_chart(fig4, 'permit_status_distribution.html')
 
 # ============================================================================
 # CHART 5: Approval Timeline Trends
 # ============================================================================
 print("\nChart 5: Generating Approval Timeline Trends...")
 
-# Filter to projects with approval data
-df_approved = df_with_sf[df_with_sf['day_approved'].notna() & (df_with_sf['day_approved'] > 0)].copy()
-
-# Remove extreme outliers (>1000 days = ~2.7 years)
-df_approved = df_approved[df_approved['day_approved'] <= 1000]
-
-print(f"  - Projects with approval data: {len(df_approved):,}")
-print(f"  - Median approval time: {df_approved['day_approved'].median():.0f} days")
-
-# Group by quarter and calculate median
-timeline_by_quarter = df_approved.groupby('quarter')['day_approved'].agg(['median', 'count']).reset_index()
-timeline_by_quarter.columns = ['quarter', 'median_days', 'project_count']
-
-# Filter quarters with at least 5 projects for statistical significance
-timeline_by_quarter = timeline_by_quarter[timeline_by_quarter['project_count'] >= 5]
-
-fig5 = go.Figure()
-
-fig5.add_trace(go.Scatter(
-    x=timeline_by_quarter['quarter'],
-    y=timeline_by_quarter['median_days'],
-    mode='lines+markers',
-    line=dict(color=AQUILA_COLORS[0], width=3),
-    marker=dict(size=8, color=AQUILA_COLORS[0]),
-    name='Median Approval Days',
-    hovertemplate='<b>%{x|%Y Q%q}</b><br>Median Days: %{y:.0f}<br>Projects: %{customdata}<extra></extra>',
-    customdata=timeline_by_quarter['project_count']
-))
-
-fig5.update_layout(
-    title='Austin Development Approval Timeline Trends (2015-Present)',
-    xaxis_title='Quarter',
-    yaxis_title='Median Days to Approval',
-    height=600,
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    font=dict(family=AQUILA_FONT, color='#172344'),
-    showlegend=False,
-    xaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=False
-    ),
-    yaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=True,
-        gridcolor='#e9e9ea',
-        tickformat=','
-    )
-)
-
-output_file = 'charts/development/approval_timeline_trends.html'
-fig5.write_html(output_file)
-print(f"  ✓ Saved to {output_file}")
-
-# ============================================================================
-# CHART 6: Density Trends (FAR - Floor Area Ratio)
-# ============================================================================
-print("\nChart 6: Generating Density Trends (FAR)...")
-
-# Filter to projects with both SF and acreage data
-df_far = df_with_sf[
-    (df_with_sf['gross_site_area_acres'].notna()) &
-    (df_with_sf['gross_site_area_acres'] > 0)
+# Filter to permits with valid timeline data (positive days, not extreme outliers)
+df_with_timeline = df[
+    (df['days_to_status'].notna()) &
+    (df['days_to_status'] > 0) &
+    (df['days_to_status'] <= 1500)
 ].copy()
 
-# Calculate FAR: Building SF / (Acres * 43,560 SF/acre)
-df_far['far'] = df_far['proposed_bldg_sq_footage'] / (df_far['gross_site_area_acres'] * 43560)
+print(f"  - Permits with timeline data: {len(df_with_timeline):,}")
+if len(df_with_timeline) > 0:
+    print(f"  - Median days to status change: {df_with_timeline['days_to_status'].median():.0f} days")
 
-# Filter outliers: FAR should be between 0 and 20 (20 is very dense, like downtown high-rise)
-df_far = df_far[(df_far['far'] > 0) & (df_far['far'] <= 20)]
+    timeline_by_quarter = df_with_timeline.groupby('quarter')['days_to_status'].agg(['median', 'count']).reset_index()
+    timeline_by_quarter.columns = ['quarter', 'median_days', 'permit_count']
 
-print(f"  - Projects with FAR data: {len(df_far):,}")
-print(f"  - Median FAR: {df_far['far'].median():.2f}")
+    # Filter quarters with at least 10 permits for statistical significance
+    timeline_by_quarter = timeline_by_quarter[timeline_by_quarter['permit_count'] >= 10]
 
-# Group by quarter and calculate median FAR
-far_by_quarter = df_far.groupby('quarter')['far'].agg(['median', 'count']).reset_index()
-far_by_quarter.columns = ['quarter', 'median_far', 'project_count']
+    fig5 = go.Figure()
 
-# Filter quarters with at least 5 projects
-far_by_quarter = far_by_quarter[far_by_quarter['project_count'] >= 5]
+    fig5.add_trace(go.Scatter(
+        x=timeline_by_quarter['quarter'],
+        y=timeline_by_quarter['median_days'],
+        mode='lines+markers',
+        line=dict(color=AQUILA_COLORS[0], width=3),
+        marker=dict(size=8, color=AQUILA_COLORS[0]),
+        name='Median Days',
+        hovertemplate='<b>%{x|%Y Q%q}</b><br>Median Days: %{y:.0f}<br>Permits: %{customdata}<extra></extra>',
+        customdata=timeline_by_quarter['permit_count']
+    ))
 
-fig6 = go.Figure()
+    fig5.update_layout(**aquila_layout(
+        'Austin Site Plan Approval Timeline Trends (2015-Present)',
+        'Quarter', 'Median Days to Status Change',
+        height=600, show_legend=False
+    ))
 
-fig6.add_trace(go.Scatter(
-    x=far_by_quarter['quarter'],
-    y=far_by_quarter['median_far'],
-    mode='lines+markers',
-    line=dict(color=AQUILA_COLORS[2], width=3),
-    marker=dict(size=8, color=AQUILA_COLORS[2]),
-    name='Median FAR',
-    hovertemplate='<b>%{x|%Y Q%q}</b><br>Median FAR: %{y:.2f}<br>Projects: %{customdata}<extra></extra>',
-    customdata=far_by_quarter['project_count']
-))
+    save_chart(fig5, 'approval_timeline_trends.html')
+else:
+    print("  [SKIP] No timeline data available")
 
-fig6.update_layout(
-    title='Austin Development Density Trends - Floor Area Ratio (2015-Present)',
-    xaxis_title='Quarter',
-    yaxis_title='Median Floor Area Ratio (FAR)',
-    height=600,
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    font=dict(family=AQUILA_FONT, color='#172344'),
-    showlegend=False,
-    xaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=False
-    ),
-    yaxis=dict(
-        showline=True,
-        linecolor='#e9e9ea',
-        linewidth=0.5,
-        showgrid=True,
-        gridcolor='#e9e9ea',
-        tickformat='.2f'
-    )
+# ============================================================================
+# CHART 6: Year-over-Year Permit Trends
+# ============================================================================
+print("\nChart 6: Generating Year-over-Year Permit Trends...")
+
+df['year'] = df['application_start_date'].dt.year
+
+# Exclude current year if incomplete (less than 3 months of data)
+current_year = pd.Timestamp.now().year
+latest_month = df[df['year'] == current_year]['application_start_date'].dt.month.max()
+if pd.notna(latest_month) and latest_month < 3:
+    yoy_df = df[df['year'] < current_year].copy()
+    print(f"  - Excluding {current_year} (only {int(latest_month)} month(s) of data)")
+else:
+    yoy_df = df.copy()
+
+yoy_counts = yoy_df.groupby(['year', 'land_use_category']).size().reset_index(name='permit_count')
+
+fig6 = px.bar(
+    yoy_counts,
+    x='year',
+    y='permit_count',
+    color='land_use_category',
+    title='Austin Site Plan Permits Year-over-Year by Land Use (2015-Present)',
+    labels={
+        'year': 'Year',
+        'permit_count': 'Number of Permits',
+        'land_use_category': 'Land Use Category'
+    },
+    color_discrete_sequence=AQUILA_COLORS,
+    barmode='stack'
 )
 
-output_file = 'charts/development/density_trends_far.html'
-fig6.write_html(output_file)
-print(f"  ✓ Saved to {output_file}")
+fig6.update_layout(**aquila_layout(
+    'Austin Site Plan Permits Year-over-Year by Land Use (2015-Present)',
+    'Year', 'Number of Permits'
+))
+fig6.update_xaxes(dtick=1)
+
+save_chart(fig6, 'permits_yoy_by_land_use.html')
 
 # ============================================================================
 # Summary
@@ -483,10 +411,9 @@ print(f"  ✓ Saved to {output_file}")
 print("\n" + "=" * 80)
 print("CHART GENERATION COMPLETE")
 print("=" * 80)
-print(f"\n✓ Generated 6 charts in charts/development/")
-print(f"✓ Data period: 2015-{df['application_start_date'].max().year}")
-print(f"✓ Total records analyzed: {len(df):,}")
-print(f"✓ Total proposed SF: {df_with_sf['proposed_bldg_sq_footage'].sum() / 1_000_000:.1f}M SF")
+print(f"\n  Generated 6 charts in charts/development/")
+print(f"  Data period: 2015-{df['application_start_date'].max().year}")
+print(f"  Total records analyzed: {len(df):,}")
 print(f"\nNext steps:")
 print(f"  1. Review charts in charts/development/")
 print(f"  2. Update README.md with chart links")
