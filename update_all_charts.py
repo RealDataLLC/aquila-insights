@@ -8,11 +8,11 @@ Usage:
     python3 update_all_charts.py --update-readme
 
 This script runs:
-1. update_google_sheets_charts.py (4 charts)
-2. update_supabase_charts.py (1 chart)
-3. update_fred_charts.py (1 chart)
-4. update_building_performance_charts.py (4 charts)
-5. update_fred_economic_indicators.py (7 charts)
+1. update_office_combined_requirements.py (7 Office requirement charts)
+2. update_industrial_vacancy.py (1 Industrial vacancy chart)
+3. update_fred_housing_chart.py (1 Housing chart)
+4. update_building_performance_charts.py (4 Office & Industrial charts)
+5. update_fred_economic_indicators.py (7 Economic charts)
 """
 
 import subprocess
@@ -50,28 +50,28 @@ def main():
 
     results = {}
 
-    # 1. Google Sheets Charts
-    results['google_sheets'] = run_script(
-        'update_google_sheets_charts.py',
-        'Google Sheets Charts (4 charts)'
+    # 1. Office Combined Requirements Charts (Google Sheets)
+    results['office_requirements'] = run_script(
+        'update_office_combined_requirements.py',
+        'Office Combined Requirements (7 charts)'
     )
 
-    # 2. Supabase Charts
-    results['supabase'] = run_script(
-        'update_supabase_charts.py',
-        'Supabase Charts (1 chart)'
+    # 2. Industrial Vacancy Charts (Supabase)
+    results['industrial_vacancy'] = run_script(
+        'update_industrial_vacancy.py',
+        'Industrial Vacancy (1 chart)'
     )
 
-    # 3. FRED API Charts
-    results['fred'] = run_script(
-        'update_fred_charts.py',
-        'FRED API Charts (1 chart)'
+    # 3. FRED Housing Chart
+    results['fred_housing'] = run_script(
+        'update_fred_housing_chart.py',
+        'FRED Housing Starts (1 chart)'
     )
 
-    # 4. Building Performance Charts
+    # 4. Building Performance Charts (Supabase - Office & Industrial)
     results['building_performance'] = run_script(
         'update_building_performance_charts.py',
-        'Building Performance Charts (4 charts)'
+        'Building Performance by Size (4 charts)'
     )
 
     # 5. FRED Economic Indicators
@@ -97,24 +97,31 @@ def main():
     if success_count == total_count:
         print("\n✓ ALL CHARTS UPDATED SUCCESSFULLY")
 
-        print("\nTotal charts generated:")
-        print("  • requirements_sf_total.html")
-        print("  • requirements_sf_avg.html")
-        print("  • requirements_sf_avg_by_industry.html")
-        print("  • requirements_by_size_range.html")
-        print("  • vacancy_rate_industrial.html")
-        print("  • austin_housing_starts.html")
-        print("  • office_occupancy_by_size.html")
-        print("  • office_rent_by_size.html")
-        print("  • industrial_occupancy_by_size.html")
-        print("  • industrial_rent_by_size.html")
-        print("  • austin_employment_office_sectors.html")
-        print("  • austin_employment_industrial.html")
-        print("  • austin_employment_retail.html")
-        print("  • austin_vs_national_tech_employment.html")
-        print("  • austin_vs_dallas_vs_national_wage_growth.html")
-        print("  • interest_rates_treasury_mortgage.html")
-        print("  • inflation_cpi_ppi_office.html")
+        print("\nTotal charts generated (20 charts):")
+        print("\n  Office Requirements (7):")
+        print("    • requirements_sf_total.html")
+        print("    • requirements_sf_avg.html")
+        print("    • requirements_sf_avg_by_industry.html")
+        print("    • requirements_by_size_range.html")
+        print("    • requirements_vs_absorption_office.html")
+        print("    • requirements_yoy_rolling_12m.html")
+        print("    • requirements_demand_by_tenant_size.html")
+        print("\n  Industrial (1):")
+        print("    • vacancy_rate_industrial.html")
+        print("\n  Building Performance (4):")
+        print("    • office_occupancy_by_size.html")
+        print("    • office_rent_by_size.html")
+        print("    • industrial_occupancy_by_size.html")
+        print("    • industrial_rent_by_size.html")
+        print("\n  Economic Indicators (8):")
+        print("    • austin_housing_starts.html")
+        print("    • austin_employment_office_sectors.html")
+        print("    • austin_employment_industrial.html")
+        print("    • austin_employment_retail.html")
+        print("    • austin_vs_national_tech_employment.html")
+        print("    • austin_vs_dallas_vs_national_wage_growth.html")
+        print("    • interest_rates_treasury_mortgage.html")
+        print("    • inflation_cpi_ppi_office.html")
 
         if '--update-readme' in sys.argv:
             print("\n✓ README.md dates updated")
