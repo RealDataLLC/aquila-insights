@@ -1,0 +1,56 @@
+case_id,application_start_date,approval_date,status,proposed_land_use,proposed_bldg_sq_footage,gross_site_area_acres,day_approved,neighborhood_plan_name
+2015-001,2015-01-15,,Active,Office,125000,3.5,,Downtown Austin
+2015-002,2015-02-20,2015-08-10,Approved,Mixed-Use,250000,5.2,172,Domain
+2015-003,2015-03-10,2015-09-15,Approved,Retail,45000,2.1,189,South Lamar
+2015-004,2015-04-05,,Under Review,Industrial,180000,8.3,,East Riverside-Oltorf
+2015-005,2015-05-12,2016-01-20,Approved,Apartment,320000,6.8,253,East Riverside-Oltorf
+2016-001,2016-01-08,2016-07-22,Approved,Office,95000,2.8,196,Northwest Hills
+2016-002,2016-02-14,2016-10-05,Approved,Hotel,75000,1.9,234,Downtown Austin
+2016-003,2016-03-20,,Withdrawn,Retail,32000,1.5,,Allandale
+2016-004,2016-04-25,2016-11-30,Approved,Mixed-Use,420000,9.1,219,Domain
+2016-005,2016-06-10,2017-02-15,Approved,Office,155000,4.2,250,Circle C
+2017-001,2017-01-15,2017-08-20,Approved,Industrial,275000,12.5,217,Southeast Combined
+2017-002,2017-02-22,2017-09-10,Approved,Residential,185000,7.3,200,Mueller
+2017-003,2017-03-30,,Active,Office,210000,5.1,,Downtown Austin
+2017-004,2017-05-08,2018-01-25,Approved,Retail,58000,2.4,262,South Congress
+2017-005,2017-06-12,2018-03-10,Approved,Mixed-Use,380000,8.7,271,East Riverside-Oltorf
+2018-001,2018-01-20,2018-09-15,Approved,Office,165000,4.8,238,Domain
+2018-002,2018-02-28,2018-11-20,Approved,Apartment,295000,6.2,265,East Riverside-Oltorf
+2018-003,2018-04-10,,Under Review,Industrial,220000,10.2,,Southeast Combined
+2018-004,2018-05-15,2019-02-08,Approved,Retail,67000,2.9,269,South Lamar
+2018-005,2018-07-22,2019-03-30,Approved,Mixed-Use,510000,11.4,251,Downtown Austin
+2019-001,2019-01-10,2019-08-25,Approved,Office,185000,5.3,227,Domain
+2019-002,2019-02-15,2019-10-20,Approved,Hotel,92000,2.6,247,Downtown Austin
+2019-003,2019-03-25,,Active,Residential,245000,8.1,,Mueller
+2019-004,2019-05-05,2020-01-15,Approved,Industrial,310000,13.7,255,Southeast Combined
+2019-005,2019-06-18,2020-03-22,Approved,Mixed-Use,445000,9.8,278,East Riverside-Oltorf
+2020-001,2020-01-22,2020-09-10,Approved,Office,145000,4.1,232,Northwest Hills
+2020-002,2020-03-05,2020-11-28,Approved,Retail,54000,2.2,268,South Congress
+2020-003,2020-04-15,,Withdrawn,Office,98000,3.3,,Circle C
+2020-004,2020-06-20,2021-03-15,Approved,Apartment,365000,7.9,268,East Riverside-Oltorf
+2020-005,2020-08-10,2021-05-20,Approved,Mixed-Use,425000,10.1,283,Domain
+2021-001,2021-01-12,2021-09-08,Approved,Office,225000,6.2,239,Downtown Austin
+2021-002,2021-02-18,2021-11-05,Approved,Industrial,285000,12.8,260,Southeast Combined
+2021-003,2021-03-25,,Active,Retail,72000,2.8,,South Lamar
+2021-004,2021-05-10,2022-02-15,Approved,Residential,315000,8.5,281,Mueller
+2021-005,2021-07-08,2022-04-20,Approved,Mixed-Use,485000,11.2,286,East Riverside-Oltorf
+2022-001,2022-01-15,2022-09-22,Approved,Office,195000,5.6,250,Domain
+2022-002,2022-02-20,2022-11-10,Approved,Hotel,105000,3.1,263,Downtown Austin
+2022-003,2022-04-05,,Under Review,Industrial,340000,15.2,,Southeast Combined
+2022-004,2022-05-18,2023-02-28,Approved,Apartment,425000,9.3,286,East Riverside-Oltorf
+2022-005,2022-07-22,2023-05-10,Approved,Mixed-Use,520000,12.6,292,Domain
+2023-001,2023-01-10,2023-09-25,Approved,Office,215000,6.1,258,Downtown Austin
+2023-002,2023-02-14,2023-11-18,Approved,Retail,68000,2.7,277,South Congress
+2023-003,2023-03-20,,Active,Residential,285000,7.8,,Mueller
+2023-004,2023-05-08,2024-02-20,Approved,Industrial,365000,16.3,288,Southeast Combined
+2023-005,2023-06-25,2024-04-15,Approved,Mixed-Use,565000,13.1,295,East Riverside-Oltorf
+2024-001,2024-01-18,2024-10-05,Approved,Office,245000,6.8,261,Domain
+2024-002,2024-02-22,,Under Review,Hotel,115000,3.4,,Downtown Austin
+2024-003,2024-04-10,,Active,Retail,78000,3.1,,South Lamar
+2024-004,2024-05-15,,Active,Apartment,385000,8.9,,East Riverside-Oltorf
+2024-005,2024-07-20,,Active,Mixed-Use,485000,11.5,,Domain
+2025-001,2025-01-15,,Active,Office,265000,7.2,,Downtown Austin
+2025-002,2025-02-10,,Active,Industrial,295000,13.8,,Southeast Combined
+2025-003,2025-03-05,,Under Review,Residential,325000,8.6,,Mueller
+2025-004,2025-04-12,,Active,Mixed-Use,545000,12.9,,East Riverside-Oltorf
+2025-005,2025-05-20,,Active,Office,225000,6.5,,Domain

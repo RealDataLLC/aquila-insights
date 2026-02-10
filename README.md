@@ -87,6 +87,22 @@ These are data plots for Aquila Commercial, maintained by [Nelson Lin](mailto:ne
 ### Housing Indicators
 [Austin Housing Starts (Monthly) [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_housing_starts.html)
 
+## Development & Permitting
+
+### Development Pipeline Analysis
+[Pipeline Volume by Quarter [2026-02-10]](https://realdatallc.github.io/aquila-insights/charts/development/pipeline_volume_by_quarter.html) - Total proposed SF by quarter and permit status (2015-present)
+
+[Pipeline by Land Use Type [2026-02-10]](https://realdatallc.github.io/aquila-insights/charts/development/pipeline_by_land_use_type.html) - Development activity by CRE sector (Office, Industrial, Retail, Mixed-Use, etc.)
+
+[Pipeline by Neighborhood [2026-02-10]](https://realdatallc.github.io/aquila-insights/charts/development/pipeline_by_neighborhood.html) - Top 15 neighborhoods by total development SF
+
+[Project Size Distribution [2026-02-10]](https://realdatallc.github.io/aquila-insights/charts/development/project_size_distribution.html) - Distribution of projects by size category (Small to Mega)
+
+### Regulatory & Market Efficiency
+[Approval Timeline Trends [2026-02-10]](https://realdatallc.github.io/aquila-insights/charts/development/approval_timeline_trends.html) - Median days to approval by quarter
+
+[Density Trends (FAR) [2026-02-10]](https://realdatallc.github.io/aquila-insights/charts/development/density_trends_far.html) - Floor Area Ratio trends showing development intensity
+
 Todo:
 - Requirements vs Absorption (Industrial)
 - Sales Taxes in Austin (Retail)
