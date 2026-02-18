@@ -75,7 +75,7 @@ client = gspread.authorize(credentials)
 spreadsheet_id = '1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec'
 sheet = client.open_by_key(spreadsheet_id)
 
-print("  ✓ Connected successfully")
+print("  [OK] Connected successfully")
 
 # ============================================================================
 # STEP 2: Read both tabs
@@ -93,7 +93,7 @@ print("  Reading Tab 1: 'DITM & Crab Trap MASTER Report (Through 2024)' data..."
 try:
     tab1 = sheet.worksheet("DITM & Crab Trap MASTER Report (Through 2024)")
 except Exception as e:
-    print(f"    ✗ Could not find tab by name, trying index 2: {e}")
+    print(f"    [ERROR] Could not find tab by name, trying index 2: {e}")
     tab1 = sheet.get_worksheet(2)
 
 rows = tab1.get_all_values()
@@ -154,16 +154,16 @@ for key, tab0_col in key_columns_tab0.items():
     # Look for exact match first
     if tab0_col in df_through_2024.columns:
         column_mapping[key] = tab0_col
-        print(f"    ✓ {key}: '{tab0_col}' (exact match)")
+        print(f"    [OK] {key}: '{tab0_col}' (exact match)")
     else:
         # Look for similar column names
         similar = [col for col in df_through_2024.columns
                   if any(word in col.upper() for word in tab0_col.upper().split())]
         if similar:
             column_mapping[key] = similar[0]
-            print(f"    ≈ {key}: '{similar[0]}' (similar to '{tab0_col}')")
+            print(f"    ~ {key}: '{similar[0]}' (similar to '{tab0_col}')")
         else:
-            print(f"    ✗ {key}: no match found for '{tab0_col}'")
+            print(f"    [ERROR] {key}: no match found for '{tab0_col}'")
 
 # ============================================================================
 # STEP 4: Standardize and combine data
@@ -338,7 +338,7 @@ fig1.update_layout(
     height=550  # Increased height
 )
 fig1.write_html("charts/office/requirements_sf_total.html")
-print("    ✓ Saved charts/office/requirements_sf_total.html")
+print("    [OK] Saved charts/office/requirements_sf_total.html")
 
 # 5c. Chart 2: Average SF with Count (dual-axis)
 print("  Creating Chart 2: Average SF Metrics...")
@@ -390,17 +390,16 @@ fig2.update_layout(
         linecolor='lightgrey'
     ),
     yaxis2=dict(
-        title="Count",
+        title=dict(text="Count", font=dict(family=AQUILA_FONT, size=12, color=COLORS['text'])),
         overlaying='y',
         side='right',
-        titlefont=dict(family=AQUILA_FONT, size=12, color=COLORS['text']),
         tickfont=dict(family=AQUILA_FONT, size=12, color=COLORS['text'])
     ),
     legend=dict(orientation="h", y=-0.2),
     margin=dict(t=100, b=50, l=50, r=50)
 )
 fig2.write_html("charts/office/requirements_sf_avg.html")
-print("    ✓ Saved charts/office/requirements_sf_avg.html")
+print("    [OK] Saved charts/office/requirements_sf_avg.html")
 
 # 5d. Chart 3: Demand by Industry (donut chart)
 print("  Creating Chart 3: Demand by Industry...")
@@ -468,7 +467,7 @@ fig3.update_layout(
     margin=dict(t=100, b=80, l=50, r=50)
 )
 fig3.write_html("charts/office/requirements_sf_avg_by_industry.html")
-print("    ✓ Saved charts/office/requirements_sf_avg_by_industry.html")
+print("    [OK] Saved charts/office/requirements_sf_avg_by_industry.html")
 
 # 5e. Chart 4: Requirements by Size Range
 print("  Creating Chart 4: Requirements by Size Range...")
@@ -530,7 +529,7 @@ fig4.update_layout(
     margin=dict(t=80, b=80, l=120, r=50)
 )
 fig4.write_html("charts/office/requirements_by_size_range.html")
-print("    ✓ Saved charts/office/requirements_by_size_range.html")
+print("    [OK] Saved charts/office/requirements_by_size_range.html")
 
 # ============================================================================
 # STEP 6: Fetch Supabase absorption data
@@ -539,7 +538,7 @@ print("\nStep 6: Fetching absorption data from Supabase...")
 
 try:
     supabase = initialize_supabase_connection()
-    print("  ✓ Connected to Supabase")
+    print("  [OK] Connected to Supabase")
 
     # Query office market data for absorption
     print("  Querying market_tables_office...")
@@ -587,7 +586,7 @@ try:
     print(f"    - Date range: {absorption_quarterly['quarter'].min()} to {absorption_quarterly['quarter'].max()}")
 
 except Exception as e:
-    print(f"  ✗ Error fetching Supabase data: {e}")
+    print(f"  [ERROR] Error fetching Supabase data: {e}")
     print("  Continuing without absorption comparison chart...")
     absorption_quarterly = None
 
@@ -680,7 +679,7 @@ if absorption_quarterly is not None:
     )
 
     fig5.write_html("charts/office/requirements_vs_absorption_office.html")
-    print("    ✓ Saved charts/office/requirements_vs_absorption_office.html")
+    print("    [OK] Saved charts/office/requirements_vs_absorption_office.html")
 
 # ============================================================================
 # CHART 6: Rolling 12-Month Requirements with YoY Comparison
@@ -802,12 +801,138 @@ fig6.update_layout(
 )
 
 fig6.write_html('charts/office/requirements_yoy_rolling_12m.html')
-print('  ✓ Saved charts/office/requirements_yoy_rolling_12m.html')
+print('  [OK] Saved charts/office/requirements_yoy_rolling_12m.html')
+
+# ============================================================================
+# PROJECTION FUNCTIONS FOR 2026
+# ============================================================================
+def calculate_2026_projection_by_quarter(df_combined):
+    """
+    Calculate projected 2026 quarterly demand using 2025 quarterly pattern.
+
+    Returns:
+        dict with 'projected_quarters', 'projection_factor', and metadata
+    """
+    from datetime import datetime
+
+    today = datetime.now()
+    current_year = today.year
+    day_of_year = today.timetuple().tm_yday
+
+    # Filter by year
+    df_2025 = df_combined[df_combined['date'].dt.year == 2025].copy()
+    df_2026 = df_combined[df_combined['date'].dt.year == current_year].copy()
+
+    # Add quarter column
+    df_2025['quarter'] = df_2025['date'].dt.to_period('Q')
+    df_2026['quarter'] = df_2026['date'].dt.to_period('Q')
+
+    # Calculate 2025 quarterly totals and size distribution
+    df_2025['size_category_temp'] = pd.cut(
+        df_2025['sf_avg'],
+        bins=[0, 10000, 25000, 50000, 100000, float('inf')],
+        labels=['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements'],
+        right=False
+    )
+
+    # Quarterly totals by size category
+    quarterly_2025_by_size = df_2025.groupby(['quarter', 'size_category_temp'], observed=False)['sf_avg'].sum()
+    quarterly_2025_total = df_2025.groupby('quarter')['sf_avg'].sum()
+    total_2025 = quarterly_2025_total.sum()
+
+    # Calculate 2026 YTD
+    comparison_date_2025 = datetime(2025, 1, 1) + pd.Timedelta(days=day_of_year - 1)
+    df_2025_ytd = df_2025[df_2025['date'] <= comparison_date_2025]
+
+    ytd_2025 = df_2025_ytd['sf_avg'].sum()
+    ytd_2026 = df_2026['sf_avg'].sum()
+
+    # Calculate projection factor
+    projection_factor = total_2025 / ytd_2025 if ytd_2025 > 0 else (365 / day_of_year)
+    projected_total_2026 = ytd_2026 * projection_factor
+
+    # Get actual 2026 quarters by size
+    df_2026['size_category_temp'] = pd.cut(
+        df_2026['sf_avg'],
+        bins=[0, 10000, 25000, 50000, 100000, float('inf')],
+        labels=['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements'],
+        right=False
+    )
+    actual_quarters_2026_by_size = df_2026.groupby(['quarter', 'size_category_temp'], observed=False)['sf_avg'].sum()
+
+    # Generate projected quarterly values using 2025 pattern
+    projected_quarters_2026 = {}
+    size_categories = ['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements']
+
+    for q_num in range(1, 5):
+        q_period = pd.Period(f'2026Q{q_num}', freq='Q')
+        q_2025 = pd.Period(f'2025Q{q_num}', freq='Q')
+
+        # Check if we have actual data for this quarter
+        has_actual = q_period in df_2026['quarter'].values
+
+        if has_actual:
+            # Use actual data
+            projected_quarters_2026[q_period] = {
+                'is_actual': True,
+                'by_size': {}
+            }
+            for size_cat in size_categories:
+                try:
+                    val = actual_quarters_2026_by_size.loc[(q_period, size_cat)]
+                except KeyError:
+                    val = 0
+                projected_quarters_2026[q_period]['by_size'][size_cat] = val
+        else:
+            # Use 2025 pattern
+            q_total_2025 = quarterly_2025_total.get(q_2025, 0)
+            if total_2025 > 0:
+                q_pct = q_total_2025 / total_2025
+            else:
+                q_pct = 0.25  # Default to 25% per quarter
+
+            projected_q_total = projected_total_2026 * q_pct
+
+            projected_quarters_2026[q_period] = {
+                'is_actual': False,
+                'by_size': {}
+            }
+
+            # Distribute by size using 2025 pattern
+            for size_cat in size_categories:
+                try:
+                    size_val_2025 = quarterly_2025_by_size.loc[(q_2025, size_cat)]
+                except KeyError:
+                    size_val_2025 = 0
+
+                if q_total_2025 > 0:
+                    size_pct = size_val_2025 / q_total_2025
+                else:
+                    size_pct = 1.0 / len(size_categories)  # Equal distribution
+
+                projected_quarters_2026[q_period]['by_size'][size_cat] = projected_q_total * size_pct
+
+    return {
+        'projected_quarters': projected_quarters_2026,
+        'projection_factor': projection_factor,
+        'projected_total': projected_total_2026,
+        'ytd_actual': ytd_2026,
+        'comparison_date': comparison_date_2025,
+        'day_of_year': day_of_year
+    }
 
 # ============================================================================
 # CHART 7: Office Demand by Tenant Size (Quarterly Grouped Bar + Total Line)
 # ============================================================================
 print("\n7. Generating Office Demand by Tenant Size chart...")
+
+# Calculate 2026 projection
+projection_data = calculate_2026_projection_by_quarter(df_combined)
+print(f"  2026 Projection calculated:")
+print(f"    - Projection factor: {projection_data['projection_factor']:.2f}x")
+print(f"    - Projected total 2026: {projection_data['projected_total']:,.0f} SF")
+print(f"    - YTD 2026 actual: {projection_data['ytd_actual']:,.0f} SF")
+print(f"    - Data through: {projection_data['comparison_date']:%Y-%m-%d}")
 
 # Filter to records with valid dates
 df_demand = df_combined[df_combined['date'].notna()].copy()
@@ -835,6 +960,40 @@ quarterly_total = df_demand.groupby('quarter').agg(
     total_demand=('sf_avg', 'sum')
 ).reset_index()
 
+# Add projected 2026 quarters to the data
+from datetime import datetime
+current_year = datetime.now().year
+
+for q_period, q_data in projection_data['projected_quarters'].items():
+    if not q_data['is_actual']:
+        # Add projected quarter data
+        q_timestamp = q_period.to_timestamp()
+
+        # Add to quarterly_total
+        projected_row_total = pd.DataFrame([{
+            'quarter': q_timestamp,
+            'total_demand': sum(q_data['by_size'].values()),
+            'is_projected': True
+        }])
+        quarterly_total = pd.concat([quarterly_total, projected_row_total], ignore_index=True)
+
+        # Add to quarterly_by_size
+        for size_cat, size_val in q_data['by_size'].items():
+            projected_row_size = pd.DataFrame([{
+                'quarter': q_timestamp,
+                'size_category': size_cat,
+                'segment_demand': size_val,
+                'count': 0,
+                'is_projected': True
+            }])
+            quarterly_by_size = pd.concat([quarterly_by_size, projected_row_size], ignore_index=True)
+
+# Mark actual data
+if 'is_projected' not in quarterly_total.columns:
+    quarterly_total['is_projected'] = False
+if 'is_projected' not in quarterly_by_size.columns:
+    quarterly_by_size['is_projected'] = False
+
 quarters = sorted(quarterly_by_size['quarter'].unique())
 
 # Colors for each size category
@@ -850,53 +1009,154 @@ category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF'
 
 fig7 = go.Figure()
 
-# Grouped bars for each size category
+# Grouped bars for each size category (split by actual vs projected)
 for category in category_order:
-    cat_data = quarterly_by_size[quarterly_by_size['size_category'] == category]
-    cat_data = cat_data[['quarter', 'segment_demand', 'count']].set_index('quarter').reindex(quarters).fillna(0).reset_index()
+    cat_data = quarterly_by_size[quarterly_by_size['size_category'] == category].copy()
+    cat_data = cat_data[['quarter', 'segment_demand', 'count', 'is_projected']].set_index('quarter').reindex(quarters).reset_index()
+
+    # Fill NaN values properly
+    cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
+    cat_data['count'] = cat_data['count'].fillna(0)
+    cat_data['is_projected'] = cat_data['is_projected'].fillna(False).astype(bool)
 
     # Format quarter labels as "YYYY Qn"
     cat_data['quarter_label'] = cat_data['quarter'].dt.to_period('Q').astype(str)
 
-    fig7.add_trace(go.Bar(
-        x=cat_data['quarter_label'],
-        y=cat_data['segment_demand'],
-        name=category,
-        marker_color=category_colors[category],
+    # Separate actual and projected data
+    actual_data = cat_data[~cat_data['is_projected']].copy()
+    projected_data = cat_data[cat_data['is_projected']].copy()
+
+    # Actual data bars (full opacity)
+    if len(actual_data) > 0:
+        fig7.add_trace(go.Bar(
+            x=actual_data['quarter_label'],
+            y=actual_data['segment_demand'],
+            name=category,
+            marker_color=category_colors[category],
+            legendgroup=category,
+            showlegend=True,
+            hovertemplate=(
+                f'<b>{category}</b><br>'
+                'Quarter: %{x}<br>'
+                'Demand: %{y:,.0f} SF<br>'
+                '<b>(Actual)</b><extra></extra>'
+            ),
+        ))
+
+    # Projected data bars (40% opacity)
+    if len(projected_data) > 0:
+        fig7.add_trace(go.Bar(
+            x=projected_data['quarter_label'],
+            y=projected_data['segment_demand'],
+            name=f'{category} (Projected)',
+            marker_color=category_colors[category],
+            marker_line=dict(width=2, color=category_colors[category]),
+            marker_pattern_shape="/",
+            opacity=0.4,
+            legendgroup=category,
+            showlegend=False,
+            hovertemplate=(
+                f'<b>{category}</b><br>'
+                'Quarter: %{x}<br>'
+                'Demand: %{y:,.0f} SF<br>'
+                '<b>(Projected)</b><extra></extra>'
+            ),
+        ))
+
+# Total demand line on secondary y-axis (split by actual vs projected)
+total_data = quarterly_total.set_index('quarter').reindex(quarters).reset_index()
+
+# Fill NaN values properly
+total_data['total_demand'] = total_data['total_demand'].fillna(0)
+total_data['is_projected'] = total_data['is_projected'].fillna(False).astype(bool)
+
+total_data['quarter_label'] = total_data['quarter'].dt.to_period('Q').astype(str)
+
+# Separate actual and projected total demand
+actual_total = total_data[~total_data['is_projected']].copy()
+projected_total_line = total_data[total_data['is_projected']].copy()
+
+# Actual total demand (solid line)
+if len(actual_total) > 0:
+    fig7.add_trace(go.Scatter(
+        x=actual_total['quarter_label'],
+        y=actual_total['total_demand'],
+        mode='lines+markers',
+        name='Total Demand',
+        line=dict(color=AQUILA_COLORS[0], width=3),
+        marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle'),
+        yaxis='y2',
+        legendgroup='total',
+        showlegend=True,
         hovertemplate=(
-            f'<b>{category}</b><br>'
+            '<b>Total Demand</b><br>'
             'Quarter: %{x}<br>'
-            'Demand: %{y:,.0f} SF<br>'
-            '<extra></extra>'
+            'Total: %{y:,.0f} SF<br>'
+            '<b>(Actual)</b><extra></extra>'
         ),
     ))
 
-# Total demand line on secondary y-axis
-total_data = quarterly_total.set_index('quarter').reindex(quarters).fillna(0).reset_index()
-total_data['quarter_label'] = total_data['quarter'].dt.to_period('Q').astype(str)
+# Projected total demand (dashed line)
+if len(projected_total_line) > 0:
+    # Connect the last actual point to the first projected point
+    if len(actual_total) > 0:
+        last_actual = actual_total.iloc[-1]
+        first_projected = projected_total_line.iloc[0]
 
-fig7.add_trace(go.Scatter(
-    x=total_data['quarter_label'],
-    y=total_data['total_demand'],
-    mode='lines+markers',
-    name='Total Demand',
-    line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
-    marker=dict(size=10, color=AQUILA_COLORS[0], symbol='line-ew-open', line=dict(width=3)),
-    yaxis='y2',
-    hovertemplate=(
-        '<b>Total Demand</b><br>'
-        'Quarter: %{x}<br>'
-        'Total: %{y:,.0f} SF<br>'
-        '<extra></extra>'
-    ),
-))
+        # Create connecting segment
+        connect_df = pd.DataFrame([
+            {'quarter_label': last_actual['quarter_label'], 'total_demand': last_actual['total_demand']},
+            {'quarter_label': first_projected['quarter_label'], 'total_demand': first_projected['total_demand']}
+        ])
+
+        fig7.add_trace(go.Scatter(
+            x=connect_df['quarter_label'],
+            y=connect_df['total_demand'],
+            mode='lines',
+            name='Total Demand (Projected)',
+            line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
+            yaxis='y2',
+            legendgroup='total',
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+
+    # Add projected line
+    fig7.add_trace(go.Scatter(
+        x=projected_total_line['quarter_label'],
+        y=projected_total_line['total_demand'],
+        mode='lines+markers',
+        name='Total Demand (Projected)',
+        line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
+        marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle-open', line=dict(width=2)),
+        yaxis='y2',
+        legendgroup='total',
+        showlegend=True,
+        hovertemplate=(
+            '<b>Total Demand</b><br>'
+            'Quarter: %{x}<br>'
+            'Total: %{y:,.0f} SF<br>'
+            '<b>(Projected)</b><extra></extra>'
+        ),
+    ))
 
 min_quarter = quarters[0]
 max_quarter = quarters[-1]
 
+# Add annotation for projection
+fig7.add_annotation(
+    text=f"Note: 2026 Q2-Q4 projected using 2025 quarterly pattern (data through {projection_data['comparison_date']:%b %d, %Y})",
+    xref="paper", yref="paper",
+    x=0.5, y=1.08,
+    showarrow=False,
+    font=dict(size=11, color=AQUILA_COLORS[0]),
+    xanchor='center',
+    yanchor='bottom'
+)
+
 fig7.update_layout(
     title={
-        'text': f'Office Demand by Tenant Size (Quarterly: {min_quarter.to_period("Q")}\u2013{max_quarter.to_period("Q")})',
+        'text': f'Office Demand by Tenant Size (Quarterly: {min_quarter.to_period("Q")}\u2013{max_quarter.to_period("Q")} with 2026 Projection)',
         'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
         'x': 0.5,
         'xanchor': 'center',
@@ -915,8 +1175,7 @@ fig7.update_layout(
         tickangle=-45,
     ),
     yaxis=dict(
-        title='Segment Demand (SF)',
-        titlefont=dict(size=14),
+        title=dict(text='Segment Demand (SF)', font=dict(size=14)),
         showgrid=True,
         gridcolor='#e9e9ea',
         showline=True,
@@ -926,8 +1185,7 @@ fig7.update_layout(
         rangemode='tozero',
     ),
     yaxis2=dict(
-        title='Total Demand (SF)',
-        titlefont=dict(size=14),
+        title=dict(text='Total Demand (SF)', font=dict(size=14)),
         overlaying='y',
         side='right',
         showgrid=False,
@@ -953,7 +1211,7 @@ fig7.update_layout(
 )
 
 fig7.write_html('charts/office/requirements_demand_by_tenant_size.html')
-print('  ✓ Saved charts/office/requirements_demand_by_tenant_size.html')
+print('  [OK] Saved charts/office/requirements_demand_by_tenant_size.html')
 
 # ============================================================================
 # SUMMARY
@@ -969,15 +1227,15 @@ print(f"  - Tab 1 (Through 2024) records: {len(df_std_2024)}")
 print(f"  - Total requirements SF (avg): {df_combined['sf_avg'].sum():,.0f}")
 
 print(f"\nCharts generated:")
-print(f"  ✓ charts/office/requirements_sf_total.html")
-print(f"  ✓ charts/office/requirements_sf_avg.html")
-print(f"  ✓ charts/office/requirements_sf_avg_by_industry.html")
-print(f"  ✓ charts/office/requirements_by_size_range.html")
+print(f"  [OK] charts/office/requirements_sf_total.html")
+print(f"  [OK] charts/office/requirements_sf_avg.html")
+print(f"  [OK] charts/office/requirements_sf_avg_by_industry.html")
+print(f"  [OK] charts/office/requirements_by_size_range.html")
 if absorption_quarterly is not None:
-    print(f"  ✓ charts/office/requirements_vs_absorption_office.html")
-print(f"  ✓ charts/office/requirements_yoy_rolling_12m.html")
-print(f"  ✓ charts/office/requirements_demand_by_tenant_size.html")
+    print(f"  [OK] charts/office/requirements_vs_absorption_office.html")
+print(f"  [OK] charts/office/requirements_yoy_rolling_12m.html")
+print(f"  [OK] charts/office/requirements_demand_by_tenant_size.html")
 
 print("\n" + "="*80)
-print("✓ Complete!")
+print("[OK] Complete!")
 print("="*80)

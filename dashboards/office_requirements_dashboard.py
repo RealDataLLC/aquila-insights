@@ -467,8 +467,8 @@ app.title = "Austin Office Requirements Dashboard"
 
 # Calculate default dates for DatePickerRange
 max_date = df_global['date'].max()
-max_complete_month = max_date - pd.DateOffset(months=1)
-default_start = max_complete_month - pd.DateOffset(months=11)
+max_complete_month = max_date 
+default_start = max_complete_month - pd.DateOffset(months=12)
 
 app.layout = dbc.Container([
     dbc.Row([
