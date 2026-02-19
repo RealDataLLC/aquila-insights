@@ -1095,6 +1095,7 @@ fig7.update_layout(
         'xanchor': 'center',
     },
     barmode='group',
+    bargroupgap=0,
     plot_bgcolor='white',
     paper_bgcolor='white',
     font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
