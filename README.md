@@ -59,6 +59,8 @@ These are data plots for Aquila Commercial, maintained by [Nelson Lin](mailto:ne
 [Industrial Requirements Average SF [2026-02-09]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_sf_avg.html) - Monthly average SF with record count
 
 ### Market Metrics
+[NNN Rental Rates by Submarket [2026-02-19]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_nnn_rent_by_submarket.html)
+
 [Vacancy Rate by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/industrial/vacancy_rate_industrial.html)
 
 [Industrial Occupancy Rate by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_occupancy_by_size.html)
