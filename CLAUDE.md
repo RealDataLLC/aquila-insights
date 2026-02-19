@@ -132,6 +132,7 @@ AQUILA_COLORS = [
 - Combines historical & current data from 2018+
 - Compares requirements vs absorption (Supabase)
 - Market mapping: Flexible/Citywide counts toward all markets
+- **2026 annualized projection** on demand-by-tenant-size chart (see below)
 
 **Outputs (7 charts):**
 ```
@@ -142,10 +143,18 @@ charts/office/
 ├── requirements_by_size_range.html
 ├── requirements_vs_absorption_office.html
 ├── requirements_yoy_rolling_12m.html
-└── requirements_demand_by_tenant_size.html
+└── requirements_demand_by_tenant_size.html   ← Annual bars + 2026 projection
 ```
 
 **Size Bins:** Sub 10k, 10k-25k, 25k-50k, 50k-100k, Mega (100k+)
+
+**2026 Annualized Projection (`requirements_demand_by_tenant_size.html`):**
+- Chart aggregates by **year** (not quarter)
+- Current year bar is **projected full-year** demand, not YTD actuals
+- Projection formula: `projected_2026 = ytd_2026 × (full_2025 / ytd_2025_same_period)`
+- Size distribution uses 2025's annual size-category mix
+- Visual distinction: projected bar rendered at 45% opacity with diagonal hatch pattern; total demand marker is open circle on a dashed connector
+- Caption in chart subtitle shows pace factor and as-of date, e.g. *"8.4x pace factor vs. 2025"*
 
 ---
 
@@ -299,6 +308,13 @@ charts/office/
 ├── requirements_demand_by_tenant_size_e.html
 └── requirements_demand_by_tenant_size_c.html
 ```
+
+**2026 Annualized Projection (all 5 submarket charts):**
+- Same annual aggregation and projection methodology as the main demand chart (Section 1)
+- Global pace factor computed from all-market 2025 vs 2026 YTD, then applied per submarket
+- Market-specific 2026 projected total distributed by that submarket's 2025 size mix (falls back to YTD 2026 mix if no 2025 data exists for that market)
+- Identical visual treatment: hatched/faded projected bar + dashed connector to open-circle marker on total line
+- Caption subtitle on each chart shows pace factor and as-of date
 
 ---
 
@@ -491,6 +507,9 @@ GOOGLE_UNIVERSE_DOMAIN=googleapis.com
 | **Date Parsing** | Use `pd.to_datetime(..., errors='coerce')` and check for NaTs |
 | **Git Push Failed** | Check branch format: `claude/*-{sessionId}`; retry with backoff |
 | **Chart No Data** | Verify date filters didn't remove all records |
+| **Projection factor looks wrong** | Check that `date` column has 2025 records; fallback is `365/day_of_year` |
+| **Submarket projection is 0** | Market may have no 2026 YTD data; chart still renders historical bars |
+| **`titlefont` ValueError (Plotly)** | Use `title=dict(text=..., font=dict(...))` syntax instead |
 
 ---
 
@@ -544,12 +563,24 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 
 ---
 
-**Last Updated:** 2026-02-10
-**Document Version:** 2.0.0 (Condensed & Reorganized)
+**Last Updated:** 2026-02-19
+**Document Version:** 2.1.0
 
 ---
 
 ## Changelog
+
+### Version 2.1.0 (2026-02-19)
+- Added 2026 annualized projection to `requirements_demand_by_tenant_size.html` (main demand chart)
+  - Chart changed from quarterly to **annual** aggregation (years on x-axis)
+  - Current-year bar shows projected full-year demand; historical bars unchanged
+  - Projection: `ytd_2026 × (full_2025 / ytd_2025_same_period)`, distributed by 2025 size mix
+  - Visual: 45% opacity + diagonal hatch for projected bar; dashed connector + open-circle marker on total line
+  - Subtitle caption shows pace factor and as-of date dynamically
+- Applied identical projection logic to all 5 submarket charts (`create_office_demand_by_market.py`)
+  - Global pace factor from all-market 2025 vs 2026 YTD applied per submarket
+  - Market-specific size distribution from 2025 annual mix (falls back to YTD 2026 mix)
+- `calculate_2026_annual_projection()` helper function embedded in `update_office_combined_requirements.py`
 
 ### Version 2.0.0 (2026-02-10)
 - **MAJOR:** Condensed from 2869 to 587 lines (80% reduction)
