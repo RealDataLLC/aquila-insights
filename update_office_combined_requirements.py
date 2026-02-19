@@ -957,66 +957,68 @@ category_colors = {
 
 fig7 = go.Figure()
 
-# Grouped bars — actual years (solid) and projected year (hatched/lighter)
+min_year = years[0]
+max_year = years[-1]
+
+# One trace per category across ALL years — use per-bar pattern lists so 2026
+# gets a hatch while historical bars stay solid. This keeps exactly 5 bar
+# traces total so bargroupgap=0 truly eliminates gaps within each year.
 for category in category_order:
     cat_data = annual_by_size[annual_by_size['size_category'] == category].copy()
     cat_data = cat_data.set_index('year').reindex(years).reset_index()
     cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
-    cat_data['count'] = cat_data['count'].fillna(0)
     cat_data['is_projected'] = cat_data['is_projected'].fillna(False).astype(bool)
     cat_data['year_label'] = cat_data['year'].astype(str)
 
-    actual_rows = cat_data[~cat_data['is_projected']]
-    proj_rows = cat_data[cat_data['is_projected']]
+    # Per-bar pattern: hatch for projected, empty string for actual
+    patterns = ['/' if p else '' for p in cat_data['is_projected']]
+    # Per-bar opacity via color alpha: 0.45 for projected, 1.0 for actual
+    # Plotly doesn't support per-bar opacity natively, so we encode it in
+    # marker.color as rgba strings
+    base_color = category_colors[category]
+    # Convert hex to rgba
+    r = int(base_color[1:3], 16)
+    g = int(base_color[3:5], 16)
+    b = int(base_color[5:7], 16)
+    bar_colors = [
+        f'rgba({r},{g},{b},0.45)' if p else f'rgba({r},{g},{b},1.0)'
+        for p in cat_data['is_projected']
+    ]
+    hover_suffixes = ['<b>(Projected)</b>' if p else '<b>(Actual)</b>' for p in cat_data['is_projected']]
 
-    if len(actual_rows) > 0:
-        fig7.add_trace(go.Bar(
-            x=actual_rows['year_label'],
-            y=actual_rows['segment_demand'],
-            name=category,
-            marker_color=category_colors[category],
-            legendgroup=category,
-            showlegend=True,
-            hovertemplate=(
-                f'<b>{category}</b><br>'
-                'Year: %{x}<br>'
-                'Demand: %{y:,.0f} SF<br>'
-                '<b>(Actual)</b><extra></extra>'
-            ),
-        ))
+    fig7.add_trace(go.Bar(
+        x=cat_data['year_label'],
+        y=cat_data['segment_demand'],
+        name=category,
+        marker=dict(
+            color=bar_colors,
+            pattern=dict(shape=patterns, fgcolor=base_color, size=8),
+        ),
+        legendgroup=category,
+        showlegend=True,
+        customdata=hover_suffixes,
+        hovertemplate=(
+            f'<b>{category}</b><br>'
+            'Year: %{x}<br>'
+            'Demand: %{y:,.0f} SF<br>'
+            '%{customdata}<extra></extra>'
+        ),
+    ))
 
-    if len(proj_rows) > 0:
-        fig7.add_trace(go.Bar(
-            x=proj_rows['year_label'],
-            y=proj_rows['segment_demand'],
-            name=f'{category} (Projected)',
-            marker_color=category_colors[category],
-            marker_line=dict(width=2, color=category_colors[category]),
-            marker_pattern_shape="/",
-            opacity=0.45,
-            legendgroup=category,
-            showlegend=False,
-            hovertemplate=(
-                f'<b>{category}</b><br>'
-                'Year: %{x}<br>'
-                'Demand: %{y:,.0f} SF<br>'
-                '<b>(Projected)</b><extra></extra>'
-            ),
-        ))
-
-# Total demand line on secondary y-axis
+# Total demand line — single continuous trace with dash starting at projected year
 total_data = annual_total.set_index('year').reindex(years).reset_index()
 total_data['total_demand'] = total_data['total_demand'].fillna(0)
 total_data['is_projected'] = total_data['is_projected'].fillna(False).astype(bool)
 total_data['year_label'] = total_data['year'].astype(str)
 
-actual_total_line = total_data[~total_data['is_projected']]
-proj_total_line = total_data[total_data['is_projected']]
+actual_total = total_data[~total_data['is_projected']]
+proj_total = total_data[total_data['is_projected']]
 
-if len(actual_total_line) > 0:
+# Solid line for actuals
+if len(actual_total) > 0:
     fig7.add_trace(go.Scatter(
-        x=actual_total_line['year_label'],
-        y=actual_total_line['total_demand'],
+        x=actual_total['year_label'],
+        y=actual_total['total_demand'],
         mode='lines+markers',
         name='Total Demand',
         line=dict(color=AQUILA_COLORS[0], width=3),
@@ -1032,29 +1034,23 @@ if len(actual_total_line) > 0:
         ),
     ))
 
-if len(proj_total_line) > 0:
-    # Connect last actual to projected
-    if len(actual_total_line) > 0:
-        last_actual = actual_total_line.iloc[-1]
-        first_proj = proj_total_line.iloc[0]
-        connect_df = pd.DataFrame([
-            {'year_label': last_actual['year_label'], 'total_demand': last_actual['total_demand']},
-            {'year_label': first_proj['year_label'], 'total_demand': first_proj['total_demand']}
-        ])
-        fig7.add_trace(go.Scatter(
-            x=connect_df['year_label'],
-            y=connect_df['total_demand'],
-            mode='lines',
-            line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
-            yaxis='y2',
-            legendgroup='total',
-            showlegend=False,
-            hoverinfo='skip'
-        ))
-
+# Dashed connector + projected point
+if len(proj_total) > 0 and len(actual_total) > 0:
+    last_actual = actual_total.iloc[-1]
+    first_proj = proj_total.iloc[0]
     fig7.add_trace(go.Scatter(
-        x=proj_total_line['year_label'],
-        y=proj_total_line['total_demand'],
+        x=[last_actual['year_label'], first_proj['year_label']],
+        y=[last_actual['total_demand'], first_proj['total_demand']],
+        mode='lines',
+        line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
+        yaxis='y2',
+        legendgroup='total',
+        showlegend=False,
+        hoverinfo='skip',
+    ))
+    fig7.add_trace(go.Scatter(
+        x=proj_total['year_label'],
+        y=proj_total['total_demand'],
         mode='markers',
         name='Total Demand (Projected)',
         marker=dict(size=12, color=AQUILA_COLORS[0], symbol='circle-open', line=dict(width=2.5)),
@@ -1065,34 +1061,27 @@ if len(proj_total_line) > 0:
             '<b>Total Demand</b><br>'
             'Year: %{x}<br>'
             'Total: %{y:,.0f} SF<br>'
-            f'<b>(Annualized — as of {projection_data["as_of_date"]:%b %d, %Y})</b><extra></extra>'
+            f'<b>Annualized as of {projection_data["as_of_date"]:%b %d, %Y}</b><extra></extra>'
         ),
     ))
 
-min_year = years[0]
-max_year = years[-1]
-
-# Annotation explaining the projection
-fig7.add_annotation(
-    text=(
-        f"Note: {current_year} bar is annualized from YTD demand "
-        f"(as of {projection_data['as_of_date']:%b %d, %Y}) "
-        f"using {projection_data['projection_factor']:.1f}x pace factor vs. {current_year - 1}"
-    ),
-    xref="paper", yref="paper",
-    x=0.5, y=1.08,
-    showarrow=False,
-    font=dict(size=11, color=AQUILA_COLORS[0]),
-    xanchor='center',
-    yanchor='bottom'
+caption = (
+    f'<i>Note: {current_year} bar is annualized from YTD demand '
+    f'(as of {projection_data["as_of_date"]:%b %d, %Y}) '
+    f'using a {projection_data["projection_factor"]:.1f}x pace factor vs. {current_year - 1}</i>'
 )
 
 fig7.update_layout(
     title={
-        'text': f'Office Demand by Tenant Size (Annual: {min_year}\u2013{max_year} with {current_year} Annualized Projection)',
+        'text': (
+            f'Office Demand by Tenant Size (Annual: {min_year}\u2013{max_year} with {current_year} Annualized Projection)'
+            f'<br><sup>{caption}</sup>'
+        ),
         'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
         'x': 0.5,
         'xanchor': 'center',
+        'y': 0.97,
+        'yanchor': 'top',
     },
     barmode='group',
     bargroupgap=0,
@@ -1132,15 +1121,15 @@ fig7.update_layout(
     legend=dict(
         orientation='h',
         yanchor='top',
-        y=-0.2,
+        y=-0.15,
         xanchor='center',
         x=0.5,
         font=dict(size=12),
         traceorder='normal',
     ),
-    height=650,
+    height=680,
     width=1400,
-    margin=dict(t=80, b=140, l=80, r=80),
+    margin=dict(t=110, b=120, l=80, r=80),
     hovermode='x unified',
 )
 
