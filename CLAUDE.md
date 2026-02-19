@@ -39,7 +39,7 @@
 ├── charts/                                  # Published HTML charts (organized by category)
 │   ├── property-management/                 # 1 chart: AMS KPIs
 │   ├── office/                              # 17 charts: Requirements, transactions, market metrics
-│   ├── industrial/                          # 8 charts: TITM demand, vacancy, market metrics
+│   ├── industrial/                          # 9 charts: TITM demand, vacancy, NNN rent, market metrics
 │   └── economic-indicators/                 # 8 charts: Employment, wages, housing, financial
 │
 ├── dashboards/                              # Interactive Dash apps (local, not published)
@@ -70,7 +70,8 @@
 │   ├── create_ams_kpi_chart.py                    # Property management KPIs
 │   ├── create_office_transaction_charts.py        # Office transaction volume (2 charts)
 │   ├── create_office_demand_by_market.py          # Office demand by submarket (5 charts)
-│   └── create_industrial_demand_charts.py         # Industrial TITM charts (5 charts)
+│   ├── create_industrial_demand_charts.py         # Industrial TITM charts (5 charts)
+│   └── create_industrial_nnn_rent_chart.py        # Industrial NNN rent by submarket (1 chart)
 │
 ├── DEPRECATED
 │   └── DEPRECATED_update_office_requirements.py   # Old single-tab Google Sheets (replaced by combined)
@@ -201,7 +202,27 @@ charts/industrial/
 
 ---
 
-### 4. Building Performance (Supabase)
+### 4. Industrial NNN Rental Rates (Supabase)
+
+**Script:** `create_industrial_nnn_rent_chart.py`
+
+**Data Source:** Supabase table `market_tables_industrial`
+
+**Filters:** `property_type = 'Industrial'`, submarkets: Northeast, Southeast, Williamson County
+
+**Date Range:** 2022 Q1 → configurable `END_QUARTER` constant (update as new quarters arrive)
+
+**Outputs (1 chart):**
+```
+charts/industrial/
+└── industrial_nnn_rent_by_submarket.html
+```
+
+**Colors:** Navy (Northeast), Brass (Southeast), Concrete (Williamson County)
+
+---
+
+### 5. Building Performance (Supabase)
 
 **Notebook:** `building-performance-by-size.ipynb`
 **Script:** `update_building_performance_charts.py`
@@ -233,7 +254,7 @@ charts/industrial/
 
 ---
 
-### 5. Economic Indicators (FRED API)
+### 6. Economic Indicators (FRED API)
 
 **Notebook:** `fred-economic-indicators.ipynb`
 **Scripts:**
@@ -259,7 +280,7 @@ charts/economic-indicators/
 
 ---
 
-### 6. Property Management (Excel)
+### 7. Property Management (Excel)
 
 **Script:** `create_ams_kpi_chart.py`
 
@@ -275,7 +296,7 @@ charts/property-management/
 
 ---
 
-### 7. Office Transactions (Excel)
+### 8. Office Transactions (Excel)
 
 **Script:** `create_office_transaction_charts.py`
 
@@ -294,7 +315,7 @@ charts/office/
 
 ---
 
-### 8. Office Demand by Market (Google Sheets)
+### 9. Office Demand by Market (Google Sheets)
 
 **Script:** `create_office_demand_by_market.py`
 
@@ -638,11 +659,19 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 ---
 
 **Last Updated:** 2026-02-19
-**Document Version:** 2.2.0
+**Document Version:** 2.3.0
 
 ---
 
 ## Changelog
+
+### Version 2.3.0 (2026-02-19)
+- Added `create_industrial_nnn_rent_chart.py` — Industrial NNN Rental Rates line chart
+  - Submarkets: Northeast, Southeast, Williamson County; property type: Industrial
+  - Date range: 2022 Q1 → configurable `END_QUARTER` constant
+  - Output: `charts/industrial/industrial_nnn_rent_by_submarket.html`
+- Updated industrial chart count: 8 → 9
+- Renumbered data source sections 4–8 to 5–9 to accommodate new section
 
 ### Version 2.2.0 (2026-02-19)
 - Added `dashboards/` directory and Office Requirements Dashboard documentation
