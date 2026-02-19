@@ -83,7 +83,7 @@ client = gspread.authorize(credentials)
 spreadsheet_id = '1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec'
 sheet = client.open_by_key(spreadsheet_id)
 
-print("  ✓ Connected successfully")
+print("  [OK] Connected successfully")
 
 # ============================================================================
 # STEP 2: Read both tabs
@@ -379,7 +379,7 @@ for market in ['CBD', 'SW', 'NW', 'E', 'C']:
 # ============================================================================
 # STEP 6: Generate market-specific charts (ANNUAL, not quarterly)
 # ============================================================================
-print("\nStep 6: Generating market-specific charts (annual)...")
+print("\nStep 6: Generating market-specific charts (annual with 2026 projection)...")
 
 # Create output directory
 os.makedirs('charts/office', exist_ok=True)
@@ -395,16 +395,16 @@ df_expanded['size_category'] = pd.cut(
     right=False
 )
 
-# Add year column (annual x-axis, replacing quarters!)
+# Add year column (annual x-axis)
 df_expanded['year'] = df_expanded['date'].dt.year
 
-# Colors for each size category (replace Signal with Pennybacker)
+# Colors for each size category
 category_colors = {
     'Mega Requirements': AQUILA_COLORS[0],   # AQUILA Navy
     '50k-100k SF':       AQUILA_COLORS[4],   # Greenspace
     '25k-50k SF':        AQUILA_COLORS[3],   # Brass
     '10k-25k SF':        AQUILA_COLORS[2],   # Copper
-    'Sub 10k SF':        AQUILA_COLORS[7],   # Pennybacker (was Signal)
+    'Sub 10k SF':        AQUILA_COLORS[7],   # Pennybacker
 }
 
 category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
@@ -418,7 +418,22 @@ market_names = {
     'C': 'Central'
 }
 
-# Generate a chart for each market, aggregating ANNUAL (not quarterly)
+# Compute 2026 projection parameters (once, across all data)
+from datetime import datetime as _dt
+_today = _dt.now()
+_current_year = _today.year
+_day_of_year = _today.timetuple().tm_yday
+_comparison_date_2025 = _dt(2025, 1, 1) + pd.Timedelta(days=_day_of_year - 1)
+
+# Whole-dataset 2025 vs 2026 YTD for the pace factor
+_df_2025_all = df_expanded[df_expanded['year'] == 2025]
+_df_2026_all = df_expanded[df_expanded['year'] == _current_year]
+_total_2025_all = _df_2025_all['sf_avg'].sum()
+_ytd_2025_all = _df_2025_all[_df_2025_all['date'] <= _comparison_date_2025]['sf_avg'].sum()
+_global_factor = (_total_2025_all / _ytd_2025_all) if _ytd_2025_all > 0 else (365.0 / _day_of_year)
+print(f"  Global annualization factor: {_global_factor:.2f}x (as of {_today:%b %d, %Y})")
+
+# Generate a chart for each market, aggregating ANNUAL
 for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
     print(f"\n  Generating chart for {market_names[market_code]}...")
 
@@ -429,20 +444,60 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         print(f"    ⚠ No data for {market_code}, skipping")
         continue
 
-    # Drop NA years (in case)
+    # Drop NA years
     df_market = df_market[df_market['year'].notna()].copy()
     df_market['year'] = df_market['year'].astype(int)
 
-    # Aggregate by year and size category (annual breakdown)
-    annual_by_size = df_market.groupby(['year', 'size_category'], observed=False).agg(
+    # Split into historical (completed years) and current year
+    df_hist = df_market[df_market['year'] < _current_year].copy()
+    df_curr = df_market[df_market['year'] == _current_year].copy()
+
+    # Aggregate historical by year and size category
+    annual_by_size = df_hist.groupby(['year', 'size_category'], observed=False).agg(
         segment_demand=('sf_avg', 'sum'),
         count=('sf_avg', 'count')
     ).reset_index()
+    annual_by_size['is_projected'] = False
 
-    # Total demand per year
-    annual_total = df_market.groupby('year').agg(
+    annual_total = df_hist.groupby('year').agg(
         total_demand=('sf_avg', 'sum')
     ).reset_index()
+    annual_total['is_projected'] = False
+
+    # Compute market-level YTD 2026 and project full year using global factor
+    ytd_market_2026 = df_curr['sf_avg'].sum()
+    projected_market_total = ytd_market_2026 * _global_factor
+
+    # Distribute projected total by this market's 2025 annual size mix
+    market_2025_by_size = df_hist[df_hist['year'] == 2025].groupby('size_category', observed=False)['sf_avg'].sum()
+    market_2025_total = market_2025_by_size.sum()
+
+    # Fall back to YTD 2026 mix if no 2025 data
+    if market_2025_total == 0:
+        market_ytd_by_size = df_curr.groupby('size_category', observed=False)['sf_avg'].sum()
+        market_ytd_total = market_ytd_by_size.sum()
+        for size_cat in demand_labels:
+            val = market_ytd_by_size.get(size_cat, 0)
+            pct = val / market_ytd_total if market_ytd_total > 0 else 1.0 / len(demand_labels)
+            proj_row = pd.DataFrame([{
+                'year': _current_year, 'size_category': size_cat,
+                'segment_demand': projected_market_total * pct, 'count': 0, 'is_projected': True
+            }])
+            annual_by_size = pd.concat([annual_by_size, proj_row], ignore_index=True)
+    else:
+        for size_cat in demand_labels:
+            size_val = market_2025_by_size.get(size_cat, 0)
+            pct = size_val / market_2025_total
+            proj_row = pd.DataFrame([{
+                'year': _current_year, 'size_category': size_cat,
+                'segment_demand': projected_market_total * pct, 'count': 0, 'is_projected': True
+            }])
+            annual_by_size = pd.concat([annual_by_size, proj_row], ignore_index=True)
+
+    proj_total_row = pd.DataFrame([{
+        'year': _current_year, 'total_demand': projected_market_total, 'is_projected': True
+    }])
+    annual_total = pd.concat([annual_total, proj_total_row], ignore_index=True)
 
     years = sorted(annual_by_size['year'].unique())
 
@@ -450,60 +505,143 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         print(f"    ⚠ No annual data for {market_code}, skipping")
         continue
 
+    print(f"    YTD {_current_year}: {ytd_market_2026:,.0f} SF → Projected: {projected_market_total:,.0f} SF")
+
     # Create figure
     fig = go.Figure()
 
-    # Grouped bars for each size category
+    # Grouped bars for each size category (actual vs projected)
     for category in category_order:
-        cat_data = annual_by_size[annual_by_size['size_category'] == category]
-        cat_data = cat_data[['year', 'segment_demand', 'count']].set_index('year').reindex(years).reset_index()
-        # Fill NaN values only in numeric columns
+        cat_data = annual_by_size[annual_by_size['size_category'] == category].copy()
+        cat_data = cat_data.set_index('year').reindex(years).reset_index()
         cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
         cat_data['count'] = cat_data['count'].fillna(0)
-
-        # Format year labels as string
+        cat_data['is_projected'] = cat_data['is_projected'].fillna(False).astype(bool)
         cat_data['year_label'] = cat_data['year'].astype(str)
 
-        fig.add_trace(go.Bar(
-            x=cat_data['year_label'],
-            y=cat_data['segment_demand'],
-            name=category,
-            marker_color=category_colors[category],
-            hovertemplate=(
-                f'<b>{category}</b><br>'
-                'Year: %{x}<br>'
-                'Demand: %{y:,.0f} SF<br>'
-                '<extra></extra>'
-            ),
-        ))
+        actual_rows = cat_data[~cat_data['is_projected']]
+        proj_rows = cat_data[cat_data['is_projected']]
+
+        if len(actual_rows) > 0:
+            fig.add_trace(go.Bar(
+                x=actual_rows['year_label'],
+                y=actual_rows['segment_demand'],
+                name=category,
+                marker_color=category_colors[category],
+                legendgroup=category,
+                showlegend=True,
+                hovertemplate=(
+                    f'<b>{category}</b><br>'
+                    'Year: %{x}<br>'
+                    'Demand: %{y:,.0f} SF<br>'
+                    '<b>(Actual)</b><extra></extra>'
+                ),
+            ))
+
+        if len(proj_rows) > 0:
+            fig.add_trace(go.Bar(
+                x=proj_rows['year_label'],
+                y=proj_rows['segment_demand'],
+                name=f'{category} (Projected)',
+                marker_color=category_colors[category],
+                marker_line=dict(width=2, color=category_colors[category]),
+                marker_pattern_shape="/",
+                opacity=0.45,
+                legendgroup=category,
+                showlegend=False,
+                hovertemplate=(
+                    f'<b>{category}</b><br>'
+                    'Year: %{x}<br>'
+                    'Demand: %{y:,.0f} SF<br>'
+                    '<b>(Projected)</b><extra></extra>'
+                ),
+            ))
 
     # Total demand line on secondary y-axis
     total_data = annual_total.set_index('year').reindex(years).reset_index()
     total_data['total_demand'] = total_data['total_demand'].fillna(0)
+    total_data['is_projected'] = total_data['is_projected'].fillna(False).astype(bool)
     total_data['year_label'] = total_data['year'].astype(str)
 
-    fig.add_trace(go.Scatter(
-        x=total_data['year_label'],
-        y=total_data['total_demand'],
-        mode='lines+markers',
-        name='Total Demand',
-        line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
-        marker=dict(size=10, color=AQUILA_COLORS[0], symbol='line-ew-open', line=dict(width=3)),
-        yaxis='y2',
-        hovertemplate=(
-            '<b>Total Demand</b><br>'
-            'Year: %{x}<br>'
-            'Total: %{y:,.0f} SF<br>'
-            '<extra></extra>'
-        ),
-    ))
+    actual_total_line = total_data[~total_data['is_projected']]
+    proj_total_line = total_data[total_data['is_projected']]
+
+    if len(actual_total_line) > 0:
+        fig.add_trace(go.Scatter(
+            x=actual_total_line['year_label'],
+            y=actual_total_line['total_demand'],
+            mode='lines+markers',
+            name='Total Demand',
+            line=dict(color=AQUILA_COLORS[0], width=3),
+            marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle'),
+            yaxis='y2',
+            legendgroup='total',
+            showlegend=True,
+            hovertemplate=(
+                '<b>Total Demand</b><br>'
+                'Year: %{x}<br>'
+                'Total: %{y:,.0f} SF<br>'
+                '<b>(Actual)</b><extra></extra>'
+            ),
+        ))
+
+    if len(proj_total_line) > 0:
+        if len(actual_total_line) > 0:
+            last_actual = actual_total_line.iloc[-1]
+            first_proj = proj_total_line.iloc[0]
+            connect_df = pd.DataFrame([
+                {'year_label': last_actual['year_label'], 'total_demand': last_actual['total_demand']},
+                {'year_label': first_proj['year_label'], 'total_demand': first_proj['total_demand']}
+            ])
+            fig.add_trace(go.Scatter(
+                x=connect_df['year_label'],
+                y=connect_df['total_demand'],
+                mode='lines',
+                line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
+                yaxis='y2',
+                legendgroup='total',
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+
+        fig.add_trace(go.Scatter(
+            x=proj_total_line['year_label'],
+            y=proj_total_line['total_demand'],
+            mode='markers',
+            name='Total Demand (Projected)',
+            marker=dict(size=12, color=AQUILA_COLORS[0], symbol='circle-open', line=dict(width=2.5)),
+            yaxis='y2',
+            legendgroup='total',
+            showlegend=True,
+            hovertemplate=(
+                '<b>Total Demand</b><br>'
+                'Year: %{x}<br>'
+                'Total: %{y:,.0f} SF<br>'
+                f'<b>(Annualized — as of {_today:%b %d, %Y})</b><extra></extra>'
+            ),
+        ))
 
     min_year = min(years)
     max_year = max(years)
 
+    # Annotation for projection
+    fig.add_annotation(
+        text=(
+            f"Note: {_current_year} bar is annualized from YTD demand "
+            f"(as of {_today:%b %d, %Y}) "
+            f"using {_global_factor:.1f}x pace factor vs. {_current_year - 1}"
+        ),
+        xref="paper", yref="paper",
+        x=0.5, y=1.08,
+        showarrow=False,
+        font=dict(size=11, color=AQUILA_COLORS[0]),
+        xanchor='center',
+        yanchor='bottom'
+    )
+
     fig.update_layout(
         title={
-            'text': f'Office Demand by Tenant Size - {market_names[market_code]} (Annual: {min_year}–{max_year})',
+            'text': f'Office Demand by Tenant Size - {market_names[market_code]} (Annual: {min_year}\u2013{max_year} with {_current_year} Annualized Projection)',
             'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
             'x': 0.5,
             'xanchor': 'center',
@@ -519,11 +657,10 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
             linecolor='lightgrey',
             linewidth=1,
             tickfont=dict(size=12),
-            tickangle=-45,
+            tickangle=0,
         ),
         yaxis=dict(
-            title='Segment Demand (SF)',
-            titlefont=dict(size=14),
+            title=dict(text='Segment Demand (SF)', font=dict(size=14)),
             showgrid=True,
             gridcolor='#e9e9ea',
             showline=True,
@@ -533,8 +670,7 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
             rangemode='tozero',
         ),
         yaxis2=dict(
-            title='Total Demand (SF)',
-            titlefont=dict(size=14),
+            title=dict(text='Total Demand (SF)', font=dict(size=14)),
             overlaying='y',
             side='right',
             showgrid=False,
