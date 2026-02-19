@@ -42,6 +42,11 @@
 │   ├── industrial/                          # 8 charts: TITM demand, vacancy, market metrics
 │   └── economic-indicators/                 # 8 charts: Employment, wages, housing, financial
 │
+├── dashboards/                              # Interactive Dash apps (local, not published)
+│   ├── office_requirements_dashboard.py     # Austin office requirements interactive dashboard
+│   ├── office_requirements_dashboard_v1_backup.py  # Pre-v2 backup
+│   └── requirements.txt                     # Dashboard-specific dependencies
+│
 ├── data/                                    # Input data files
 │   ├── AMS- Property Split List.xlsx
 │   └── TransactionRequestForm_Data_*.xlsx
@@ -318,6 +323,70 @@ charts/office/
 
 ---
 
+## Interactive Dashboards (Local)
+
+Dashboards live in `dashboards/` and run locally via Dash. They are NOT published to GitHub Pages.
+
+**Run any dashboard:**
+```bash
+cd dashboards
+python office_requirements_dashboard.py
+# Opens at http://127.0.0.1:8050/
+```
+
+**Dependencies (install once):**
+```bash
+pip install dash dash-bootstrap-components plotly pandas gspread oauth2client python-dotenv
+```
+
+---
+
+### Office Requirements Dashboard
+
+**File:** `dashboards/office_requirements_dashboard.py`
+**Data Source:** Google Sheets `1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec` (same as static charts)
+
+**Features:**
+- **Submarket filter** – multi-select: CBD, SW, NW, E, C (or All)
+- **Industry filter** – multi-select from all industries in dataset
+- **Size Range filter** – Sub 10k SF, 10k-25k SF, 25k-50k SF, 50k-100k SF, Mega Requirements
+- **Date Range Picker** – controls graph display range only (data is never date-filtered)
+- **Metric Cards** – Total SF, Requirement Count, Avg SF per Req, YoY Growth (color-coded)
+- **SF Range Chart** – SF Low/High lines for current + prior year, plus 3-month rolling avg on Avg SF
+- **Count Bar Chart** – Grouped bars current vs prior year
+- **Data Table** – sortable monthly detail, 20 rows/page
+- **CSV Export** – downloads current view with rolling averages
+
+**Key Architecture Decisions:**
+- Data is **never filtered by date** — date range only slices the display. This ensures prior year comparison data is always available regardless of selected range.
+- Rolling averages are calculated on the **full dataset first**, then split into current/prior periods. This prevents edge effects at period boundaries.
+- Prior year period = exact same date range shifted back 12 months (not calendar year).
+- YoY alignment: prior year months are relabeled to current year ticks (e.g., "Feb 2024" data displays under "Feb 2025" label).
+- Orphaned prior-year rows (no matching current month) are filtered out after the merge to prevent stray dates appearing on the x-axis.
+
+**Rolling Average:**
+- Window: 3 months, `min_periods=1`
+- Calculated on `sf_avg = (sf_low + sf_high) / 2` — NOT separate low/high lines
+- Rendered as dotted Copper line (current) and dash-dot Brass line (prior year)
+
+**Size Bins (office-specific):**
+```python
+bins   = [0, 10000, 25000, 50000, 100000, float('inf')]
+labels = ['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements']
+df['size_category'] = pd.cut(df['sf_avg'], bins=bins, labels=labels, right=False)
+```
+
+**Known Gotchas:**
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Stray old date at end of chart (e.g. "Dec 2024" after "Dec 2025") | Outer merge creates orphaned rows with `NaN` sort key | Filter `df_plot[df_plot['sort_order_current'].notna()]` after merge |
+| Prior year month missing from bar chart | Date filtering applied before aggregation excluded that month | Never date-filter `df_global`; only split into current/prior after aggregating |
+| `app.run_server` error | Obsolete in newer Dash | Use `app.run()` |
+| `font` key error on axis | Plotly changed API | Use `tickfont=dict(...)` inside `xaxis`/`yaxis`, not `font=dict(...)` |
+| Unicode print error on Windows | CP1252 can't encode checkmarks | Use plain ASCII in `print()` statements |
+
+---
+
 ## Standard Workflow
 
 ### Chart Generation
@@ -510,6 +579,11 @@ GOOGLE_UNIVERSE_DOMAIN=googleapis.com
 | **Projection factor looks wrong** | Check that `date` column has 2025 records; fallback is `365/day_of_year` |
 | **Submarket projection is 0** | Market may have no 2026 YTD data; chart still renders historical bars |
 | **`titlefont` ValueError (Plotly)** | Use `title=dict(text=..., font=dict(...))` syntax instead |
+| **Dash `app.run_server` error** | Obsolete in Dash 2.x — use `app.run()` instead |
+| **Dash axis `font` ValueError** | Use `tickfont=dict(...)` inside `xaxis`/`yaxis`, not `font=dict(...)` |
+| **Stray date at end of chart** | Outer merge creates orphaned NaN rows — filter `df_plot[df_plot['sort_order_current'].notna()]` |
+| **Prior year month missing** | Data was filtered by date before aggregation — aggregate ALL data first, split into periods after |
+| **Unicode error on Windows (print)** | CP1252 encoding can't print `✓` — use plain ASCII in `print()` statements |
 
 ---
 
@@ -564,11 +638,18 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 ---
 
 **Last Updated:** 2026-02-19
-**Document Version:** 2.1.0
+**Document Version:** 2.2.0
 
 ---
 
 ## Changelog
+
+### Version 2.2.0 (2026-02-19)
+- Added `dashboards/` directory and Office Requirements Dashboard documentation
+- Dashboard features: submarket/industry/size filters, date range picker, metric cards, YoY comparison, 3-month rolling avg, data table, CSV export
+- Documented key architecture decisions: no date filtering on global data, rolling avg computed before period split, outer merge orphan filter
+- Added dashboard-specific troubleshooting entries (Dash API changes, stray dates, missing prior year data, Windows Unicode)
+- Added "Interactive Dashboards (Local)" section with run instructions and known gotchas
 
 ### Version 2.1.0 (2026-02-19)
 - Added 2026 annualized projection to `requirements_demand_by_tenant_size.html` (main demand chart)
