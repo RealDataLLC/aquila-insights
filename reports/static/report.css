@@ -1,0 +1,407 @@
+/* AQUILA Office Quarterly Report - Master Stylesheet */
+
+/* ── CSS Variables (AQUILA Brand) ──────────────────────────── */
+:root {
+    --navy: #172344;
+    --glass-blue: #C2DAF1;
+    --copper: #AB6D3A;
+    --brass: #DEB76D;
+    --greenspace: #556B30;
+    --concrete: #AAA9A8;
+    --signal: #BF4040;
+    --pennybacker: #D6B69C;
+    --texas-sun: #FFDB99;
+    --zilker: #B2C48C;
+    --mopac-gray: #E8E8E8;
+    --soco: #F2ACAC;
+    --white: #FFFFFF;
+    --light-gray: #F5F5F5;
+    --border-gray: #E0E0E0;
+    --text-dark: #172344;
+    --text-light: #666666;
+}
+
+/* ── Page Setup ────────────────────────────────────────────── */
+@page {
+    size: letter;
+    margin: 0.85in 0.75in 1in 0.75in;
+
+    @bottom-right {
+        content: counter(page);
+        font-family: "Futura LT Pro", "Futura", Arial, sans-serif;
+        font-size: 8pt;
+        color: var(--text-light);
+    }
+}
+
+@page :first {
+    @bottom-right {
+        content: none;
+    }
+}
+
+/* ── Base Styles ───────────────────────────────────────────── */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Futura LT Pro", "Futura", Arial, sans-serif;
+    font-size: 9pt;
+    color: var(--text-dark);
+    line-height: 1.4;
+}
+
+/* ── Page Break ────────────────────────────────────────────── */
+.page-break {
+    page-break-after: always;
+    height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/* ── Title Page ────────────────────────────────────────────── */
+.title-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    text-align: center;
+    page-break-after: always;
+}
+
+.title-page .logo {
+    width: 200px;
+    margin-bottom: 60px;
+}
+
+.title-page .draft-label {
+    font-size: 11pt;
+    font-weight: 300;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--copper);
+    margin-bottom: 8px;
+}
+
+.title-page h1 {
+    font-size: 28pt;
+    font-weight: 400;
+    color: var(--navy);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.title-page .quarter-label {
+    font-size: 42pt;
+    font-weight: 300;
+    color: var(--navy);
+    letter-spacing: 6px;
+    margin-bottom: 40px;
+}
+
+.title-page .subtitle {
+    font-size: 9pt;
+    color: var(--text-light);
+    letter-spacing: 1px;
+}
+
+.title-page .report-type {
+    font-size: 14pt;
+    font-weight: 300;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 40px;
+}
+
+/* ── Section Headers ───────────────────────────────────────── */
+.section-header {
+    margin-bottom: 18px;
+}
+
+.section-header .quarter-tag {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 2px;
+}
+
+.section-header h2 {
+    font-size: 22pt;
+    font-weight: 400;
+    color: var(--navy);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.section-header .sub-label {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-top: 4px;
+}
+
+/* ── KPI Boxes ─────────────────────────────────────────────── */
+.kpi-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 28px 0;
+    gap: 24px;
+}
+
+.kpi-box {
+    flex: 1;
+    text-align: left;
+}
+
+.kpi-box .kpi-value {
+    font-size: 20pt;
+    font-weight: 400;
+    color: var(--navy);
+    line-height: 1.1;
+}
+
+.kpi-box .kpi-label {
+    font-size: 7.5pt;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
+.kpi-box .kpi-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    font-size: 10pt;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.kpi-icon.down {
+    background-color: var(--signal);
+    color: white;
+}
+
+.kpi-icon.up {
+    background-color: var(--greenspace);
+    color: white;
+}
+
+/* ── KPI Header Page ──────────────────────────────────────── */
+.kpi-header-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+/* ── Map Placeholder ───────────────────────────────────────── */
+.map-placeholder {
+    background-color: var(--mopac-gray);
+    height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    font-size: 10pt;
+    margin-top: 30px;
+}
+
+/* ── Performance Page ──────────────────────────────────────── */
+.performance-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+.chart-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 18px;
+}
+
+.chart-container {
+    width: 100%;
+    margin-top: 16px;
+}
+
+.chart-container img {
+    width: 100%;
+    height: auto;
+}
+
+.chart-row .chart-half {
+    width: 48%;
+}
+
+.chart-row .chart-half img {
+    width: 100%;
+    height: auto;
+}
+
+.chart-title {
+    font-size: 8pt;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.footnote {
+    font-size: 7pt;
+    color: var(--text-light);
+    font-style: italic;
+    margin-top: 10px;
+}
+
+.please-note {
+    background-color: var(--light-gray);
+    padding: 10px 14px;
+    margin-top: 10px;
+    font-size: 7.5pt;
+    color: var(--text-dark);
+    line-height: 1.5;
+}
+
+.please-note strong {
+    font-size: 8pt;
+    letter-spacing: 1px;
+}
+
+/* ── Major Leases Page ────────────────────────────────────── */
+.major-leases-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+/* ── Major Sales Page ─────────────────────────────────────── */
+.major-sales-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+/* ── Major Sales Cards ─────────────────────────────────────── */
+.sales-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.sale-card {
+    width: 47%;
+    margin-bottom: 8px;
+}
+
+.sale-card .sale-name {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 6px;
+}
+
+.sale-card .sale-detail {
+    font-size: 8pt;
+    color: var(--text-dark);
+    margin-bottom: 2px;
+}
+
+.sale-card .sale-detail .label {
+    color: var(--text-light);
+}
+
+/* ── Pipeline Tables ───────────────────────────────────────── */
+.pipeline-row {
+    display: flex;
+    gap: 24px;
+}
+
+.pipeline-col {
+    flex: 1;
+}
+
+.pipeline-year {
+    background-color: var(--mopac-gray);
+    text-align: center;
+    font-size: 18pt;
+    font-weight: 300;
+    color: var(--navy);
+    padding: 8px;
+    margin-bottom: 2px;
+}
+
+.pipeline-quarter {
+    background-color: var(--navy);
+    color: white;
+    font-size: 7.5pt;
+    letter-spacing: 2px;
+    padding: 4px 8px;
+    margin-top: 8px;
+}
+
+/* ── Long-term chart grid ──────────────────────────────────── */
+.chart-grid-2x3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.chart-grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.chart-grid-2x3 img,
+.chart-grid-2x2 img {
+    width: 100%;
+    height: auto;
+}
+
+/* ── Large Availability Page ──────────────────────────────── */
+.large-availability-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+/* ── Building List Page ──────────────────────────────────── */
+.building-list-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+/* ── Sublease Report Page ────────────────────────────────── */
+.sublease-report-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+/* ── Availability Matrix ───────────────────────────────────── */
+.avail-matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+.avail-matrix-grid h3 {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 4px;
+}

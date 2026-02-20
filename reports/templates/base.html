@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }} - {{ quarter_label }}</title>
+    <link rel="stylesheet" href="{{ css_report }}">
+    <link rel="stylesheet" href="{{ css_tables }}">
+</head>
+<body>
+    {% for page in pages %}
+        {{ page | safe }}
+        {% if not loop.last %}<div class="page-break"></div>{% endif %}
+    {% endfor %}
+</body>
+</html>

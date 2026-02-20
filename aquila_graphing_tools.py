@@ -50,12 +50,14 @@ def initialize_supabase_connection():
     """
     from supabase import create_client, Client
     from dotenv import load_dotenv
+    # Always load aquila_graph.env from the folder containing this module file
+    import os
 
-    load_dotenv('aquila_graph.env')
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "aquila_graph.env")
+    load_dotenv(env_path)
 
     url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
-
+    key = os.getenv("SUPABASE_PUBLIC_KEY")
     if not url or not key:
         raise ValueError(
             "SUPABASE_URL and SUPABASE_KEY must be set in aquila_graph.env"
@@ -63,6 +65,7 @@ def initialize_supabase_connection():
 
     supabase: Client = create_client(url, key)
     return supabase
+    
 def commit_and_push_all(commit_message="Update readme instructions"):
     """
     Stages all changes, commits with the provided message,

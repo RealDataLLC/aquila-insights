@@ -1,0 +1,29 @@
+<div class="major-leases-page">
+    <div class="section-header">
+        <div class="quarter-tag">{{ quarter_label }}</div>
+        <h2>Major Leases</h2>
+    </div>
+
+    <table class="leases-table">
+        <thead>
+            <tr>
+                <th>Tenant</th>
+                <th>Property Name</th>
+                <th>Submarket</th>
+                <th>SF Leased</th>
+                <th>Deal Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.tenant }}</td>
+                <td>{{ row.property_name }}</td>
+                <td>{{ row.submarket }}</td>
+                <td>{{ "{:,.0f}".format(row.sf_leased) if row.sf_leased else "—" }}</td>
+                <td>{{ row.deal_type }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

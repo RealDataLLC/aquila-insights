@@ -1,0 +1,33 @@
+<div class="sublease-report-page">
+    <div class="section-header">
+        <h2>Sublease Report</h2>
+        <div class="sub-label">{{ subtitle }}</div>
+    </div>
+
+    <table class="sublease-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Property Name</th>
+                <th>Tenants</th>
+                <th>Sublease<br>Available SF</th>
+                <th>Max Contiguous<br>SF</th>
+                <th>Months on<br>Market</th>
+                <th>Submarket</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td class="row-num">{{ loop.index }}</td>
+                <td>{{ row.property_name }}</td>
+                <td>{{ row.tenants if row.tenants else "—" }}</td>
+                <td>{{ "{:,.0f}".format(row.sublease_sf) if row.sublease_sf else "—" }}</td>
+                <td>{{ "{:,.0f}".format(row.max_contiguous) if row.max_contiguous else "—" }}</td>
+                <td>{{ "{:.0f}".format(row.months_on_market) if row.months_on_market else "—" }}</td>
+                <td>{{ row.submarket if row.submarket else "—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

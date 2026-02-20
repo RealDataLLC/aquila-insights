@@ -2,3 +2,6 @@ aquila_graph.env
 *.json
 __pycache__/
 nul
+
+# Report output (generated per quarter)
+reports/office/

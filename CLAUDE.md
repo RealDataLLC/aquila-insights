@@ -20,6 +20,7 @@
 **Core Libraries:**
 - Data: `pandas`, `numpy`
 - Visualization: `plotly.express`, `plotly.graph_objects`
+- PDF Reports: `jinja2`, `weasyprint`, `kaleido`
 - APIs: `requests`, `gspread`, `oauth2client`, `supabase`
 - Files: `openpyxl`, `python-dotenv`
 
@@ -75,6 +76,30 @@
 │
 ├── DEPRECATED
 │   └── DEPRECATED_update_office_requirements.py   # Old single-tab Google Sheets (replaced by combined)
+│
+├── reports/                                 # Office Quarterly Report generator (PDF)
+│   ├── office/{YEAR}_{QN}/                  # Output per quarter
+│   │   ├── charts/                          # Intermediate PNG chart images
+│   │   └── AQUILA_Office_Report_{YEAR}_{QN}.pdf
+│   ├── templates/                           # Jinja2 HTML page templates
+│   │   ├── base.html                        # Outer shell: <html>, CSS, page counters
+│   │   ├── page_title.html                  # Cover page
+│   │   ├── page_kpi_header.html             # 4 KPI boxes + placeholder map
+│   │   ├── page_performance.html            # Data table + 3 charts (15 instances)
+│   │   ├── page_major_leases.html           # Major leases table
+│   │   ├── page_major_sales.html            # Major sales card grid
+│   │   ├── page_large_availability.html     # Large availability table
+│   │   ├── page_building_list.html          # Building list with totals
+│   │   └── page_sublease_report.html        # Sublease table (paginated)
+│   ├── static/
+│   │   ├── report.css                       # Master stylesheet (brand, @page, layout)
+│   │   └── tables.css                       # Table-specific styling
+│   ├── __init__.py
+│   ├── generate_office_report.py            # Main orchestrator (CLI entry point)
+│   ├── report_config.py                     # Quarter-specific constants & paths
+│   ├── data_loader.py                       # Supabase + Excel → DataFrames
+│   ├── chart_builder.py                     # Plotly → PNG via Kaleido
+│   └── report_assembler.py                  # Jinja2 render + WeasyPrint → PDF
 │
 ├── aquila_graphing_tools.py                 # Shared utilities (styling, Supabase, git)
 ├── aquila_graph.env                         # CREDENTIALS (gitignored)
@@ -344,6 +369,100 @@ charts/office/
 
 ---
 
+### 10. Office Quarterly Report (PDF Generator)
+
+**Directory:** `reports/`
+**Entry point:** `reports/generate_office_report.py`
+
+Programmatically recreates the AQUILA Office Quarterly Report (previously a 56-page PDF built manually in InDesign). Uses Plotly for charts, Jinja2 HTML templates for layout, and WeasyPrint for HTML-to-PDF conversion.
+
+**Data Sources:**
+- **Primary:** Supabase `market_tables_office` (544 rows, 32 quarters, 13 micromarkets x 3 table types)
+- **Secondary:** Excel files on `Q:\0-Quarterly Reports\0-Office\{YEAR} Q{N}\`
+  - `Major Leases and Sales {YEAR} {Q}Q.xlsx` — Leases + Sales
+  - `Office Avail.xlsx` — Large availability per submarket + subleases
+  - `{Q}Q {YEAR} Building List.xlsx` — 18 regional building sheets
+  - `Citywide Pipeline {YEAR} Q{Q}.xlsx` — Under construction + proposed
+  - `Availability Tables.xlsx` — Direct/sublease availability matrices
+
+**Key Architecture:**
+- `report_config.py` — Single file to update per quarter (year, quarter, paths, submarket lists)
+- `data_loader.py` — Loads Supabase (service role key) + Excel into nested dict
+- `chart_builder.py` — 3 dual-axis Plotly charts per performance page (vacancy SF, absorption, rental rates), exported as PNG via Kaleido
+- `report_assembler.py` — Jinja2 template rendering + WeasyPrint PDF conversion
+- **Citywide mapping:** Uses `table_type="overall"` (not "competitive set") in Supabase
+- **Supabase auth:** Uses `SUPABASE_KEY` (service role, `sb_secret_*`) since `SUPABASE_PUBLIC_KEY` (anon JWT) lacks RLS access to `market_tables_office`
+
+**Page Sequence (matches InDesign report order):**
+1. Title page
+2. Citywide KPI + competitive set performance
+3. Major Leases table
+4. Major Sales card grid
+5. Submarket sections (CBD, NW, SW, E): KPI header → competitive set → large availability
+6. Micromarket performance pages (Domain, Shepherd Mountain, Near NW, Far NW, Near SW, Far SW)
+7. Overall performance pages (CBD, NW, SW, E)
+8. Sublease report (paginated at 30 rows/page)
+9. Building lists (18 regional sheets)
+
+**Run Commands:**
+```bash
+# Full PDF generation
+python reports/generate_office_report.py
+
+# HTML-only preview (no WeasyPrint needed)
+python reports/generate_office_report.py --html-only
+
+# Reuse existing chart PNGs (faster iteration on CSS/layout)
+python reports/generate_office_report.py --html-only --skip-charts
+
+# Full PDF with existing charts
+python reports/generate_office_report.py --skip-charts
+```
+
+**Output:**
+```
+reports/office/{YEAR}_{QN}/
+├── charts/                                    # 48 PNG chart images
+├── AQUILA_Office_Report_{YEAR}_{QN}.html      # Intermediate HTML
+└── AQUILA_Office_Report_{YEAR}_{QN}.pdf       # Final 47-page report
+```
+
+**Templates (9 Jinja2 HTML files):**
+
+| Template | Type | Instances | Data Source |
+|----------|------|-----------|-------------|
+| `page_title.html` | Cover | 1 | Config only |
+| `page_kpi_header.html` | KPI header | 5 | Supabase (latest quarter) |
+| `page_performance.html` | Table + 3 charts | 15 | Supabase (last 8 quarters) |
+| `page_major_leases.html` | Table | 1 | Excel |
+| `page_major_sales.html` | Card grid | 1 | Excel |
+| `page_large_availability.html` | Table | 4 | Excel |
+| `page_sublease_report.html` | Table (paginated) | 2 | Excel |
+| `page_building_list.html` | Table + totals | 18 | Excel |
+
+**Performance Charts (3 per page, 15 pages = 45 charts + 3 Citywide = 48 total):**
+1. **Vacancy SF** — Stacked bar (Direct + Sublease Vacant) + line (Vacancy Rate %). Navy/Glass Blue bars, Copper line.
+2. **Net Absorption** — Bar (Net Absorption) + line (Occupancy Rate). Navy bars, Brass line.
+3. **Rental Rates** — Stacked bar (Base Rent + Opex) + line (Vacancy Rate %). Navy/Concrete bars, Copper line.
+
+Charts 1 & 2 render side-by-side at 520x300px. Chart 3 renders at 520x300px in a half-width column with blank space for layout symmetry.
+
+**Dependencies (Windows):**
+```bash
+pip install weasyprint kaleido jinja2
+# GTK3 runtime for WeasyPrint on Windows:
+# Install MSYS2 → pacman -S mingw-w64-ucrt-x86_64-pango mingw-w64-ucrt-x86_64-gtk3
+# Add C:\msys64\ucrt64\bin to PATH
+```
+
+**Quarterly Update Process:**
+1. Update `reports/report_config.py` with new `REPORT_YEAR`, `REPORT_QUARTER`, and file paths
+2. Ensure Excel files are in the expected `Q:` drive location
+3. Run `python reports/generate_office_report.py`
+4. Compare output PDF against InDesign reference
+
+---
+
 ## Interactive Dashboards (Local)
 
 Dashboards live in `dashboards/` and run locally via Dash. They are NOT published to GitHub Pages.
@@ -553,6 +672,13 @@ python3 create_office_demand_by_market.py
 python3 create_industrial_demand_charts.py
 ```
 
+### Office Quarterly Report
+```bash
+python reports/generate_office_report.py                          # Full PDF
+python reports/generate_office_report.py --html-only              # Browser preview
+python reports/generate_office_report.py --html-only --skip-charts  # Fast CSS iteration
+```
+
 ---
 
 ## Configuration
@@ -605,6 +731,10 @@ GOOGLE_UNIVERSE_DOMAIN=googleapis.com
 | **Stray date at end of chart** | Outer merge creates orphaned NaN rows — filter `df_plot[df_plot['sort_order_current'].notna()]` |
 | **Prior year month missing** | Data was filtered by date before aggregation — aggregate ALL data first, split into periods after |
 | **Unicode error on Windows (print)** | CP1252 encoding can't print `✓` — use plain ASCII in `print()` statements |
+| **WeasyPrint DLL error** | `OSError: cannot load library 'libgobject-2.0-0'` — install GTK3 via MSYS2: `pacman -S mingw-w64-ucrt-x86_64-gtk3` and add `C:\msys64\ucrt64\bin` to PATH |
+| **Supabase empty for report** | `market_tables_office` returns empty with anon key — `data_loader.py` uses `SUPABASE_KEY` (service role) not `SUPABASE_PUBLIC_KEY` |
+| **Citywide data missing** | Citywide uses `table_type="overall"` in Supabase, not `"competitive set"` — `get_kpi_data()` auto-detects |
+| **--skip-charts not finding PNGs** | Chart filenames are lowercased but keys are title-case — `_find_existing_charts()` handles the mapping |
 
 ---
 
@@ -642,11 +772,11 @@ economic-indicators/ → Employment, wages, housing, financial
 
 **Data Sources:**
 ```
-Supabase:       PostgreSQL market data
+Supabase:       PostgreSQL market data (market_tables_office, market_tables_industrial)
 Google Sheets:  Office requirements (1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec)
 Google Sheets:  Industrial TITM (1natA0ALaQnX3U_vGC5Vrchy1QqmbW8k0zvTKwuE2wys)
 FRED API:       Economic indicators
-Excel:          AMS data, Transaction forms
+Excel:          AMS data, Transaction forms, Quarterly report data (Q: drive)
 ```
 
 **Public URLs:**
@@ -659,11 +789,24 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 ---
 
 **Last Updated:** 2026-02-19
-**Document Version:** 2.3.0
+**Document Version:** 3.0.0
 
 ---
 
 ## Changelog
+
+### Version 3.0.0 (2026-02-19)
+- **MAJOR:** Added Office Quarterly Report PDF generator (`reports/` directory)
+  - Programmatic recreation of 56-page InDesign quarterly report using Plotly + Jinja2 + WeasyPrint
+  - 9 Jinja2 HTML templates: title, KPI header, performance (table + 3 charts), major leases, major sales, large availability, building list, sublease report
+  - 48 Plotly charts: 3 dual-axis performance charts per page (vacancy SF, absorption, rental rates)
+  - Data from Supabase `market_tables_office` (service role key) + 5 Excel files on Q: drive
+  - Page sequence matches InDesign report: title → citywide → leases → sales → submarkets → micromarkets → overall → subleases → building lists
+  - CSS @page US Letter layout with AQUILA brand styling (Futura font, Navy/Copper/Brass color scheme)
+  - CLI: `--html-only` for browser preview, `--skip-charts` to reuse existing PNGs
+  - First test: 2025 Q4 report (47 pages)
+- New files: `report_config.py`, `data_loader.py`, `chart_builder.py`, `report_assembler.py`, `generate_office_report.py`, 9 templates, 2 CSS files
+- Added report-specific troubleshooting entries (WeasyPrint GTK3, Supabase RLS, Citywide mapping)
 
 ### Version 2.3.0 (2026-02-19)
 - Added `create_industrial_nnn_rent_chart.py` — Industrial NNN Rental Rates line chart
