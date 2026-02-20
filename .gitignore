@@ -2,3 +2,5 @@ aquila_graph.env
 *.json
 __pycache__/
 nul
+*.pdf
+!reports/*.pdf
