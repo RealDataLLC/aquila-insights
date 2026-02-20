@@ -11,7 +11,7 @@ These are data plots for Aquila Commercial, maintained by [Nelson Lin](mailto:ne
 ## Office
 
 ### Quarterly Reports
-[Office Quarterly Report [2026-Q4]](https://realdatallc.github.io/aquila-insights/reports/office_quarterly_report_2026_q4.pdf)
+[Office Quarterly Report [2026-Q4]](https://realdatallc.github.io/aquila-insights/charts/office/office_quarterly_report_2026_q4.html)
 
 ### Tenant Requirements
 [Requirements Total SF [2026-01-30]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html) - Combined historical data from 2018+
