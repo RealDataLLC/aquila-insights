@@ -9,7 +9,6 @@
 <body>
     {% for page in pages %}
         {{ page | safe }}
-        {% if not loop.last %}<div class="page-break"></div>{% endif %}
     {% endfor %}
 </body>
 </html>
