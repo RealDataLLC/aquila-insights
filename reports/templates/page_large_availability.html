@@ -1,0 +1,29 @@
+<div class="large-availability-page">
+    <div class="section-header">
+        <h2>{{ submarket_name }}</h2>
+        <div class="sub-label">LARGE AVAILABILITIES</div>
+    </div>
+
+    <table class="avail-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Property Name</th>
+                <th>Direct Vacant<br>Space (SF)</th>
+                <th>Sublet Vacant<br>Space (SF)</th>
+                <th>Max Contiguous<br>SF</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td class="row-num">{{ loop.index }}</td>
+                <td>{{ row.property_name }}</td>
+                <td>{{ "{:,.0f}".format(row.direct_vacant) if row.direct_vacant else "—" }}</td>
+                <td>{{ "{:,.0f}".format(row.sublet_vacant) if row.sublet_vacant else "—" }}</td>
+                <td>{{ "{:,.0f}".format(row.max_contiguous) if row.max_contiguous else "—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

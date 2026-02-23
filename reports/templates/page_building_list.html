@@ -1,0 +1,40 @@
+<div class="building-list-page">
+    <div class="section-header">
+        <h2>{{ submarket_name }}</h2>
+        <div class="sub-label">BUILDING LIST</div>
+    </div>
+
+    <table class="building-list-table">
+        <thead>
+            <tr>
+                <th>Building Name</th>
+                <th>Net Rentable<br>Area (SF)</th>
+                <th>Direct<br>Vacant SF</th>
+                <th>Sublease<br>Vacant SF</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.building_name }}</td>
+                <td>{{ "{:,.0f}".format(row.nra) if row.nra else "—" }}</td>
+                <td>{{ "{:,.0f}".format(row.direct_vacant) if row.direct_vacant else "—" }}</td>
+                <td>{{ "{:,.0f}".format(row.sublease_vacant) if row.sublease_vacant else "—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if totals %}
+    <table class="building-list-table" style="margin-top: 4px;">
+        <tbody>
+            <tr style="font-weight: 700; border-top: 2px solid var(--navy);">
+                <td>TOTAL</td>
+                <td>{{ "{:,.0f}".format(totals.nra) }}</td>
+                <td>{{ "{:,.0f}".format(totals.direct_vacant) }}</td>
+                <td>{{ "{:,.0f}".format(totals.sublease_vacant) }}</td>
+            </tr>
+        </tbody>
+    </table>
+    {% endif %}
+</div>

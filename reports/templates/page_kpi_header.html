@@ -1,0 +1,44 @@
+<div class="kpi-header-page">
+    <div class="section-header">
+        <div class="quarter-tag">{{ quarter_label }} UPDATE</div>
+        <h2>{{ submarket_name }}</h2>
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi-box">
+            <div class="kpi-value">
+                <span class="kpi-icon {{ 'up' if kpi.net_absorption >= 0 else 'down' }}">{{ '&#9650;' if kpi.net_absorption >= 0 else '&#9660;' }}</span>
+                {{ "{:,.0f}".format(kpi.net_absorption|abs) }} SF
+            </div>
+            <div class="kpi-label">Net Absorption</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-value">
+                <span class="kpi-icon up">&#9650;</span>
+                ${{ "{:,.2f}".format(kpi.avg_rent) }}
+            </div>
+            <div class="kpi-label">Avg. Class A & B Full Service Rental Rate</div>
+        </div>
+    </div>
+
+    <div class="kpi-row">
+        <div class="kpi-box">
+            <div class="kpi-value">
+                <span class="kpi-icon up">&#9650;</span>
+                {{ "{:.1%}".format(kpi.vacancy_rate) }}
+            </div>
+            <div class="kpi-label">Direct & Sublease Vacancy Rate</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-value">
+                <span class="kpi-icon down">&#9660;</span>
+                {{ "{:,.0f}".format(kpi.under_construction) }} SF
+            </div>
+            <div class="kpi-label">Total Under Construction</div>
+        </div>
+    </div>
+
+    <div class="map-placeholder">
+        Submarket Map — Coming Soon
+    </div>
+</div>

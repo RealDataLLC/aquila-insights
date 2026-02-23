@@ -1,0 +1,167 @@
+/* AQUILA Office Quarterly Report - Table Styles */
+
+/* ── Data Tables ───────────────────────────────────────────── */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    margin-bottom: 12px;
+}
+
+thead {
+    display: table-header-group;
+}
+
+thead th {
+    background-color: var(--navy);
+    color: white;
+    font-weight: 500;
+    text-align: right;
+    padding: 5px 8px;
+    font-size: 7.5pt;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+thead th:first-child {
+    text-align: left;
+}
+
+tbody td {
+    padding: 4px 8px;
+    text-align: right;
+    border-bottom: 1px solid var(--border-gray);
+    white-space: nowrap;
+}
+
+tbody td:first-child {
+    text-align: left;
+    font-weight: 500;
+}
+
+tbody tr:last-child td {
+    font-weight: 600;
+}
+
+tbody tr {
+    page-break-inside: avoid;
+}
+
+/* Alternating row shading */
+tbody tr:nth-child(even) {
+    background-color: var(--light-gray);
+}
+
+/* ── Performance Data Table ────────────────────────────────── */
+.perf-table {
+    margin-bottom: 14px;
+}
+
+.perf-table thead th {
+    font-size: 7pt;
+    padding: 4px 6px;
+}
+
+.perf-table tbody td {
+    font-size: 7.5pt;
+    padding: 3px 6px;
+}
+
+/* ── Building List Table ───────────────────────────────────── */
+.building-list-table thead th {
+    font-size: 7pt;
+}
+
+.building-list-table tbody td {
+    font-size: 7.5pt;
+    padding: 3px 8px;
+}
+
+/* ── Large Availability Table ──────────────────────────────── */
+.avail-table {
+    font-size: 7.5pt;
+}
+
+.avail-table thead th {
+    font-size: 7pt;
+}
+
+.avail-table tbody td:first-child {
+    max-width: 200px;
+    white-space: normal;
+}
+
+/* Row number column */
+.avail-table .row-num {
+    width: 24px;
+    text-align: center;
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+/* ── Major Leases Table ────────────────────────────────────── */
+.leases-table {
+    margin-top: 16px;
+}
+
+.leases-table thead th {
+    font-size: 7.5pt;
+    text-align: left;
+}
+
+.leases-table thead th:nth-child(4),
+.leases-table thead th:nth-child(5) {
+    text-align: right;
+}
+
+.leases-table tbody td {
+    text-align: left;
+    font-size: 8pt;
+    padding: 5px 8px;
+}
+
+.leases-table tbody td:nth-child(4) {
+    text-align: right;
+}
+
+/* ── Sublease Report Table ─────────────────────────────────── */
+.sublease-table thead th {
+    font-size: 7pt;
+}
+
+.sublease-table tbody td {
+    font-size: 7.5pt;
+}
+
+/* ── Availability Matrix Tables ────────────────────────────── */
+.matrix-table {
+    font-size: 7pt;
+}
+
+.matrix-table thead th {
+    font-size: 6.5pt;
+    padding: 3px 4px;
+}
+
+.matrix-table tbody td {
+    font-size: 6.5pt;
+    padding: 2px 4px;
+}
+
+/* ── Pipeline Table ────────────────────────────────────────── */
+.pipeline-table {
+    font-size: 8pt;
+}
+
+.pipeline-table thead th {
+    font-size: 7.5pt;
+}
+
+/* ── Development Table ─────────────────────────────────────── */
+.dev-table thead th {
+    font-size: 7pt;
+}
+
+.dev-table tbody td {
+    font-size: 7.5pt;
+}
