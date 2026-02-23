@@ -1,0 +1,36 @@
+<div class="quarterly-changes-page">
+    <div class="section-header">
+        <div class="quarter-tag">{{ quarter_label }}</div>
+        <h2>Quarterly Changes</h2>
+    </div>
+    <hr class="section-divider">
+
+    {% for section in sections %}
+    <div class="qc-section">
+        <div class="qc-section-title">{{ section.title }}</div>
+
+        {% if section.empty %}
+        <p class="qc-empty">No changes recorded this quarter.</p>
+        {% else %}
+        <table class="qc-table">
+            <thead>
+                <tr>
+                    {% for col in section.columns %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in section.rows %}
+                <tr>
+                    {% for cell in row %}
+                    <td>{{ cell }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>

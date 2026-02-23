@@ -170,6 +170,46 @@ def load_availability_tables(path):
     return result
 
 
+def load_quarterly_changes(directory):
+    """
+    Load all CSV files from the Quarterly Changes directory.
+    Returns an ordered list of dicts: {title, columns, rows, empty}
+    Preserves file order and derives a human-readable title from the filename.
+    """
+    print(f"  Loading Quarterly Changes...")
+    result = []
+    if not os.path.isdir(directory):
+        print(f"    Directory not found: {directory}")
+        return result
+
+    # Derive clean title: "NRA_Changes [Q4].csv" -> "NRA Changes"
+    def _clean_title(filename):
+        name = os.path.splitext(filename)[0]          # strip .csv
+        name = name.split('[')[0].strip()              # strip " [Q4]"
+        name = name.replace('_', ' ')
+        return name
+
+    csv_files = sorted(f for f in os.listdir(directory) if f.lower().endswith('.csv'))
+    for fname in csv_files:
+        path = os.path.join(directory, fname)
+        try:
+            df = pd.read_csv(path)
+            # Drop rows where ALL cells are NaN
+            df = df.dropna(how='all').reset_index(drop=True)
+            title = _clean_title(fname)
+            print(f"    {title}: {len(df)} rows")
+            result.append({
+                'title': title,
+                'columns': list(df.columns),
+                'df': df,
+                'empty': df.empty,
+            })
+        except Exception as e:
+            print(f"    Warning loading {fname}: {e}")
+
+    return result
+
+
 def load_all_data(config):
     """
     Master loader: reads all data sources and returns a single nested dict.
@@ -184,6 +224,7 @@ def load_all_data(config):
     pipeline = load_pipeline(config.CITYWIDE_PIPELINE)
     building_list = load_building_list(config.BUILDING_LIST)
     avail_tables = load_availability_tables(config.AVAILABILITY_TABLES)
+    quarterly_changes = load_quarterly_changes(config.QUARTERLY_CHANGES_DIR)
 
     print("=" * 60)
     print("DATA LOADING COMPLETE")
@@ -198,6 +239,7 @@ def load_all_data(config):
         'pipeline': pipeline,
         'building_list': building_list,
         'avail_tables': avail_tables,
+        'quarterly_changes': quarterly_changes,
     }
 
 

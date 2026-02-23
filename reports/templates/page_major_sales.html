@@ -3,19 +3,38 @@
         <div class="quarter-tag">{{ quarter_label }}</div>
         <h2>Major Sales</h2>
     </div>
+    <hr class="section-divider">
 
     <div class="sales-grid">
         {% for row in rows %}
         <div class="sale-card">
             <div class="sale-name">{{ row.property_name }}</div>
-            <div class="sale-detail"><span class="label">Submarket:</span> {{ row.submarket }}</div>
-            <div class="sale-detail"><span class="label">Type:</span> {{ row.property_type }}</div>
-            <div class="sale-detail"><span class="label">Size:</span> {{ "{:,.0f}".format(row.size) if row.size else "—" }} SF</div>
-            <div class="sale-detail"><span class="label">Buyer:</span> {{ row.buyer }}</div>
-            <div class="sale-detail"><span class="label">Seller:</span> {{ row.seller }}</div>
-            {% if row.asking_price %}
-            <div class="sale-detail"><span class="label">Asking Price:</span> ${{ "{:,.0f}".format(row.asking_price) }}</div>
-            {% endif %}
+            <table class="sale-table">
+                <tbody>
+                    <tr>
+                        <td class="sale-label">Market</td>
+                        <td class="sale-value">{{ row.submarket }}</td>
+                    </tr>
+                    <tr>
+                        <td class="sale-label">Size</td>
+                        <td class="sale-value">{{ "{:,.0f}".format(row.size) if row.size else "—" }} SF</td>
+                    </tr>
+                    <tr>
+                        <td class="sale-label">Buyer</td>
+                        <td class="sale-value">{{ row.buyer }}</td>
+                    </tr>
+                    <tr>
+                        <td class="sale-label">Seller</td>
+                        <td class="sale-value">{{ row.seller }}</td>
+                    </tr>
+                    {% if row.asking_price %}
+                    <tr>
+                        <td class="sale-label">Asking Price</td>
+                        <td class="sale-value">${{ "{:,.0f}".format(row.asking_price) }}</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
         </div>
         {% endfor %}
     </div>

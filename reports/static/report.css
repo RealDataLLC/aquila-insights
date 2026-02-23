@@ -281,8 +281,18 @@ body {
 
 /* ── Major Leases Page ────────────────────────────────────── */
 .major-leases-page {
-    page-break-after: always;
     padding-top: 10px;
+    page-break-after: always;
+}
+
+.section-divider {
+    border: none;
+    border-top: 2px solid var(--navy);
+    margin: 8px 0 0 0;
+}
+
+.major-leases-page .leases-table {
+    page-break-after: avoid;
 }
 
 /* ── Major Sales Page ─────────────────────────────────────── */
@@ -295,12 +305,13 @@ body {
 .sales-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 20px;
+    margin-top: 16px;
 }
 
 .sale-card {
     width: 47%;
-    margin-bottom: 8px;
+    page-break-inside: avoid;
 }
 
 .sale-card .sale-name {
@@ -309,17 +320,169 @@ body {
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--navy);
-    margin-bottom: 6px;
+    margin-bottom: 0;
+    padding-bottom: 4px;
 }
 
-.sale-card .sale-detail {
+/* Mini-table inside each sale card */
+.sale-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+    font-size: 8pt;
+}
+
+.sale-table tbody td {
+    padding: 3px 8px;
+    border-bottom: 1px solid var(--border-gray);
+    text-align: left;
+    font-weight: 400;
+    background-color: transparent;
+    white-space: normal;
+}
+
+.sale-table tbody tr:nth-child(even) {
+    background-color: transparent;
+}
+
+.sale-table .sale-label {
+    color: var(--text-light);
+    width: 80px;
+    font-weight: 400;
+}
+
+.sale-table .sale-value {
+    color: var(--text-dark);
+}
+
+/* ── Quarterly Changes Page ─────────────────────────────────── */
+.quarterly-changes-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+.qc-section {
+    margin-bottom: 22px;
+    page-break-inside: avoid;
+}
+
+.qc-section-title {
+    background-color: var(--navy);
+    color: white;
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 8px;
+    margin-bottom: 0;
+}
+
+.qc-empty {
+    font-size: 8pt;
+    color: var(--text-light);
+    font-style: italic;
+    padding: 8px 4px;
+}
+
+.qc-table {
+    margin-bottom: 0;
+}
+
+.qc-table thead th {
+    font-size: 7.5pt;
+}
+
+.qc-table tbody td {
+    font-size: 8pt;
+    white-space: normal;
+}
+
+/* ── Development Pipeline Page ─────────────────────────────── */
+.pipeline-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+.pipeline-blurb {
     font-size: 8pt;
     color: var(--text-dark);
-    margin-bottom: 2px;
+    margin: 10px 0 14px 0;
+    line-height: 1.5;
+    max-width: 45%;
 }
 
-.sale-card .sale-detail .label {
+.pipeline-body {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+/* LEFT column: Under Construction */
+.pipeline-left {
+    width: 38%;
+    flex-shrink: 0;
+}
+
+.pipeline-year-block {
+    margin-bottom: 10px;
+    page-break-inside: avoid;
+}
+
+.pipeline-year-header {
+    background-color: var(--mopac-gray);
+    text-align: center;
+    font-size: 18pt;
+    font-weight: 300;
+    color: var(--navy);
+    padding: 6px;
+    margin-bottom: 0;
+}
+
+.pipeline-quarter-header {
+    background-color: var(--navy);
+    color: white;
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    margin-bottom: 0;
+}
+
+/* RIGHT column: Planned/Proposed */
+.pipeline-right {
+    flex: 1;
+}
+
+.proposed-header {
+    background-color: var(--mopac-gray);
+    text-align: center;
+    font-size: 13pt;
+    font-weight: 300;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--navy);
+    padding: 8px;
+    margin-bottom: 0;
+}
+
+.proposed-grid {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.proposed-grid .proposed-table {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.pipeline-footnote {
+    font-size: 6.5pt;
     color: var(--text-light);
+    font-style: italic;
+    text-align: right;
+    margin-top: 6px;
 }
 
 /* ── Pipeline Tables ───────────────────────────────────────── */
@@ -330,25 +493,6 @@ body {
 
 .pipeline-col {
     flex: 1;
-}
-
-.pipeline-year {
-    background-color: var(--mopac-gray);
-    text-align: center;
-    font-size: 18pt;
-    font-weight: 300;
-    color: var(--navy);
-    padding: 8px;
-    margin-bottom: 2px;
-}
-
-.pipeline-quarter {
-    background-color: var(--navy);
-    color: white;
-    font-size: 7.5pt;
-    letter-spacing: 2px;
-    padding: 4px 8px;
-    margin-top: 8px;
 }
 
 /* ── Long-term chart grid ──────────────────────────────────── */

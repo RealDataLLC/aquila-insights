@@ -1,0 +1,89 @@
+<!-- PAGE 1: Under Construction -->
+<div class="pipeline-page">
+    <div class="section-header">
+        <div class="quarter-tag">{{ quarter_label }}</div>
+        <h2>Development Pipeline</h2>
+    </div>
+    <hr class="section-divider">
+
+    <p class="pipeline-blurb">Office projects over 25,000 square feet, encompassing those that delivered this quarter, are under construction, are planned, or have been proposed.</p>
+
+    {% for group in uc_groups %}
+    <div class="pipeline-year-block">
+        <div class="pipeline-year-header">{{ group.year }}</div>
+        <div class="pipeline-quarter-header">{{ group.quarter }} {{ group.year }}</div>
+        <table class="pipeline-table dev-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Size (SF)</th>
+                    <th>% Leased</th>
+                    <th>Submarket</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in group.rows %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.size }}</td>
+                    <td>{{ row.pct }}</td>
+                    <td>{{ row.submarket }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- PAGE 2: Planned / Proposed -->
+<div class="pipeline-page">
+    <div class="section-header">
+        <div class="quarter-tag">{{ quarter_label }}</div>
+        <h2>Development Pipeline</h2>
+    </div>
+    <hr class="section-divider">
+
+    <div class="proposed-header">Planned / Proposed</div>
+    <div class="proposed-grid">
+        <table class="pipeline-table dev-table proposed-table">
+            <thead>
+                <tr>
+                    <th>Name (Office Portion)</th>
+                    <th>Size (SF)</th>
+                    <th>Submarket</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set half = ((proposed_rows | length) / 2) | round(0, 'ceil') | int %}
+                {% for row in proposed_rows[:half] %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.size }}</td>
+                    <td>{{ row.submarket }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <table class="pipeline-table dev-table proposed-table">
+            <thead>
+                <tr>
+                    <th>Name (Office Portion)</th>
+                    <th>Size (SF)</th>
+                    <th>Submarket</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set half = ((proposed_rows | length) / 2) | round(0, 'ceil') | int %}
+                {% for row in proposed_rows[half:] %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.size }}</td>
+                    <td>{{ row.submarket }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="pipeline-footnote">All square footages are representative of office space only.</p>
+</div>

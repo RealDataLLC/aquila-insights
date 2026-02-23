@@ -280,13 +280,14 @@ def build_long_term_absorption(df):
     return fig
 
 
-def export_chart(fig, output_path, width=None, height=None, scale=2):
+def export_chart(fig, output_path, width=None, height=None, scale=None):
     """Export a Plotly figure to PNG."""
-    from reports.report_config import CHART_WIDTH, CHART_HEIGHT
+    from reports.report_config import CHART_WIDTH, CHART_HEIGHT, CHART_SCALE
     w = width or CHART_WIDTH
     h = height or CHART_HEIGHT
+    s = scale if scale is not None else CHART_SCALE
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    fig.write_image(output_path, format='png', width=w, height=h, scale=scale)
+    fig.write_image(output_path, format='png', width=w, height=h, scale=s)
     return output_path
 
 

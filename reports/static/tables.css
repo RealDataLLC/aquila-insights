@@ -16,7 +16,7 @@ thead th {
     background-color: var(--navy);
     color: white;
     font-weight: 500;
-    text-align: right;
+    text-align: center;
     padding: 5px 8px;
     font-size: 7.5pt;
     letter-spacing: 0.3px;
@@ -29,7 +29,7 @@ thead th:first-child {
 
 tbody td {
     padding: 4px 8px;
-    text-align: right;
+    text-align: center;
     border-bottom: 1px solid var(--border-gray);
     white-space: nowrap;
 }
@@ -37,10 +37,6 @@ tbody td {
 tbody td:first-child {
     text-align: left;
     font-weight: 500;
-}
-
-tbody tr:last-child td {
-    font-weight: 600;
 }
 
 tbody tr {
@@ -106,22 +102,21 @@ tbody tr:nth-child(even) {
 
 .leases-table thead th {
     font-size: 7.5pt;
-    text-align: left;
+    text-align: center;
 }
 
-.leases-table thead th:nth-child(4),
-.leases-table thead th:nth-child(5) {
-    text-align: right;
+.leases-table thead th:first-child {
+    text-align: left;
 }
 
 .leases-table tbody td {
-    text-align: left;
     font-size: 8pt;
     padding: 5px 8px;
+    text-align: center;
 }
 
-.leases-table tbody td:nth-child(4) {
-    text-align: right;
+.leases-table tbody td:first-child {
+    text-align: left;
 }
 
 /* ── Sublease Report Table ─────────────────────────────────── */

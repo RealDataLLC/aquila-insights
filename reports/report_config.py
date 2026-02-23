@@ -38,6 +38,9 @@ BUILDING_LIST = os.path.join(
     DATA_ROOT, f"Building Lists [Q{REPORT_QUARTER}]",
     f"{REPORT_QUARTER}Q {REPORT_YEAR} Building List.xlsx"
 )
+QUARTERLY_CHANGES_DIR = os.path.join(
+    DATA_ROOT, f"Quarterly Changes [Q{REPORT_QUARTER}]"
+)
 
 # ── Output Paths ─────────────────────────────────────────────
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -101,6 +104,6 @@ PERFORMANCE_START_QUARTER = "2024 Q1"
 # ── Chart Dimensions (pixels) ────────────────────────────────
 CHART_WIDTH = 1100
 CHART_HEIGHT = 340
-CHART_SCALE = 2  # For high-DPI export
+CHART_SCALE = 3  # For high-DPI export
 CHART_SMALL_WIDTH = 520
 CHART_SMALL_HEIGHT = 320

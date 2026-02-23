@@ -234,6 +234,146 @@ def _render_building_list(env, config, data, submarket):
     )
 
 
+def _render_quarterly_changes(env, config, data):
+    """Render the Quarterly Changes page from CSV data."""
+    raw = data.get('quarterly_changes', [])
+    if not raw:
+        return None
+
+    tmpl = env.get_template('page_quarterly_changes.html')
+
+    sections = []
+    for item in raw:
+        df = item['df']
+        rows = []
+        for _, row in df.iterrows():
+            cells = []
+            for val in row:
+                if pd.isna(val):
+                    cells.append('—')
+                else:
+                    # Format plain integers with commas, leave strings/floats as-is
+                    try:
+                        fval = float(val)
+                        if fval == int(fval) and abs(fval) < 1e12:
+                            cells.append(f"{int(fval):,}")
+                        else:
+                            cells.append(str(val))
+                    except (ValueError, TypeError):
+                        cells.append(str(val))
+            rows.append(cells)
+
+        sections.append({
+            'title': item['title'],
+            'columns': item['columns'],
+            'rows': rows,
+            'empty': item['empty'],
+        })
+
+    return tmpl.render(
+        quarter_label=config.REPORT_LABEL,
+        sections=sections,
+    )
+
+
+def _render_pipeline(env, config, data):
+    """
+    Render the development pipeline page.
+    Left column: Under Construction (grouped by year/quarter).
+    Right column: Planned/Proposed (two-column grid).
+    """
+    pipeline = data.get('pipeline', {})
+    if not pipeline:
+        return None
+
+    tmpl = env.get_template('page_pipeline.html')
+
+    # ── Under Construction ────────────────────────────────────────
+    # Parse the 'Under Construction' sheet: rows are either group headers
+    # (year like 2025/2026, quarter like 1Q/4Q) or data rows.
+    uc_groups = []  # list of {year, quarter, rows:[{name, size, pct, submarket}]}
+    uc_df = pipeline.get('Under Construction', pd.DataFrame())
+    if not uc_df.empty:
+        current_year = None
+        current_quarter = None
+        current_rows = []
+
+        def _flush(year, quarter, rows):
+            if rows:
+                uc_groups.append({'year': str(year), 'quarter': str(quarter), 'rows': rows})
+
+        for _, row in uc_df.iterrows():
+            first = row.iloc[0]
+            second = row.iloc[1] if len(row) > 1 else None
+
+            # Skip completely empty rows
+            if pd.isna(first):
+                continue
+
+            first_str = str(first).strip()
+
+            # Year header (4-digit number)
+            if first_str.isdigit() and len(first_str) == 4:
+                _flush(current_year, current_quarter, current_rows)
+                current_year = first_str
+                current_quarter = None
+                current_rows = []
+
+            # Quarter header (e.g. "4Q", "1Q", "2Q", "3Q")
+            elif first_str[:1].isdigit() and first_str.endswith('Q') or \
+                 first_str.endswith('Q') and len(first_str) <= 3:
+                _flush(current_year, current_quarter, current_rows)
+                current_quarter = first_str
+                current_rows = []
+
+            # Data row: name + size (numeric in col 2)
+            elif not pd.isna(second) and str(second).replace('.', '', 1).isdigit():
+                size_val = pd.to_numeric(second, errors='coerce')
+                pct_raw = row.iloc[2] if len(row) > 2 else None
+                pct_val = pd.to_numeric(pct_raw, errors='coerce')
+                submarket = str(row.iloc[3]).strip() if len(row) > 3 and not pd.isna(row.iloc[3]) else '—'
+                current_rows.append({
+                    'name': first_str,
+                    'size': f"{int(size_val):,}" if not pd.isna(size_val) else '—',
+                    'pct': f"{int(pct_val * 100)}%" if not pd.isna(pct_val) else '0%',
+                    'submarket': submarket,
+                })
+
+        _flush(current_year, current_quarter, current_rows)
+
+    # ── Planned / Proposed ────────────────────────────────────────
+    proposed_rows = []
+    prop_df = pipeline.get('Proposed', pd.DataFrame())
+    if not prop_df.empty:
+        # Row 0 is a header row embedded in data; skip it (contains 'Future Developments')
+        for _, row in prop_df.iterrows():
+            name_val = row.iloc[0]
+            size_val = row.iloc[1] if len(row) > 1 else None
+            sub_val  = row.iloc[2] if len(row) > 2 else None
+
+            if pd.isna(name_val):
+                continue
+            name_str = str(name_val).strip()
+            # Skip the embedded header row
+            if name_str.lower() in ('future developments', 'proposed/planned'):
+                continue
+            size_num = pd.to_numeric(size_val, errors='coerce')
+            proposed_rows.append({
+                'name': name_str,
+                'size': f"{int(size_num):,}" if not pd.isna(size_num) else '—',
+                'submarket': str(sub_val).strip() if not pd.isna(sub_val) else '—',
+            })
+
+    if not uc_groups and not proposed_rows:
+        return None
+
+    return tmpl.render(
+        quarter_label=config.REPORT_LABEL,
+        uc_groups=uc_groups,
+        proposed_rows=proposed_rows,
+    )
+
+
 def _render_sublease_report(env, config, data, page_num=1, rows_per_page=30):
     """Render a sublease report page. Paginates if needed."""
     avail_data = data.get('office_avail', {})
@@ -280,22 +420,29 @@ def build_page_sequence(env, config, data, charts):
     """
     Build the ordered list of rendered page HTML strings.
     Section order matches the InDesign quarterly report PDF:
-      1. Title page
-      2. Citywide KPI + competitive set
-      3. Major Leases
-      4. Major Sales
-      5. Submarket sections: KPI → comp set → large availability (CBD, NW, SW, E)
-      6. Micromarket performance pages
-      7. Overall performance pages
-      8. Sublease report
-      9. Building lists (all regions)
-     10. (Future: long-term charts, availability matrices)
+      1.  Title page
+      1b. Quarterly Changes (NRA, Status, Vacancy)
+      2.  Citywide KPI + competitive set
+      3.  Major Leases
+      4.  Major Sales
+      4b. Development Pipeline
+      5.  Submarket sections: KPI → comp set → large availability (CBD, NW, SW, E)
+      6.  Micromarket performance pages
+      7.  Overall performance pages
+      8.  Sublease report
+      9.  Building lists (all regions)
     """
     pages = []
 
     # ── 1. Title page ────────────────────────────────────────────
     pages.append(_render_title_page(env, config))
     print("  Rendered: Title page")
+
+    # ── 1b. Quarterly Changes ─────────────────────────────────────
+    qc_page = _render_quarterly_changes(env, config, data)
+    if qc_page:
+        pages.append(qc_page)
+        print("  Rendered: Quarterly Changes")
 
     # ── 2. Citywide ──────────────────────────────────────────────
     kpi_page = _render_kpi_header(env, config, data, 'Citywide')
@@ -320,6 +467,12 @@ def build_page_sequence(env, config, data, charts):
     if sales_page:
         pages.append(sales_page)
         print("  Rendered: Major Sales")
+
+    # ── 4b. Development Pipeline ─────────────────────────────────
+    pipeline_page = _render_pipeline(env, config, data)
+    if pipeline_page:
+        pages.append(pipeline_page)
+        print("  Rendered: Development Pipeline")
 
     # ── 5. Submarket sections (KPI → comp set → large availability) ──
     for submarket in config.SUBMARKETS_WITH_DETAIL:
