@@ -73,6 +73,20 @@ tbody tr:nth-child(even) {
     padding: 3px 8px;
 }
 
+.building-list-table tfoot .totals-row td {
+    font-size: 7.5pt;
+    padding: 3px 8px;
+    font-weight: 700;
+    border-top: 2px solid var(--navy);
+    border-bottom: none;
+    background-color: transparent;
+    text-align: center;
+}
+
+.building-list-table tfoot .totals-row td:first-child {
+    text-align: left;
+}
+
 /* ── Large Availability Table ──────────────────────────────── */
 .avail-table {
     font-size: 7.5pt;

@@ -439,7 +439,7 @@ reports/office/{YEAR}_{QN}/
 | `page_kpi_header.html` | KPI header | 5 | Supabase (latest quarter) |
 | `page_performance.html` | Table + 3 charts | 15 | Supabase (last 8 quarters) |
 | `page_major_leases.html` | Table | 1 | Excel |
-| `page_major_sales.html` | Mini-table cards | 1 | Excel |
+| `page_major_sales.html` | 2-column table grid of mini-cards | 1 | Excel |
 | `page_pipeline.html` | Under Construction + Planned/Proposed | 2 | Excel (`Citywide Pipeline`) |
 | `page_large_availability.html` | Table | 4 | Excel |
 | `page_sublease_report.html` | Table (paginated) | 2 | Excel |
@@ -749,7 +749,10 @@ GOOGLE_UNIVERSE_DOMAIN=googleapis.com
 | **Quarterly Changes dir not found** | Folder must be named `Quarterly Changes [Q{N}]` exactly; check `QUARTERLY_CHANGES_DIR` in config |
 | **Pipeline UC groups empty** | `Under Construction` sheet uses merged year/quarter header rows — parser expects `2025`/`4Q` pattern |
 | **Proposed rows missing** | `Proposed` sheet row 0 is an embedded header (`Future Developments`) — loader skips it automatically |
-| **Major Sales blank gap** | Caused by `page-break-after: always` on prior page — ensure `.major-leases-page` has `page-break-after: avoid` on its last child |
+| **Major Sales gap between title and cards** | WeasyPrint ignores `page-break-before: avoid` on flex containers — use a real `<table>` layout (`.sales-table-grid`) so content flows inline; header+divider sit directly above cards |
+| **Major Sales/Leases blank trailing page** | `page-break-after: avoid` on the table pushes it to a new page — remove the rule; use `margin-top` instead |
+| **Pipeline Planned/Proposed columns colliding** | Side-by-side two-table flex layout breaks in WeasyPrint — use a single full-width `<table class="proposed-table">` with `table-layout: fixed` column widths (55%/18%/27%) that overflows naturally to the next page |
+| **Pipeline proposed content not breaking to next page** | `.pipeline-page.proposed-page` needs `page-break-after: always` — setting it to `auto` prevents the break after the CBD section |
 
 ---
 
@@ -804,11 +807,22 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 ---
 
 **Last Updated:** 2026-02-23
-**Document Version:** 3.1.0
+**Document Version:** 3.2.0
 
 ---
 
 ## Changelog
+
+### Version 3.2.0 (2026-02-23)
+- **Report layout fixes (all changes in `reports/` directory):**
+  - **Chart fonts:** All chart text scaled to 1.5× original — base font `10→15`, legend/ticks/axis titles `8→12`; long-term chart overrides `7/6→10/9`
+  - **Building list totals:** Moved totals row from separate `<table>` into `<tfoot>` of the main table so column widths align correctly; styled via `.totals-row` with navy top border
+  - **Major Leases blank page:** Removed `page-break-after: avoid` on `.leases-table` (was paradoxically pushing table to next page); replaced with `margin-top: 16px`
+  - **Major Sales layout:** Replaced flex-based `.sales-grid` with an HTML `<table class="sales-table-grid">` (2 cards per row via Jinja2 `batch(2)` filter); eliminates WeasyPrint gap between header/divider and cards
+  - **Major Sales property names:** Styled as bold navy subheaders with navy bottom border (`11pt`, uppercase, `1.5px` border)
+  - **Pipeline Planned/Proposed:** Replaced broken side-by-side two-table flex layout with a single full-width `<table class="proposed-table">` using `table-layout: fixed` (55%/18%/27% columns); overflows naturally to next page
+  - **Pipeline→CBD page break:** Restored `page-break-after: always` on `.pipeline-page.proposed-page` so CBD always starts on a fresh page
+- Added 4 new troubleshooting entries (Major Sales gap, blank trailing page, pipeline column collision, pipeline page break)
 
 ### Version 3.1.0 (2026-02-23)
 - **Report layout improvements (all changes in `reports/` directory):**
@@ -821,7 +835,7 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
   - Parses `Citywide Pipeline {YEAR} Q{N}.xlsx` → `Under Construction` sheet (year/quarter grouped) + `Proposed` sheet
   - Split into **two separate pages**: page 1 = Under Construction, page 2 = Planned/Proposed (two-column table)
   - Under Construction: year large-gray header + quarter navy sub-header + Name/Size/% Leased/Submarket table
-  - Planned/Proposed: centered gray header + side-by-side Name/Size/Submarket tables + footnote
+  - Planned/Proposed: centered gray header + single full-width Name/Size/Submarket table (overflows to next page) + footnote
 - **New: Quarterly Changes page** (`page_quarterly_changes.html`, `load_quarterly_changes()`, `_render_quarterly_changes()`)
   - Inserted immediately after title page
   - Reads all CSVs from `Quarterly Changes [Q{N}]/` folder: `NRA_Changes`, `Status_Changes`, `Vacancy_Changes`

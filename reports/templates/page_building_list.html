@@ -23,18 +23,15 @@
             </tr>
             {% endfor %}
         </tbody>
-    </table>
-
-    {% if totals %}
-    <table class="building-list-table" style="margin-top: 4px;">
-        <tbody>
-            <tr style="font-weight: 700; border-top: 2px solid var(--navy);">
+        {% if totals %}
+        <tfoot>
+            <tr class="totals-row">
                 <td>TOTAL</td>
                 <td>{{ "{:,.0f}".format(totals.nra) }}</td>
                 <td>{{ "{:,.0f}".format(totals.direct_vacant) }}</td>
                 <td>{{ "{:,.0f}".format(totals.sublease_vacant) }}</td>
             </tr>
-        </tbody>
+        </tfoot>
+        {% endif %}
     </table>
-    {% endif %}
 </div>

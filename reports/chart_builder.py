@@ -21,7 +21,7 @@ CONCRETE = AQUILA_COLORS[5]   # #AAA9A8
 
 # ── Shared Layout Config ─────────────────────────────────────
 LAYOUT_DEFAULTS = dict(
-    font=dict(family=AQUILA_FONT, color=NAVY, size=10),
+    font=dict(family=AQUILA_FONT, color=NAVY, size=15),
     plot_bgcolor='white',
     paper_bgcolor='white',
     margin=dict(l=50, r=50, t=10, b=40),
@@ -31,7 +31,7 @@ LAYOUT_DEFAULTS = dict(
         y=1.02,
         xanchor='left',
         x=0,
-        font=dict(size=8),
+        font=dict(size=12),
     ),
     bargap=0.3,
 )
@@ -40,26 +40,26 @@ LAYOUT_DEFAULTS = dict(
 def _apply_axes(fig, y1_title=None, y2_title=None, y2_tickformat=None):
     """Apply consistent axis styling."""
     fig.update_xaxes(
-        tickfont=dict(size=8, color=NAVY),
+        tickfont=dict(size=12, color=NAVY),
         tickangle=-45,
         showgrid=False,
         showline=True,
         linecolor='#e9e9ea',
     )
     fig.update_yaxes(
-        tickfont=dict(size=8, color=NAVY),
+        tickfont=dict(size=12, color=NAVY),
         showgrid=True,
         gridcolor='#e9e9ea',
         showline=False,
         secondary_y=False,
     )
     if y1_title:
-        fig.update_yaxes(title_text=y1_title, title_font=dict(size=8), secondary_y=False)
+        fig.update_yaxes(title_text=y1_title, title_font=dict(size=12), secondary_y=False)
     if y2_title:
         fig.update_yaxes(
             title_text=y2_title,
-            title_font=dict(size=8),
-            tickfont=dict(size=8, color=COPPER),
+            title_font=dict(size=12),
+            tickfont=dict(size=12, color=COPPER),
             showgrid=False,
             secondary_y=True,
         )
@@ -220,11 +220,11 @@ def build_long_term_vacancy_chart(df, submarket_name):
     layout = {**LAYOUT_DEFAULTS}
     layout['margin'] = dict(l=40, r=40, t=10, b=50)
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=7)
+        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=10)
     )
     fig.update_layout(**layout, barmode='stack')
     _apply_axes(fig, y2_tickformat='.0%')
-    fig.update_xaxes(tickfont=dict(size=6), dtick=2)
+    fig.update_xaxes(tickfont=dict(size=9), dtick=2)
 
     return fig
 
@@ -242,8 +242,8 @@ def build_long_term_asking_rates(df):
     layout = {**LAYOUT_DEFAULTS}
     layout['margin'] = dict(l=40, r=20, t=10, b=50)
     fig.update_layout(**layout)
-    fig.update_xaxes(tickfont=dict(size=6), dtick=4, tickangle=-45)
-    fig.update_yaxes(tickfont=dict(size=7), tickprefix='$', showgrid=True, gridcolor='#e9e9ea')
+    fig.update_xaxes(tickfont=dict(size=9), dtick=4, tickangle=-45)
+    fig.update_yaxes(tickfont=dict(size=10), tickprefix='$', showgrid=True, gridcolor='#e9e9ea')
     return fig
 
 
@@ -271,11 +271,11 @@ def build_long_term_absorption(df):
     layout = {**LAYOUT_DEFAULTS}
     layout['margin'] = dict(l=40, r=40, t=10, b=50)
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=7)
+        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=10)
     )
     fig.update_layout(**layout)
     _apply_axes(fig, y2_tickformat='.0%')
-    fig.update_xaxes(tickfont=dict(size=6), dtick=2)
+    fig.update_xaxes(tickfont=dict(size=9), dtick=2)
 
     return fig
 

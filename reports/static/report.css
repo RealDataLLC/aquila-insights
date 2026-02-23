@@ -292,7 +292,7 @@ body {
 }
 
 .major-leases-page .leases-table {
-    page-break-after: avoid;
+    margin-top: 16px;
 }
 
 /* ── Major Sales Page ─────────────────────────────────────── */
@@ -301,27 +301,48 @@ body {
     padding-top: 10px;
 }
 
-/* ── Major Sales Cards ─────────────────────────────────────── */
-.sales-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-top: 16px;
+/* ── Major Sales Table Grid ────────────────────────────────── */
+/* Use a real HTML table so WeasyPrint renders it inline with
+   the header — no flex gap between title and cards. */
+.sales-table-grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+    margin-top: 8px;
+    margin-bottom: 0;
 }
 
-.sale-card {
-    width: 47%;
+.sales-table-grid thead {
+    display: none;
+}
+
+.sales-row td.sale-cell {
+    width: 50%;
+    vertical-align: top;
+    padding: 0 10px 12px 0;
+    border-bottom: none;
+    background-color: transparent;
+    text-align: left;
+}
+
+.sales-row td.sale-cell:last-child {
+    padding-right: 0;
+}
+
+.sale-cell {
     page-break-inside: avoid;
 }
 
-.sale-card .sale-name {
-    font-size: 9pt;
+.sale-name {
+    font-size: 11pt;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--navy);
     margin-bottom: 0;
-    padding-bottom: 4px;
+    padding-bottom: 5px;
+    border-bottom: 1.5px solid var(--navy);
+    margin-top: 4px;
 }
 
 /* Mini-table inside each sale card */
@@ -403,6 +424,11 @@ body {
     padding-top: 10px;
 }
 
+/* Proposed page always ends with a break so the next section starts fresh */
+.pipeline-page.proposed-page {
+    page-break-after: always;
+}
+
 .pipeline-blurb {
     font-size: 8pt;
     color: var(--text-dark);
@@ -466,15 +492,28 @@ body {
     margin-bottom: 0;
 }
 
-.proposed-grid {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
+/* Single full-width proposed table — overflows to next page naturally */
+.proposed-table {
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 0;
 }
 
-.proposed-grid .proposed-table {
-    flex: 1;
-    margin-bottom: 0;
+.proposed-table th:nth-child(1),
+.proposed-table td:nth-child(1) {
+    width: 55%;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+.proposed-table th:nth-child(2),
+.proposed-table td:nth-child(2) {
+    width: 18%;
+}
+
+.proposed-table th:nth-child(3),
+.proposed-table td:nth-child(3) {
+    width: 27%;
 }
 
 .pipeline-footnote {
