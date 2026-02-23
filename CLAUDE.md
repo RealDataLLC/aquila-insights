@@ -378,12 +378,13 @@ Programmatically recreates the AQUILA Office Quarterly Report (previously a 56-p
 
 **Data Sources:**
 - **Primary:** Supabase `market_tables_office` (544 rows, 32 quarters, 13 micromarkets x 3 table types)
-- **Secondary:** Excel files on `Q:\0-Quarterly Reports\0-Office\{YEAR} Q{N}\`
+- **Secondary:** Excel/CSV files on `Q:\0-Quarterly Reports\0-Office\{YEAR} Q{N}\`
   - `Major Leases and Sales {YEAR} {Q}Q.xlsx` — Leases + Sales
   - `Office Avail.xlsx` — Large availability per submarket + subleases
   - `{Q}Q {YEAR} Building List.xlsx` — 18 regional building sheets
-  - `Citywide Pipeline {YEAR} Q{Q}.xlsx` — Under construction + proposed
+  - `Citywide Pipeline {YEAR} Q{Q}.xlsx` — Under construction + proposed (parsed into year/quarter groups)
   - `Availability Tables.xlsx` — Direct/sublease availability matrices
+  - `Quarterly Changes [Q{N}]/` — CSV files: `NRA_Changes`, `Status_Changes`, `Vacancy_Changes`
 
 **Key Architecture:**
 - `report_config.py` — Single file to update per quarter (year, quarter, paths, submarket lists)
@@ -395,18 +396,20 @@ Programmatically recreates the AQUILA Office Quarterly Report (previously a 56-p
 
 **Page Sequence (matches InDesign report order):**
 1. Title page
-2. Citywide KPI + competitive set performance
-3. Major Leases table
-4. Major Sales card grid
-5. Submarket sections (CBD, NW, SW, E): KPI header → competitive set → large availability
-6. Micromarket performance pages (Domain, Shepherd Mountain, Near NW, Far NW, Near SW, Far SW)
-7. Overall performance pages (CBD, NW, SW, E)
-8. Sublease report (paginated at 30 rows/page)
-9. Building lists (18 regional sheets)
+2. Quarterly Changes (NRA, Status, Vacancy — from CSV files)
+3. Citywide KPI + competitive set performance
+4. Major Leases table
+5. Major Sales mini-table cards
+6. Development Pipeline — Under Construction (page 1) + Planned/Proposed (page 2)
+7. Submarket sections (CBD, NW, SW, E): KPI header → competitive set → large availability
+8. Micromarket performance pages (Domain, Shepherd Mountain, Near NW, Far NW, Near SW, Far SW)
+9. Overall performance pages (CBD, NW, SW, E)
+10. Sublease report (paginated at 30 rows/page)
+11. Building lists (18 regional sheets)
 
 **Run Commands:**
 ```bash
-# Full PDF generation
+# Full PDF generation (charts + PDF)
 python reports/generate_office_report.py
 
 # HTML-only preview (no WeasyPrint needed)
@@ -424,18 +427,20 @@ python reports/generate_office_report.py --skip-charts
 reports/office/{YEAR}_{QN}/
 ├── charts/                                    # 48 PNG chart images
 ├── AQUILA_Office_Report_{YEAR}_{QN}.html      # Intermediate HTML
-└── AQUILA_Office_Report_{YEAR}_{QN}.pdf       # Final 47-page report
+└── AQUILA_Office_Report_{YEAR}_{QN}.pdf       # Final ~50-page report
 ```
 
-**Templates (9 Jinja2 HTML files):**
+**Templates (11 Jinja2 HTML files):**
 
 | Template | Type | Instances | Data Source |
 |----------|------|-----------|-------------|
 | `page_title.html` | Cover | 1 | Config only |
+| `page_quarterly_changes.html` | Tables (NRA/Status/Vacancy) | 1 | CSV files (`Quarterly Changes [QN]/`) |
 | `page_kpi_header.html` | KPI header | 5 | Supabase (latest quarter) |
 | `page_performance.html` | Table + 3 charts | 15 | Supabase (last 8 quarters) |
 | `page_major_leases.html` | Table | 1 | Excel |
-| `page_major_sales.html` | Card grid | 1 | Excel |
+| `page_major_sales.html` | Mini-table cards | 1 | Excel |
+| `page_pipeline.html` | Under Construction + Planned/Proposed | 2 | Excel (`Citywide Pipeline`) |
 | `page_large_availability.html` | Table | 4 | Excel |
 | `page_sublease_report.html` | Table (paginated) | 2 | Excel |
 | `page_building_list.html` | Table + totals | 18 | Excel |
@@ -456,8 +461,13 @@ pip install weasyprint kaleido jinja2
 ```
 
 **Quarterly Update Process:**
-1. Update `reports/report_config.py` with new `REPORT_YEAR`, `REPORT_QUARTER`, and file paths
-2. Ensure Excel files are in the expected `Q:` drive location
+1. Update `reports/report_config.py` with new `REPORT_YEAR` and `REPORT_QUARTER` (all paths auto-derive)
+2. Ensure all source files are in the expected `Q:` drive folder structure:
+   - `Major Leases and Sales [Q{N}]/`
+   - `Large Availabilities & Maps [Q{N}]/`
+   - `Building Lists [Q{N}]/`
+   - `Citywide Pipeline [Q{N}]/`
+   - `Quarterly Changes [Q{N}]/` ← CSV exports: NRA_Changes, Status_Changes, Vacancy_Changes
 3. Run `python reports/generate_office_report.py`
 4. Compare output PDF against InDesign reference
 
@@ -735,6 +745,11 @@ GOOGLE_UNIVERSE_DOMAIN=googleapis.com
 | **Supabase empty for report** | `market_tables_office` returns empty with anon key — `data_loader.py` uses `SUPABASE_KEY` (service role) not `SUPABASE_PUBLIC_KEY` |
 | **Citywide data missing** | Citywide uses `table_type="overall"` in Supabase, not `"competitive set"` — `get_kpi_data()` auto-detects |
 | **--skip-charts not finding PNGs** | Chart filenames are lowercased but keys are title-case — `_find_existing_charts()` handles the mapping |
+| **PDF write PermissionError** | PDF is open in a viewer — close it first, or WeasyPrint cannot overwrite it |
+| **Quarterly Changes dir not found** | Folder must be named `Quarterly Changes [Q{N}]` exactly; check `QUARTERLY_CHANGES_DIR` in config |
+| **Pipeline UC groups empty** | `Under Construction` sheet uses merged year/quarter header rows — parser expects `2025`/`4Q` pattern |
+| **Proposed rows missing** | `Proposed` sheet row 0 is an embedded header (`Future Developments`) — loader skips it automatically |
+| **Major Sales blank gap** | Caused by `page-break-after: always` on prior page — ensure `.major-leases-page` has `page-break-after: avoid` on its last child |
 
 ---
 
@@ -788,12 +803,34 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 
 ---
 
-**Last Updated:** 2026-02-19
-**Document Version:** 3.0.0
+**Last Updated:** 2026-02-23
+**Document Version:** 3.1.0
 
 ---
 
 ## Changelog
+
+### Version 3.1.0 (2026-02-23)
+- **Report layout improvements (all changes in `reports/` directory):**
+  - Increased chart export scale from 2× to 3× (`CHART_SCALE = 3`) for higher pixel density across all 48 charts
+  - All table columns now center-aligned (first column stays left); removed bold styling from last row globally
+  - Added navy dividing line (`<hr class="section-divider">`) after section titles on Major Leases and Major Sales pages
+  - Major Leases: fixed blank trailing page with `page-break-after: avoid` on the table element
+  - Major Sales: reformatted from label/value div blocks into mini-tables per card (Market / Size / Buyer / Seller rows), matching InDesign style
+- **New: Development Pipeline pages** (`page_pipeline.html`, updated `_render_pipeline()`)
+  - Parses `Citywide Pipeline {YEAR} Q{N}.xlsx` → `Under Construction` sheet (year/quarter grouped) + `Proposed` sheet
+  - Split into **two separate pages**: page 1 = Under Construction, page 2 = Planned/Proposed (two-column table)
+  - Under Construction: year large-gray header + quarter navy sub-header + Name/Size/% Leased/Submarket table
+  - Planned/Proposed: centered gray header + side-by-side Name/Size/Submarket tables + footnote
+- **New: Quarterly Changes page** (`page_quarterly_changes.html`, `load_quarterly_changes()`, `_render_quarterly_changes()`)
+  - Inserted immediately after title page
+  - Reads all CSVs from `Quarterly Changes [Q{N}]/` folder: `NRA_Changes`, `Status_Changes`, `Vacancy_Changes`
+  - Each CSV gets its own navy subheader; empty CSVs display "No changes recorded this quarter"
+  - `QUARTERLY_CHANGES_DIR` added to `report_config.py` (auto-derives from `DATA_ROOT`)
+- Updated page count: 47 → ~50 pages (adds Quarterly Changes + 2 Pipeline pages)
+- Updated template count: 9 → 11 templates
+- Updated page sequence documentation to reflect new order
+- Added 6 new troubleshooting entries (PDF PermissionError, Quarterly Changes dir, Pipeline parsing, Major Sales gap)
 
 ### Version 3.0.0 (2026-02-19)
 - **MAJOR:** Added Office Quarterly Report PDF generator (`reports/` directory)
