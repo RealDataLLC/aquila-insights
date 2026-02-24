@@ -183,11 +183,20 @@ def load_quarterly_changes(directory):
         return result
 
     # Derive clean title: "NRA_Changes [Q4].csv" -> "NRA Changes"
+    # Override map: base filename prefix -> display title
+    _title_overrides = {
+        'NRA_Changes': 'Existing Supply NRA Changes',
+        'NRA Changes': 'Existing Supply NRA Changes',
+    }
+
     def _clean_title(filename):
         name = os.path.splitext(filename)[0]          # strip .csv
         name = name.split('[')[0].strip()              # strip " [Q4]"
+        # Check for override before replacing underscores
+        if name in _title_overrides:
+            return _title_overrides[name]
         name = name.replace('_', ' ')
-        return name
+        return _title_overrides.get(name, name)
 
     csv_files = sorted(f for f in os.listdir(directory) if f.lower().endswith('.csv'))
     for fname in csv_files:

@@ -17,6 +17,7 @@ from reports import report_config as config
 from reports.data_loader import load_all_data
 from reports.chart_builder import generate_all_charts
 from reports.report_assembler import generate_report
+from reports.cleanup_quarterly_data import run_cleanup
 
 
 def main():
@@ -25,11 +26,19 @@ def main():
                         help='Generate HTML only (no PDF conversion)')
     parser.add_argument('--skip-charts', action='store_true',
                         help='Skip chart generation (reuse existing PNGs)')
+    parser.add_argument('--skip-cleanup', action='store_true',
+                        help='Skip pre-report data cleanup step')
     args = parser.parse_args()
 
     print("=" * 60)
     print(f"AQUILA Office Quarterly Report - {config.REPORT_LABEL}")
     print("=" * 60)
+
+    # Step 0: Data cleanup (abbreviation standardization + vertical format tab)
+    if not args.skip_cleanup:
+        run_cleanup(config)
+    else:
+        print("\n  --skip-cleanup: Skipping data cleanup step")
 
     # Step 1: Load all data
     data = load_all_data(config)

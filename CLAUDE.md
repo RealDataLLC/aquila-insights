@@ -96,6 +96,7 @@
 │   │   └── tables.css                       # Table-specific styling
 │   ├── __init__.py
 │   ├── generate_office_report.py            # Main orchestrator (CLI entry point)
+│   ├── cleanup_quarterly_data.py            # Pre-report data cleanup (run automatically)
 │   ├── report_config.py                     # Quarter-specific constants & paths
 │   ├── data_loader.py                       # Supabase + Excel → DataFrames
 │   ├── chart_builder.py                     # Plotly → PNG via Kaleido
@@ -388,6 +389,7 @@ Programmatically recreates the AQUILA Office Quarterly Report (previously a 56-p
 
 **Key Architecture:**
 - `report_config.py` — Single file to update per quarter (year, quarter, paths, submarket lists)
+- `cleanup_quarterly_data.py` — Pre-report data cleanup; runs automatically as Step 0 of `generate_office_report.py`
 - `data_loader.py` — Loads Supabase (service role key) + Excel into nested dict
 - `chart_builder.py` — 3 dual-axis Plotly charts per performance page (vacancy SF, absorption, rental rates), exported as PNG via Kaleido
 - `report_assembler.py` — Jinja2 template rendering + WeasyPrint PDF conversion
@@ -409,7 +411,7 @@ Programmatically recreates the AQUILA Office Quarterly Report (previously a 56-p
 
 **Run Commands:**
 ```bash
-# Full PDF generation (charts + PDF)
+# Full PDF generation (cleanup + charts + PDF)
 python reports/generate_office_report.py
 
 # HTML-only preview (no WeasyPrint needed)
@@ -420,12 +422,21 @@ python reports/generate_office_report.py --html-only --skip-charts
 
 # Full PDF with existing charts
 python reports/generate_office_report.py --skip-charts
+
+# Skip the data cleanup step
+python reports/generate_office_report.py --skip-cleanup
+
+# Run cleanup standalone (preview changes without writing)
+python reports/cleanup_quarterly_data.py --dry-run
+
+# Run cleanup standalone (apply changes)
+python reports/cleanup_quarterly_data.py
 ```
 
 **Output:**
 ```
 reports/office/{YEAR}_{QN}/
-├── charts/                                    # 48 PNG chart images
+├── charts/                                    # 55 PNG chart images
 ├── AQUILA_Office_Report_{YEAR}_{QN}.html      # Intermediate HTML
 └── AQUILA_Office_Report_{YEAR}_{QN}.pdf       # Final ~50-page report
 ```
@@ -710,9 +721,12 @@ python3 create_industrial_demand_charts.py
 
 ### Office Quarterly Report
 ```bash
-python reports/generate_office_report.py                          # Full PDF
-python reports/generate_office_report.py --html-only              # Browser preview
+python reports/generate_office_report.py                            # Cleanup + full PDF
+python reports/generate_office_report.py --html-only                # Browser preview
 python reports/generate_office_report.py --html-only --skip-charts  # Fast CSS iteration
+python reports/generate_office_report.py --skip-cleanup             # Skip data cleanup step
+python reports/cleanup_quarterly_data.py --dry-run                  # Preview cleanup changes
+python reports/cleanup_quarterly_data.py                            # Run cleanup standalone
 ```
 
 ---
@@ -779,6 +793,11 @@ GOOGLE_UNIVERSE_DOMAIN=googleapis.com
 | **Major Sales/Leases blank trailing page** | `page-break-after: avoid` on the table pushes it to a new page — remove the rule; use `margin-top` instead |
 | **Pipeline Planned/Proposed columns colliding** | Side-by-side two-table flex layout breaks in WeasyPrint — use a single full-width `<table class="proposed-table">` with `table-layout: fixed` column widths (55%/18%/27%) that overflows naturally to the next page |
 | **Pipeline proposed content not breaking to next page** | `.pipeline-page.proposed-page` needs `page-break-after: always` — setting it to `auto` prevents the break after the CBD section |
+| **NRA Changes title shows wrong label** | `_clean_title()` in `data_loader.py` uses override map; ensure CSV is named `NRA_Changes*.csv` |
+| **Property ID has commas (e.g. 12,345)** | `_render_quarterly_changes()` detects columns matching `\bid\b` and skips comma formatting |
+| **Abbreviation over-expanded (e.g. "Bldg. E." instead of "Bldg. E")** | Single-letter cardinals use negative lookbehind `(?<!\.)` — letter preceded by `.` is never expanded |
+| **Cleanup runs on wrong quarter's files** | `cleanup_quarterly_data.py` derives paths from `report_config.py` — update `REPORT_YEAR`/`REPORT_QUARTER` first |
+| **Vertical Format tab missing after cleanup** | Tab is created only if `Major Sales` sheet exists and `Vertical Format` tab is absent; check workbook sheet names |
 
 ---
 
@@ -833,11 +852,25 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 ---
 
 **Last Updated:** 2026-02-24
-**Document Version:** 3.4.0
+**Document Version:** 3.5.0
 
 ---
 
 ## Changelog
+
+### Version 3.5.0 (2026-02-24)
+- **New: Pre-report data cleanup script** (`reports/cleanup_quarterly_data.py`)
+  - Runs automatically as **Step 0** of `generate_office_report.py` (before data loading); skip with `--skip-cleanup`
+  - **Abbreviation standardization:** applies period-correct street abbreviations (`Dr.`, `Blvd.`, `Pkwy.`, etc.) and cardinal directions (`N.`, `S.E.`, etc.) to address/name/tenant columns across all quarterly Excel and CSV files (Major Leases & Sales, Office Avail, Building List, Citywide Pipeline, Quarterly Changes CSVs)
+  - Single-letter cardinals (`N`, `S`, `E`, `W`) use a **negative lookbehind** `(?<!\.)` so letters that already follow a period (e.g. `Bldg. E`) are never expanded to `Bldg. E.`
+  - **Vertical Format tab:** if `Major Leases and Sales` workbook lacks a `Vertical Format` sheet, creates one from `Major Sales` (sorted by SF descending, vertical key-value layout per record)
+  - `--dry-run` flag previews changes without writing any files
+  - Can be run standalone: `python reports/cleanup_quarterly_data.py`
+- **Quarterly Changes page fixes:**
+  - **Title rename:** `NRA Changes` → **`Existing Supply NRA Changes`** via override map in `data_loader._clean_title()`
+  - **Property ID formatting:** columns matching `\bid\b` (e.g. "Property ID") now render as plain integers — no comma insertion (e.g. `12345678` not `12,345,678`)
+- Added `import re` to `report_assembler.py` (required for ID column detection)
+- 5 new troubleshooting entries (NRA title, Property ID commas, abbreviation over-expansion, cleanup path, Vertical Format tab)
 
 ### Version 3.4.0 (2026-02-24)
 - **New: Long-term performance pages** (placed after micromarket performance, before overall performance)

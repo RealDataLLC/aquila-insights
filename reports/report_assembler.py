@@ -3,6 +3,7 @@ Report assembler for AQUILA Office Quarterly Report.
 Renders Jinja2 templates to HTML, then converts to PDF via WeasyPrint.
 """
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -308,12 +309,27 @@ def _render_quarterly_changes(env, config, data):
     sections = []
     for item in raw:
         df = item['df']
+        # Identify columns that should NOT get comma formatting (IDs, codes, etc.)
+        no_comma_cols = {
+            i for i, col in enumerate(df.columns)
+            if re.search(r'\bid\b', str(col), re.IGNORECASE)
+        }
         rows = []
         for _, row in df.iterrows():
             cells = []
-            for val in row:
+            for col_idx, val in enumerate(row):
                 if pd.isna(val):
                     cells.append('—')
+                elif col_idx in no_comma_cols:
+                    # ID columns: render as plain string, no comma formatting
+                    try:
+                        fval = float(val)
+                        if fval == int(fval):
+                            cells.append(str(int(fval)))
+                        else:
+                            cells.append(str(val))
+                    except (ValueError, TypeError):
+                        cells.append(str(val))
                 else:
                     # Format plain integers with commas, leave strings/floats as-is
                     try:
