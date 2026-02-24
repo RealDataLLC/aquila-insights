@@ -86,20 +86,20 @@ def _find_existing_charts(charts_dir):
         filepath = os.path.join(charts_dir, filename)
         name = filename.replace('.png', '')
 
-        # Performance charts
-        for chart_type in ['vacancy_sf', 'absorption', 'rental']:
-            if name.endswith(f'_{chart_type}'):
-                file_prefix = name[:-(len(chart_type) + 1)]
-                key = prefix_to_key.get(file_prefix, file_prefix)
-                if key not in charts:
-                    charts[key] = {}
-                charts[key][chart_type] = filepath
-
-        # Long-term charts
+        # Long-term charts (lt_* prefix)
         if name.startswith('lt_'):
             if 'long_term' not in charts:
                 charts['long_term'] = {}
             charts['long_term'][name] = filepath
+        else:
+            # Performance charts
+            for chart_type in ['vacancy_sf', 'absorption', 'rental']:
+                if name.endswith(f'_{chart_type}'):
+                    file_prefix = name[:-(len(chart_type) + 1)]
+                    key = prefix_to_key.get(file_prefix, file_prefix)
+                    if key not in charts:
+                        charts[key] = {}
+                    charts[key][chart_type] = filepath
 
     return charts
 

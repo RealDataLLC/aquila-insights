@@ -1,0 +1,37 @@
+<div class="long-term-page"{% if anchor_id %} id="{{ anchor_id }}"{% endif %}>
+    <div class="lt-heading">LONG-TERM PERFORMANCE</div>
+    <div class="lt-subheading">OF SUBMARKETS</div>
+    <hr class="section-divider">
+
+    <!-- Row 1: Citywide + CBD Vacant SF vs Vacancy Rate -->
+    <div class="chart-grid-2x3">
+        <div class="lt-chart-cell">
+            <div class="chart-title">CITYWIDE VACANT SF VS. VACANCY RATE</div>
+            <img src="{{ charts.lt_vacancy_citywide }}" alt="Citywide Vacant SF vs Vacancy Rate">
+        </div>
+        <div class="lt-chart-cell">
+            <div class="chart-title">CBD VACANT SF VS. VACANCY RATE</div>
+            <img src="{{ charts.lt_vacancy_cbd }}" alt="CBD Vacant SF vs Vacancy Rate">
+        </div>
+
+        <!-- Row 2: Northwest + Southwest Vacant SF vs Vacancy Rate -->
+        <div class="lt-chart-cell">
+            <div class="chart-title">NORTHWEST VACANT SF VS. VACANCY RATE</div>
+            <img src="{{ charts.lt_vacancy_northwest }}" alt="Northwest Vacant SF vs Vacancy Rate">
+        </div>
+        <div class="lt-chart-cell">
+            <div class="chart-title">SOUTHWEST VACANT SF VS. VACANCY RATE</div>
+            <img src="{{ charts.lt_vacancy_southwest }}" alt="Southwest Vacant SF vs Vacancy Rate">
+        </div>
+
+        <!-- Row 3: Citywide Asking Rates + Citywide Absorption -->
+        <div class="lt-chart-cell">
+            <div class="chart-title">CITYWIDE CLASS A &amp; B ASKING RATES</div>
+            <img src="{{ charts.lt_asking_rates }}" alt="Citywide Class A & B Asking Rates">
+        </div>
+        <div class="lt-chart-cell">
+            <div class="chart-title">ABSORPTION &amp; OCCUPANCY RATE</div>
+            <img src="{{ charts.lt_absorption }}" alt="Absorption & Occupancy Rate">
+        </div>
+    </div>
+</div>

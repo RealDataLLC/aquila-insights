@@ -276,9 +276,10 @@ def _render_toc(env, config, page_map, city_photo_path=None):
     # Appendix entries
     appendix_entries = []
     for anchor, label in [
-        ('micromarket-performance', 'Competitive Set Micromarket Performance & Building Lists'),
-        ('overall-performance',     'Overall Submarket Performance'),
-        ('sublease-report',         'Sublease Report & Direct/Sublease Availability'),
+        ('micromarket-performance',  'Competitive Set Micromarket Performance & Building Lists'),
+        ('long-term-performance',    'Long-Term Performance'),
+        ('overall-performance',      'Overall Submarket Performance'),
+        ('sublease-report',          'Sublease Report & Direct/Sublease Availability'),
     ]:
         e = _entry(anchor, label)
         if e:
@@ -434,6 +435,53 @@ def _render_pipeline(env, config, data):
         uc_groups=uc_groups,
         proposed_rows=proposed_rows,
     )
+
+
+def _render_long_term_submarkets(env, config, charts, anchor_id=None):
+    """
+    Render Page 1 of long-term performance: Of Submarkets.
+    6 charts in a 2x3 grid: Citywide/CBD/NW/SW vacancy + asking rates + absorption.
+    """
+    lt = charts.get('long_term', {})
+    required = [
+        'lt_vacancy_citywide', 'lt_vacancy_cbd',
+        'lt_vacancy_northwest', 'lt_vacancy_southwest',
+        'lt_asking_rates', 'lt_absorption',
+    ]
+    missing = [k for k in required if k not in lt]
+    if missing:
+        print(f"  Skipping long-term submarkets page (missing charts: {missing})")
+        return None
+
+    tmpl = env.get_template('page_long_term_submarkets.html')
+    chart_uris = {
+        k: 'file:///' + os.path.abspath(lt[k]).replace('\\', '/')
+        for k in required
+    }
+    return tmpl.render(charts=chart_uris, anchor_id=anchor_id)
+
+
+def _render_long_term_cbd_suburban(env, config, charts, anchor_id=None):
+    """
+    Render Page 2 of long-term performance: CBD vs Suburban.
+    4 charts in a 2x2 grid: asking rates, vacancy, direct/sublease, under construction.
+    """
+    lt = charts.get('long_term', {})
+    required = [
+        'lt_cbd_suburban_asking', 'lt_cbd_suburban_vacancy',
+        'lt_cbd_suburban_direct_sublease', 'lt_cbd_suburban_under_construction',
+    ]
+    missing = [k for k in required if k not in lt]
+    if missing:
+        print(f"  Skipping long-term CBD vs Suburban page (missing charts: {missing})")
+        return None
+
+    tmpl = env.get_template('page_long_term_cbd_suburban.html')
+    chart_uris = {
+        k: 'file:///' + os.path.abspath(lt[k]).replace('\\', '/')
+        for k in required
+    }
+    return tmpl.render(charts=chart_uris, anchor_id=anchor_id)
 
 
 def _render_sublease_report(env, config, data, rows_per_page=30):
@@ -601,6 +649,18 @@ def build_page_sequence(env, config, data, charts):
         if perf:
             print(f"  Rendered: {micro} micromarket performance")
             first_micro = False
+
+    # ── 6b. Long-term performance pages ──────────────────────────
+    lt_sub_page = _render_long_term_submarkets(env, config, charts,
+                                                anchor_id='long-term-performance')
+    _add(lt_sub_page, anchor='long-term-performance')
+    if lt_sub_page:
+        print("  Rendered: Long-term performance – Of Submarkets")
+
+    lt_cbd_page = _render_long_term_cbd_suburban(env, config, charts)
+    _add(lt_cbd_page)
+    if lt_cbd_page:
+        print("  Rendered: Long-term performance – CBD vs Suburban")
 
     # ── 7. Overall performance pages ─────────────────────────────
     first_overall = True

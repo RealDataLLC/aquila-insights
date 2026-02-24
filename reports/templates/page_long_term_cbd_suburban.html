@@ -1,0 +1,25 @@
+<div class="long-term-page"{% if anchor_id %} id="{{ anchor_id }}"{% endif %}>
+    <div class="lt-heading">LONG-TERM PERFORMANCE</div>
+    <div class="lt-subheading">CBD VS. SUBURBAN</div>
+    <hr class="section-divider">
+
+    <!-- 2x2 grid: Asking Rates, Vacant SF, Direct/Sublease Vacancy, SF Under Construction -->
+    <div class="chart-grid-2x2">
+        <div class="lt-chart-cell">
+            <div class="chart-title">AVERAGE CLASS A ASKING RATES</div>
+            <img src="{{ charts.lt_cbd_suburban_asking }}" alt="Average Class A Asking Rates">
+        </div>
+        <div class="lt-chart-cell">
+            <div class="chart-title">VACANT SF VS. VACANCY RATE</div>
+            <img src="{{ charts.lt_cbd_suburban_vacancy }}" alt="Vacant SF vs Vacancy Rate">
+        </div>
+        <div class="lt-chart-cell">
+            <div class="chart-title">DIRECT &amp; SUBLEASE VACANCY</div>
+            <img src="{{ charts.lt_cbd_suburban_direct_sublease }}" alt="Direct & Sublease Vacancy">
+        </div>
+        <div class="lt-chart-cell">
+            <div class="chart-title">SF UNDER CONSTRUCTION</div>
+            <img src="{{ charts.lt_cbd_suburban_under_construction }}" alt="SF Under Construction">
+        </div>
+    </div>
+</div>

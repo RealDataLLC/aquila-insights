@@ -658,6 +658,34 @@ body {
     flex: 1;
 }
 
+/* ── Long-Term Performance Pages ──────────────────────────── */
+.long-term-page {
+    page-break-after: always;
+    padding-top: 10px;
+}
+
+.lt-heading {
+    font-size: 36pt;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--navy);
+    line-height: 1;
+}
+
+.lt-subheading {
+    font-size: 11pt;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 10px;
+}
+
+.lt-chart-cell {
+    /* wraps chart-title + img */
+}
+
 /* ── Long-term chart grid ──────────────────────────────────── */
 .chart-grid-2x3 {
     display: grid;

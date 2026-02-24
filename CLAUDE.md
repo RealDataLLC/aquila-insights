@@ -430,7 +430,7 @@ reports/office/{YEAR}_{QN}/
 └── AQUILA_Office_Report_{YEAR}_{QN}.pdf       # Final ~50-page report
 ```
 
-**Templates (12 Jinja2 HTML files):**
+**Templates (14 Jinja2 HTML files):**
 
 | Template | Type | Instances | Data Source |
 |----------|------|-----------|-------------|
@@ -443,13 +443,15 @@ reports/office/{YEAR}_{QN}/
 | `page_major_sales.html` | 2-column table grid of mini-cards | 1 | Excel |
 | `page_pipeline.html` | Under Construction + Planned/Proposed | 2 | Excel (`Citywide Pipeline`) |
 | `page_large_availability.html` | Table | 4 | Excel |
+| `page_long_term_submarkets.html` | 2×3 chart grid (Of Submarkets) | 1 | Supabase (all quarters) |
+| `page_long_term_cbd_suburban.html` | 2×2 chart grid (CBD vs Suburban) | 1 | Supabase (all quarters) |
 | `page_sublease_report.html` | Table (paginated) | 2 | Excel |
 | `page_building_list.html` | Table + totals | 18 | Excel |
 
 **TOC Architecture:**
 - Built via two-pass: all content pages rendered first to record anchor → page number mappings
 - TOC inserts after title page (page 2), content starts at page 3
-- Anchors: `citywide-performance`, `major-leases`, `development-pipeline`, `cbd-kpi`, `nw-kpi`, `sw-kpi`, `east-kpi`, `micromarket-performance`, `overall-performance`, `sublease-report`
+- Anchors: `citywide-performance`, `major-leases`, `development-pipeline`, `cbd-kpi`, `nw-kpi`, `sw-kpi`, `east-kpi`, `micromarket-performance`, `long-term-performance`, `overall-performance`, `sublease-report`
 - Pipeline counts as 2 physical PDF pages in the page counter (`pdf_pages=2`)
 - City photo: place `austin_skyline.jpg` in `reports/static/` to populate the TOC photo; falls back to gray placeholder
 - TOC page number is suppressed via `@page toc-page` named rule
@@ -460,6 +462,21 @@ reports/office/{YEAR}_{QN}/
 3. **Rental Rates** — Stacked bar (Base Rent + Opex) + line (Vacancy Rate %). Navy/Concrete bars, Copper line.
 
 Charts 1 & 2 render side-by-side at 520x300px. Chart 3 renders at 520x300px in a half-width column with blank space for layout symmetry.
+
+**Long-term Charts (2 pages, 10 charts total, placed after micromarket/before overall):**
+- **Page 1 — Of Submarkets** (`page_long_term_submarkets.html`): 2×3 grid
+  - Citywide vacant SF vs vacancy rate (overall table_type)
+  - CBD, Northwest, Southwest vacant SF vs vacancy rate (competitive set)
+  - Citywide Class A & B asking rates line chart
+  - Citywide absorption & occupancy rate
+- **Page 2 — CBD vs Suburban** (`page_long_term_cbd_suburban.html`): 2×2 grid
+  - Average Class A asking rates: CBD (Navy) vs Suburban (Brass) lines
+  - Vacant SF vs Vacancy Rate: CBD and Suburban stacked bars + combined vacancy rate line (Copper). Stack order (bottom→top): CBD Sublease (Glass Blue), CBD Direct (Navy), Suburban Sublease (Brass), Suburban Direct (Brass + hatch `/`)
+  - Direct & Sublease Vacancy: fully stacked bars (`barmode='stack'`). Same color scheme as vacancy chart — CBD Sublease (Glass Blue), CBD Direct (Navy), Suburban Sublease (Brass), Suburban Direct (Brass + `/` hatch). Quarters aligned via `set_index`
+  - SF Under Construction: stacked bars CBD (Navy) / Suburban (Brass) / East (Glass Blue)
+  - **Suburban = NW + SW** competitive set combined (SF summed; rent/rate NRA-weighted average)
+- **Absorption chart** uses `barmode='relative'` (not `'stack'`) to correctly handle negative absorption values below zero; CBD (Navy) / Northwest (Glass Blue) / Southwest (Brass) bars + Citywide occupancy rate line (Copper) on secondary y-axis
+- **Citywide asking rates** chart shows two lines: Class A (Navy) and Class B (Brass)
 
 **Dependencies (Windows):**
 ```bash
@@ -816,11 +833,26 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 ---
 
 **Last Updated:** 2026-02-24
-**Document Version:** 3.3.1
+**Document Version:** 3.4.0
 
 ---
 
 ## Changelog
+
+### Version 3.4.0 (2026-02-24)
+- **New: Long-term performance pages** (placed after micromarket performance, before overall performance)
+  - **Page 1 — Of Submarkets** (`page_long_term_submarkets.html`): 2×3 grid of 6 charts — Citywide/CBD/NW/SW vacant SF vs vacancy rate, Citywide Class A & B asking rates, Citywide absorption & occupancy rate
+  - **Page 2 — CBD vs Suburban** (`page_long_term_cbd_suburban.html`): 2×2 grid of 4 charts — Class A asking rates (CBD vs Suburban lines), vacant SF vs vacancy rate (stacked bars + rate line), direct & sublease vacancy (fully stacked bars), SF under construction (stacked bars)
+  - Suburban defined as NW + SW competitive set combined (SF columns summed; rent/rate columns NRA-weighted average); East shown separately on under construction chart
+  - 4 new chart builder functions in `chart_builder.py`: `build_cbd_suburban_asking_chart`, `build_cbd_suburban_vacancy_chart`, `build_cbd_suburban_direct_sublease_chart`, `build_cbd_suburban_under_construction_chart`
+  - `generate_long_term_charts()` updated to generate 10 charts total (was 6)
+  - TOC entry added: "Long-Term Performance" anchor `long-term-performance`
+  - Total charts: 55 (was 48); total pages: ~54 (adds 2 new pages)
+  - Template count: 12 → 14
+- **Chart refinements (iterative):**
+  - **Citywide asking rates** (`build_long_term_asking_rates`): Added Class B rent line (Brass) alongside Class A (Navy); was single-line Class A only
+  - **Citywide absorption** (`build_long_term_absorption`): Changed from single citywide bar to **submarket-stacked bars** (CBD=Navy, NW=Glass Blue, SW=Brass) using `barmode='relative'` (handles negative absorption); Citywide occupancy rate line (Copper) on secondary y-axis. Previously used single Navy bar.
+  - **Direct & Sublease Vacancy** (`build_cbd_suburban_direct_sublease_chart`): Changed from grouped side-by-side to **fully stacked** `barmode='stack'`. Color scheme matched to vacant SF vs vacancy rate: CBD Sublease (Glass Blue), CBD Direct (Navy), Suburban Sublease (Brass), Suburban Direct (Brass + `/` hatch pattern). Quarters aligned via `set_index` union.
 
 ### Version 3.3.1 (2026-02-24)
 - **TOC readability improvements** (`report.css`, `report_assembler.py`)
