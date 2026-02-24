@@ -1,0 +1,59 @@
+<div class="toc-page">
+    <div class="toc-heading">IN THIS REPORT</div>
+    <div class="toc-rule"></div>
+
+    <div class="toc-body">
+
+        <div class="toc-section-group">
+            <div class="toc-group-title">AUSTIN CITYWIDE UPDATE</div>
+            <div class="toc-group-desc">Market performance, major sales, major leases, and development pipeline</div>
+        </div>
+
+        {% for entry in left_entries %}
+        <div class="toc-entry">
+            <a href="#{{ entry.anchor }}" class="toc-link">
+                <span class="toc-page-num">{{ entry.page_num }}</span>
+                <span class="toc-entry-label">{{ entry.label }}</span>
+            </a>
+        </div>
+        {% endfor %}
+
+        <div class="toc-section-group">
+            <div class="toc-group-title">SUBMARKET UPDATES</div>
+            <div class="toc-group-desc">Market insights, performance, and trends, plus, office developments and large availabilities</div>
+        </div>
+
+        {% for entry in submarket_entries %}
+        <div class="toc-entry">
+            <a href="#{{ entry.anchor }}" class="toc-link">
+                <span class="toc-page-num">{{ entry.page_num }}</span>
+                <span class="toc-entry-label">{{ entry.label }}</span>
+            </a>
+        </div>
+        {% endfor %}
+
+        <div class="toc-section-group">
+            <div class="toc-group-title">APPENDIX</div>
+            <div class="toc-group-desc">Micromarket performance and building lists, historical market performance</div>
+        </div>
+
+        {% for entry in appendix_entries %}
+        <div class="toc-entry">
+            <a href="#{{ entry.anchor }}" class="toc-link">
+                <span class="toc-page-num">{{ entry.page_num }}</span>
+                <span class="toc-entry-label">{{ entry.label }}</span>
+            </a>
+        </div>
+        {% endfor %}
+
+        <div class="toc-footer-note">
+            <p>To view this and other reports or to opt in to market research updates, visit:</p>
+            <p class="toc-url">aquilacommercial.com/market-intelligence</p>
+        </div>
+
+    </div>
+
+    <div class="toc-disclaimer">
+        <strong>AQUILA</strong> is dedicated to providing quality service to our clients. We understand that real-time market data helps our clients make smart, informed real estate decisions. This report is produced and distributed quarterly. <strong>DISCLAIMER:</strong> This report utilizes various real estate and economic data sources. The information contained herein is confidential and proprietary in nature. No warranties or guarantees are made as to the accuracy of the information contained herein.
+    </div>
+</div>

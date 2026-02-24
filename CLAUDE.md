@@ -430,11 +430,12 @@ reports/office/{YEAR}_{QN}/
 └── AQUILA_Office_Report_{YEAR}_{QN}.pdf       # Final ~50-page report
 ```
 
-**Templates (11 Jinja2 HTML files):**
+**Templates (12 Jinja2 HTML files):**
 
 | Template | Type | Instances | Data Source |
 |----------|------|-----------|-------------|
 | `page_title.html` | Cover | 1 | Config only |
+| `page_toc.html` | Table of Contents (2-column + city photo) | 1 | Auto-generated from page_map |
 | `page_quarterly_changes.html` | Tables (NRA/Status/Vacancy) | 1 | CSV files (`Quarterly Changes [QN]/`) |
 | `page_kpi_header.html` | KPI header | 5 | Supabase (latest quarter) |
 | `page_performance.html` | Table + 3 charts | 15 | Supabase (last 8 quarters) |
@@ -444,6 +445,14 @@ reports/office/{YEAR}_{QN}/
 | `page_large_availability.html` | Table | 4 | Excel |
 | `page_sublease_report.html` | Table (paginated) | 2 | Excel |
 | `page_building_list.html` | Table + totals | 18 | Excel |
+
+**TOC Architecture:**
+- Built via two-pass: all content pages rendered first to record anchor → page number mappings
+- TOC inserts after title page (page 2), content starts at page 3
+- Anchors: `citywide-performance`, `major-leases`, `development-pipeline`, `cbd-kpi`, `nw-kpi`, `sw-kpi`, `east-kpi`, `micromarket-performance`, `overall-performance`, `sublease-report`
+- Pipeline counts as 2 physical PDF pages in the page counter (`pdf_pages=2`)
+- City photo: place `austin_skyline.jpg` in `reports/static/` to populate the TOC photo; falls back to gray placeholder
+- TOC page number is suppressed via `@page toc-page` named rule
 
 **Performance Charts (3 per page, 15 pages = 45 charts + 3 Citywide = 48 total):**
 1. **Vacancy SF** — Stacked bar (Direct + Sublease Vacant) + line (Vacancy Rate %). Navy/Glass Blue bars, Copper line.
@@ -806,12 +815,34 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 
 ---
 
-**Last Updated:** 2026-02-23
-**Document Version:** 3.2.0
+**Last Updated:** 2026-02-24
+**Document Version:** 3.3.1
 
 ---
 
 ## Changelog
+
+### Version 3.3.1 (2026-02-24)
+- **TOC readability improvements** (`report.css`, `report_assembler.py`)
+  - Switched TOC to single-column layout (removed two-column + photo placeholder)
+  - Widened TOC body to 70% of page width so labels fit on one line (`white-space: nowrap`)
+  - Increased entry margin to 10px and label padding-bottom to 8px for more breathing room between entries
+  - Shortened appendix label: "Sublease Report, Direct & Sublease Availability" → "Sublease Report & Direct/Sublease Availability"
+  - Removed "Long-Term Performance" appendix entry (no matching page in current report)
+
+### Version 3.3.0 (2026-02-24)
+- **New: Table of Contents page** (`page_toc.html`, updated `report_assembler.py`, `report.css`)
+  - Inserted between title page and quarterly changes (page 2)
+  - Two-column layout matching InDesign reference: left = Citywide Update + Submarket sections, right = city photo + Appendix
+  - Each entry shows a copper page number + navy uppercase label, with a bottom-border rule per entry
+  - City photo: place `austin_skyline.jpg` in `reports/static/` for the right-column photo; falls back to gray placeholder
+  - Hyperlinks to section anchors using `<a href="#anchor-id">` — works in HTML preview and WeasyPrint PDF
+  - **Two-pass build:** all content pages rendered first to compute accurate page numbers; TOC built last then inserted at position 2
+  - `pdf_pages=2` parameter on pipeline `_add()` call accounts for its dual-page HTML generating 2 physical PDF pages
+  - Page counter suppressed on TOC via `@page toc-page` named CSS rule
+  - All 10 page templates updated with optional `id="{{ anchor_id }}"` attribute; `major-leases`, `major-sales`, `development-pipeline` anchors hard-coded in templates
+  - Template count: 11 → 12
+- Added TOC architecture notes to template documentation section
 
 ### Version 3.2.0 (2026-02-23)
 - **Report layout fixes (all changes in `reports/` directory):**

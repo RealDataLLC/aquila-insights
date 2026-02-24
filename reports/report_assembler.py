@@ -31,7 +31,7 @@ def _render_title_page(env, config):
     )
 
 
-def _render_kpi_header(env, config, data, submarket):
+def _render_kpi_header(env, config, data, submarket, anchor_id=None):
     """Render a KPI header page for a submarket."""
     from reports.data_loader import get_kpi_data
     kpi = get_kpi_data(data, submarket)
@@ -52,11 +52,12 @@ def _render_kpi_header(env, config, data, submarket):
         quarter_label=config.REPORT_LABEL,
         submarket_name=submarket.upper(),
         kpi=k,
+        anchor_id=anchor_id,
     )
 
 
 def _render_performance_page(env, config, data, charts, submarket, table_type,
-                              display_type=None):
+                              display_type=None, anchor_id=None):
     """Render a performance page (table + 3 charts).
     display_type overrides the section label shown on the page.
     """
@@ -107,6 +108,7 @@ def _render_performance_page(env, config, data, charts, submarket, table_type,
         rows=rows,
         charts=chart_uris,
         note=None,
+        anchor_id=anchor_id,
     )
 
 
@@ -231,6 +233,66 @@ def _render_building_list(env, config, data, submarket):
         submarket_name=submarket,
         rows=rows,
         totals=t,
+    )
+
+
+def _render_toc(env, config, page_map, city_photo_path=None):
+    """
+    Render the Table of Contents page.
+    page_map is a dict of anchor_id -> page_number (1-based, starting from 1
+    for the first content page after title+TOC).
+    """
+    tmpl = env.get_template('page_toc.html')
+
+    def _entry(anchor, label):
+        pg = page_map.get(anchor)
+        if pg is None:
+            return None
+        return {'anchor': anchor, 'label': label, 'page_num': pg}
+
+    # Left column: Citywide update + major transactions + pipeline
+    left_entries = []
+    for anchor, label in [
+        ('citywide-performance',  'Overall Performance'),
+        ('major-leases',          'Major Leases & Sales'),
+        ('development-pipeline',  'Development Pipeline'),
+    ]:
+        e = _entry(anchor, label)
+        if e:
+            left_entries.append(e)
+
+    # Submarket section entries
+    submarket_entries = []
+    for anchor, label in [
+        ('cbd-kpi',   'CBD Submarket'),
+        ('nw-kpi',    'Northwest Submarket'),
+        ('sw-kpi',    'Southwest Submarket'),
+        ('east-kpi',  'East Submarket'),
+    ]:
+        e = _entry(anchor, label)
+        if e:
+            submarket_entries.append(e)
+
+    # Appendix entries
+    appendix_entries = []
+    for anchor, label in [
+        ('micromarket-performance', 'Competitive Set Micromarket Performance & Building Lists'),
+        ('overall-performance',     'Overall Submarket Performance'),
+        ('sublease-report',         'Sublease Report & Direct/Sublease Availability'),
+    ]:
+        e = _entry(anchor, label)
+        if e:
+            appendix_entries.append(e)
+
+    photo_uri = None
+    if city_photo_path and os.path.exists(city_photo_path):
+        photo_uri = 'file:///' + city_photo_path.replace('\\', '/')
+
+    return tmpl.render(
+        left_entries=left_entries,
+        submarket_entries=submarket_entries,
+        appendix_entries=appendix_entries,
+        city_photo_path=photo_uri,
     )
 
 
@@ -374,7 +436,7 @@ def _render_pipeline(env, config, data):
     )
 
 
-def _render_sublease_report(env, config, data, page_num=1, rows_per_page=30):
+def _render_sublease_report(env, config, data, rows_per_page=30):
     """Render a sublease report page. Paginates if needed."""
     avail_data = data.get('office_avail', {})
     if 'Subleases' not in avail_data or avail_data['Subleases'].empty:
@@ -400,18 +462,20 @@ def _render_sublease_report(env, config, data, page_num=1, rows_per_page=30):
         r.submarket = row.get('submarket_name', row.get('Submarket Name', ''))
         all_rows.append(r)
 
-    # Paginate
+    # Paginate — first page gets anchor_id, subsequent pages do not
     pages = []
     for i in range(0, len(all_rows), rows_per_page):
         chunk = all_rows[i:i + rows_per_page]
         page_idx = i // rows_per_page + 1
         total_pages = (len(all_rows) + rows_per_page - 1) // rows_per_page
-        subtitle = f"ALL SUBMARKETS"
+        subtitle = "ALL SUBMARKETS"
         if total_pages > 1:
             subtitle += f" (Page {page_idx} of {total_pages})"
+        anchor = 'sublease-report' if page_idx == 1 else None
         pages.append(tmpl.render(
             subtitle=subtitle,
             rows=chunk,
+            anchor_id=anchor,
         ))
     return pages
 
@@ -421,7 +485,8 @@ def build_page_sequence(env, config, data, charts):
     Build the ordered list of rendered page HTML strings.
     Section order matches the InDesign quarterly report PDF:
       1.  Title page
-      1b. Quarterly Changes (NRA, Status, Vacancy)
+      1b. Table of Contents (with hyperlinks)
+      1c. Quarterly Changes (NRA, Status, Vacancy)
       2.  Citywide KPI + competitive set
       3.  Major Leases
       4.  Major Sales
@@ -431,87 +496,130 @@ def build_page_sequence(env, config, data, charts):
       7.  Overall performance pages
       8.  Sublease report
       9.  Building lists (all regions)
+
+    The TOC is built after all other pages are rendered so we can record
+    accurate page numbers (position in the page list + 3 for title/TOC/QC offset).
     """
-    pages = []
+    # ── Helper to track anchor → page number ─────────────────────
+    # Page numbering: title=1, TOC=2, then content starts at 3.
+    # We offset content pages by 3 (title + TOC + 1 for 1-based).
+    content_pages = []   # list of (html_string, anchor_id_or_None)
+    page_map = {}        # anchor_id -> display page number
 
-    # ── 1. Title page ────────────────────────────────────────────
-    pages.append(_render_title_page(env, config))
-    print("  Rendered: Title page")
+    pdf_page_counter = [0]  # mutable counter for physical PDF pages
 
-    # ── 1b. Quarterly Changes ─────────────────────────────────────
+    def _add(html, anchor=None, pdf_pages=1):
+        """Add a rendered HTML string to content_pages.
+        pdf_pages: number of physical PDF pages this HTML string produces
+                   (usually 1, but 2 for pipeline which has two page-break divs).
+        """
+        if html is None:
+            return
+        # Physical page number = title(1) + TOC(2) + accumulated pages so far + 1
+        page_num = 3 + pdf_page_counter[0]
+        content_pages.append(html)
+        if anchor:
+            page_map[anchor] = page_num
+        pdf_page_counter[0] += pdf_pages
+
+    # ── 1c. Quarterly Changes ─────────────────────────────────────
     qc_page = _render_quarterly_changes(env, config, data)
+    _add(qc_page)
     if qc_page:
-        pages.append(qc_page)
         print("  Rendered: Quarterly Changes")
 
     # ── 2. Citywide ──────────────────────────────────────────────
-    kpi_page = _render_kpi_header(env, config, data, 'Citywide')
+    kpi_page = _render_kpi_header(env, config, data, 'Citywide',
+                                   anchor_id='citywide-kpi')
+    _add(kpi_page)
     if kpi_page:
-        pages.append(kpi_page)
         print("  Rendered: Citywide KPI header")
 
     perf = _render_performance_page(env, config, data, charts, 'Citywide', 'overall',
-                                     display_type='Competitive Set')
+                                     display_type='Competitive Set',
+                                     anchor_id='citywide-performance')
+    _add(perf, anchor='citywide-performance')
     if perf:
-        pages.append(perf)
         print("  Rendered: Citywide competitive set performance")
 
     # ── 3. Major Leases ──────────────────────────────────────────
+    # anchor is hard-coded in template as id="major-leases"
     leases_page = _render_major_leases(env, config, data)
+    _add(leases_page, anchor='major-leases')
     if leases_page:
-        pages.append(leases_page)
         print("  Rendered: Major Leases")
 
     # ── 4. Major Sales ───────────────────────────────────────────
+    # anchor is hard-coded in template as id="major-sales"
     sales_page = _render_major_sales(env, config, data)
+    _add(sales_page, anchor='major-sales')
     if sales_page:
-        pages.append(sales_page)
         print("  Rendered: Major Sales")
 
     # ── 4b. Development Pipeline ─────────────────────────────────
+    # anchor is hard-coded in template as id="development-pipeline"
+    # Pipeline renders 2 physical PDF pages (UC + Planned/Proposed divs)
     pipeline_page = _render_pipeline(env, config, data)
+    _add(pipeline_page, anchor='development-pipeline', pdf_pages=2)
     if pipeline_page:
-        pages.append(pipeline_page)
         print("  Rendered: Development Pipeline")
 
     # ── 5. Submarket sections (KPI → comp set → large availability) ──
+    # Anchor mapping for the four major submarkets
+    _submarket_anchors = {
+        'CBD':       ('cbd-kpi',  'cbd-perf'),
+        'Northwest': ('nw-kpi',   'nw-perf'),
+        'Southwest': ('sw-kpi',   'sw-perf'),
+        'East':      ('east-kpi', 'east-perf'),
+    }
     for submarket in config.SUBMARKETS_WITH_DETAIL:
-        # KPI header
-        kpi_page = _render_kpi_header(env, config, data, submarket)
+        kpi_anchor, _perf_anchor = _submarket_anchors.get(submarket, (None, None))
+        kpi_page = _render_kpi_header(env, config, data, submarket,
+                                       anchor_id=kpi_anchor)
+        _add(kpi_page, anchor=kpi_anchor)
         if kpi_page:
-            pages.append(kpi_page)
             print(f"  Rendered: {submarket} KPI header")
 
-        # Competitive set performance
-        perf = _render_performance_page(env, config, data, charts, submarket, 'competitive set')
+        perf = _render_performance_page(env, config, data, charts, submarket,
+                                         'competitive set')
+        _add(perf)
         if perf:
-            pages.append(perf)
             print(f"  Rendered: {submarket} competitive set performance")
 
-        # Large availability (immediately after comp set for this submarket)
         avail_page = _render_large_availability(env, config, data, submarket)
+        _add(avail_page)
         if avail_page:
-            pages.append(avail_page)
             print(f"  Rendered: {submarket} large availability")
 
     # ── 6. Micromarket performance pages ─────────────────────────
+    first_micro = True
     for micro in config.MICROMARKETS:
-        perf = _render_performance_page(env, config, data, charts, micro, 'micromarket')
+        anchor = 'micromarket-performance' if first_micro else None
+        perf = _render_performance_page(env, config, data, charts, micro,
+                                         'micromarket', anchor_id=anchor)
+        _add(perf, anchor=anchor)
         if perf:
-            pages.append(perf)
             print(f"  Rendered: {micro} micromarket performance")
+            first_micro = False
 
     # ── 7. Overall performance pages ─────────────────────────────
+    first_overall = True
     for submarket in config.SUBMARKETS_OVERALL:
-        perf = _render_performance_page(env, config, data, charts, submarket, 'overall')
+        anchor = 'overall-performance' if first_overall else None
+        perf = _render_performance_page(env, config, data, charts, submarket,
+                                         'overall', anchor_id=anchor)
+        _add(perf, anchor=anchor)
         if perf:
-            pages.append(perf)
             print(f"  Rendered: {submarket} overall performance")
+            first_overall = False
 
     # ── 8. Sublease report ───────────────────────────────────────
     sublease_pages = _render_sublease_report(env, config, data)
+    first_sublease = True
     for sp in sublease_pages:
-        pages.append(sp)
+        anchor = 'sublease-report' if first_sublease else None
+        _add(sp, anchor=anchor)
+        first_sublease = False
     if sublease_pages:
         print(f"  Rendered: {len(sublease_pages)} sublease report page(s)")
 
@@ -519,10 +627,21 @@ def build_page_sequence(env, config, data, charts):
     building_list_data = data.get('building_list', {})
     for submarket in building_list_data.keys():
         bl_page = _render_building_list(env, config, data, submarket)
+        _add(bl_page)
         if bl_page:
-            pages.append(bl_page)
             print(f"  Rendered: {submarket} building list")
 
+    # ── Build TOC now that page numbers are known ─────────────────
+    # Place an austin_skyline.jpg in reports/static/ to populate the TOC photo.
+    city_photo = os.path.join(config.STATIC_DIR, 'austin_skyline.jpg')
+    toc_page = _render_toc(env, config, page_map, city_photo_path=city_photo)
+    print("  Rendered: Table of Contents")
+
+    # ── Assemble final page list ──────────────────────────────────
+    title_page = _render_title_page(env, config)
+    print("  Rendered: Title page")
+
+    pages = [title_page, toc_page] + [html for html in content_pages]
     return pages
 
 

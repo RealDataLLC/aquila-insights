@@ -40,6 +40,17 @@
     }
 }
 
+/* TOC page: suppress page number */
+@page toc-page {
+    @bottom-right {
+        content: none;
+    }
+}
+
+.toc-page {
+    page: toc-page;
+}
+
 /* ── Base Styles ───────────────────────────────────────────── */
 * {
     box-sizing: border-box;
@@ -117,6 +128,119 @@ body {
     text-transform: uppercase;
     color: var(--navy);
     margin-bottom: 40px;
+}
+
+/* ── Table of Contents Page ────────────────────────────────── */
+.toc-page {
+    page-break-after: always;
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.toc-heading {
+    font-size: 26pt;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--copper);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    line-height: 1;
+}
+
+.toc-rule {
+    border: none;
+    border-top: 2px solid var(--brass);
+    margin-bottom: 20px;
+}
+
+/* Single-column content area — wide enough so labels don't wrap */
+.toc-body {
+    flex: 1;
+    max-width: 70%;
+}
+
+.toc-section-group {
+    margin-top: 20px;
+    margin-bottom: 8px;
+}
+
+.toc-section-group:first-child {
+    margin-top: 0;
+}
+
+.toc-group-title {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 2px;
+}
+
+.toc-group-desc {
+    font-size: 7pt;
+    color: var(--text-light);
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.toc-entry {
+    margin-bottom: 10px;
+}
+
+.toc-link {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    white-space: nowrap;
+}
+
+.toc-page-num {
+    font-size: 16pt;
+    font-weight: 300;
+    color: var(--copper);
+    line-height: 1;
+    min-width: 32px;
+    flex-shrink: 0;
+}
+
+.toc-entry-label {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--navy);
+    line-height: 1.2;
+    border-bottom: 1px solid var(--border-gray);
+    flex: 1;
+    padding-bottom: 8px;
+    white-space: nowrap;
+}
+
+.toc-footer-note {
+    margin-top: 22px;
+    font-size: 7.5pt;
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.toc-url {
+    color: var(--copper);
+    font-weight: 500;
+}
+
+.toc-disclaimer {
+    font-size: 6pt;
+    color: var(--text-light);
+    line-height: 1.5;
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-gray);
+    max-width: 85%;
 }
 
 /* ── Section Headers ───────────────────────────────────────── */
