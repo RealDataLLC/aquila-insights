@@ -1,0 +1,36 @@
+<div class="performance-page"{% if anchor_id %} id="{{ anchor_id }}"{% endif %}>
+    <div class="section-header">
+        <h2>REGIONAL COMPARISON | INDUSTRIAL + FLEX</h2>
+        <div class="sub-label">{{ metric_label }}</div>
+    </div>
+
+    <!-- Cross-submarket comparison table -->
+    <table class="perf-table">
+        <thead>
+            <tr>
+                <th>Quarter</th>
+                {% for submarket in submarkets %}
+                <th>{{ submarket }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in table_rows %}
+            <tr>
+                <td>{{ row.quarter }}</td>
+                {% for val in row.values %}
+                <td>{{ val }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Multi-line comparison chart -->
+    <div class="chart-row">
+        <div style="width: 100%; text-align: center;">
+            <div class="chart-title">{{ chart_title }}</div>
+            <img src="{{ chart_path }}" alt="{{ chart_title }}" style="max-width: 100%;">
+        </div>
+    </div>
+</div>

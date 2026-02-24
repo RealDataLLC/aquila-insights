@@ -330,6 +330,74 @@ body {
     padding-top: 10px;
 }
 
+/* ── Industrial KPI Layout ───────────────────────────────── */
+.kpi-type-section {
+    margin-bottom: 12px;
+    border: 1px solid var(--border-gray);
+    padding: 14px 18px 10px;
+}
+
+.kpi-type-label {
+    font-family: "Futura LT Pro", "Futura", Arial, sans-serif;
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-gray);
+    padding-bottom: 6px;
+}
+
+.kpi-grid-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 8px;
+}
+
+.kpi-card {
+    flex: 1;
+    text-align: left;
+}
+
+.kpi-arrow {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 22px;
+    font-size: 11pt;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.kpi-arrow.up {
+    background-color: var(--greenspace);
+    color: white;
+}
+
+.kpi-arrow.down {
+    background-color: var(--signal);
+    color: white;
+}
+
+.kpi-big-value {
+    display: inline;
+    font-family: "Futura LT Pro", "Futura", Arial, sans-serif;
+    font-size: 20pt;
+    font-weight: 400;
+    color: var(--navy);
+    line-height: 1.1;
+}
+
+.kpi-card-label {
+    font-family: "Futura LT Pro", "Futura", Arial, sans-serif;
+    font-size: 7pt;
+    color: var(--text-light);
+    margin-top: 2px;
+}
+
 /* ── Map Placeholder ───────────────────────────────────────── */
 .map-placeholder {
     background-color: var(--mopac-gray);

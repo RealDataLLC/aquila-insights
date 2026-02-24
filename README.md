@@ -11,7 +11,20 @@ These are data plots for Aquila Commercial, maintained by [Nelson Lin](mailto:ne
 ## Office
 
 ### Quarterly Reports
-[Office Quarterly Report [2026-Q4]](https://realdatallc.github.io/aquila-insights/charts/office/office_quarterly_report_2026_q4.html)
+The Office Quarterly Report is generated programmatically from Supabase + Excel data using Plotly charts, Jinja2 templates, and WeasyPrint PDF conversion. It covers 4 Austin submarkets and 6 micromarkets, producing a ~50-page branded PDF with 55 charts.
+
+```bash
+# Generate full PDF
+python reports/generate_office_report.py
+
+# HTML preview only
+python reports/generate_office_report.py --html-only
+
+# Reuse existing chart PNGs (faster iteration)
+python reports/generate_office_report.py --skip-charts
+```
+
+Update `reports/report_config.py` with the new quarter before generating. Source data is read from `Q:\0-Quarterly Reports\0-Office\{YEAR} Q{N}\`.
 
 ### Tenant Requirements
 [Requirements Total SF [2026-01-30]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html) - Combined historical data from 2018+
@@ -49,6 +62,22 @@ These are data plots for Aquila Commercial, maintained by [Nelson Lin](mailto:ne
 
 
 ## Industrial
+
+### Quarterly Reports
+The Industrial Quarterly Report is generated programmatically from Supabase + Excel data using Plotly charts, Jinja2 templates, and WeasyPrint PDF conversion. It covers 7 Austin submarkets across 2 property types (Industrial + Flex), producing a ~45-page branded PDF with 52 charts.
+
+```bash
+# Generate full PDF
+python reports/generate_industrial_report.py
+
+# HTML preview only
+python reports/generate_industrial_report.py --html-only
+
+# Reuse existing chart PNGs (faster iteration)
+python reports/generate_industrial_report.py --skip-charts
+```
+
+Update `reports/industrial_report_config.py` with the new quarter before generating. Source data is read from `Q:\0-Quarterly Reports\0-Industrial\{YEAR} Q{N}\`.
 
 ### Tenant Demand (TITM)
 [Industrial Demand by Tenant Size [2026-02-09]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_demand_by_tenant_size.html) - Quarterly demand grouped by size category with total demand line

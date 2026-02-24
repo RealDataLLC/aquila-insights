@@ -1,0 +1,32 @@
+<div class="major-leases-page" id="major-leases">
+    <div class="section-header">
+        <div class="quarter-tag">SIGNED IN {{ quarter_label }}</div>
+        <h2>Major Leases</h2>
+    </div>
+    <hr class="section-divider">
+
+    <p class="pipeline-blurb">Leases 20,000 square feet or more signed this quarter include:</p>
+
+    <table class="leases-table">
+        <thead>
+            <tr>
+                <th>Tenant</th>
+                <th>Building</th>
+                <th>Submarket</th>
+                <th>Size (SF)</th>
+                <th>Transaction Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.tenant }}</td>
+                <td>{{ row.property_name }}</td>
+                <td>{{ row.submarket }}</td>
+                <td>{{ "{:,.0f}".format(row.sf_leased) if row.sf_leased else "---" }}</td>
+                <td>{{ row.transaction_type }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

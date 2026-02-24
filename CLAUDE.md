@@ -77,30 +77,48 @@
 ├── DEPRECATED
 │   └── DEPRECATED_update_office_requirements.py   # Old single-tab Google Sheets (replaced by combined)
 │
-├── reports/                                 # Office Quarterly Report generator (PDF)
-│   ├── office/{YEAR}_{QN}/                  # Output per quarter
+├── reports/                                 # Quarterly Report generators (PDF)
+│   ├── office/{YEAR}_{QN}/                  # Office output per quarter
 │   │   ├── charts/                          # Intermediate PNG chart images
 │   │   └── AQUILA_Office_Report_{YEAR}_{QN}.pdf
+│   ├── industrial/{YEAR}_{QN}/              # Industrial output per quarter
+│   │   ├── charts/                          # 52 PNG chart images
+│   │   └── AQUILA_Industrial_Report_{YEAR}_{QN}.pdf
 │   ├── templates/                           # Jinja2 HTML page templates
 │   │   ├── base.html                        # Outer shell: <html>, CSS, page counters
-│   │   ├── page_title.html                  # Cover page
-│   │   ├── page_kpi_header.html             # 4 KPI boxes + placeholder map
-│   │   ├── page_performance.html            # Data table + 3 charts (15 instances)
-│   │   ├── page_major_leases.html           # Major leases table
-│   │   ├── page_major_sales.html            # Major sales card grid
-│   │   ├── page_large_availability.html     # Large availability table
-│   │   ├── page_building_list.html          # Building list with totals
-│   │   └── page_sublease_report.html        # Sublease table (paginated)
+│   │   ├── page_title.html                  # Office cover page
+│   │   ├── page_kpi_header.html             # Office: 4 KPI boxes + placeholder map
+│   │   ├── page_performance.html            # Office: data table + 3 charts (15 instances)
+│   │   ├── page_major_leases.html           # Office: major leases table
+│   │   ├── page_major_sales.html            # Office: major sales card grid
+│   │   ├── page_large_availability.html     # Office: large availability table
+│   │   ├── page_building_list.html          # Building list with totals (shared)
+│   │   ├── page_sublease_report.html        # Office: sublease table (paginated)
+│   │   ├── page_quarterly_changes.html      # Quarterly changes tables (shared)
+│   │   ├── page_industrial_title.html       # Industrial cover page
+│   │   ├── page_industrial_toc.html         # Industrial TOC
+│   │   ├── page_industrial_kpi.html         # Industrial: By the Numbers (Ind + Flex KPIs)
+│   │   ├── page_industrial_performance.html # Industrial: table + 3 charts
+│   │   ├── page_industrial_major_leases.html# Industrial: major leases table
+│   │   ├── page_industrial_major_sales.html # Industrial: major sales card grid
+│   │   ├── page_industrial_pipeline.html    # Industrial: UC + Planned/Proposed
+│   │   ├── page_industrial_large_avail.html # Industrial: large avail by generation
+│   │   └── page_regional_comparison.html    # Industrial: cross-submarket comparison
 │   ├── static/
 │   │   ├── report.css                       # Master stylesheet (brand, @page, layout)
 │   │   └── tables.css                       # Table-specific styling
 │   ├── __init__.py
-│   ├── generate_office_report.py            # Main orchestrator (CLI entry point)
+│   ├── generate_office_report.py            # Office report orchestrator (CLI)
+│   ├── generate_industrial_report.py        # Industrial report orchestrator (CLI)
 │   ├── cleanup_quarterly_data.py            # Pre-report data cleanup (run automatically)
-│   ├── report_config.py                     # Quarter-specific constants & paths
-│   ├── data_loader.py                       # Supabase + Excel → DataFrames
-│   ├── chart_builder.py                     # Plotly → PNG via Kaleido
-│   └── report_assembler.py                  # Jinja2 render + WeasyPrint → PDF
+│   ├── report_config.py                     # Office: quarter-specific constants & paths
+│   ├── industrial_report_config.py          # Industrial: quarter-specific constants & paths
+│   ├── data_loader.py                       # Office: Supabase + Excel → DataFrames
+│   ├── industrial_data_loader.py            # Industrial: Supabase + Excel → DataFrames
+│   ├── chart_builder.py                     # Office: Plotly → PNG via Kaleido
+│   ├── industrial_chart_builder.py          # Industrial: Plotly → PNG via Kaleido
+│   ├── report_assembler.py                  # Office: Jinja2 render + WeasyPrint → PDF
+│   └── industrial_report_assembler.py       # Industrial: Jinja2 render + WeasyPrint → PDF
 │
 ├── aquila_graphing_tools.py                 # Shared utilities (styling, Supabase, git)
 ├── aquila_graph.env                         # CREDENTIALS (gitignored)
@@ -510,6 +528,160 @@ pip install weasyprint kaleido jinja2
 
 ---
 
+### 11. Industrial Quarterly Report (PDF Generator)
+
+**Directory:** `reports/`
+**Entry point:** `reports/generate_industrial_report.py`
+
+Programmatically recreates the AQUILA Industrial Quarterly Report (previously a ~52-page PDF built manually in InDesign). Parallel architecture to the office report but with industrial-specific data structures: dual property types (Industrial + Flex), different submarkets, and unique page types (regional comparison, generation-based large availabilities).
+
+**Data Sources:**
+- **Primary:** Supabase `market_tables_industrial` (keyed by `submarket_name` + `property_type`)
+- **Secondary:** Excel/CSV files on `Q:\0-Quarterly Reports\0-Industrial\{YEAR} Q{N}\`
+  - `Tables and Graphs [Q{N}]/Tables/{YEAR}Q{N}_submarket_tables_industrial.xlsx` — 18 sheets (8 submarkets × 2 types + Regional)
+  - `Major Sales and Leases [Q{N}]/{YEAR} Q{N} Industrial Major Sales and Leases.xlsx` — Leases + Sales
+  - `Large Availabilities [Q{N}]/{YEAR} Q{N} Large Availabilities.xlsx` — First Gen + Second Gen sheets
+  - `Development Pipeline [Q{N}]/{YEAR} Q{N} Development Pipeline.xlsx` — Under Construction + Proposed
+  - `Building Lists [Q{N}]/{N}Q {YEAR} - building_list_industrial.xlsx` — 16 sheets (8 submarkets × 2 types)
+  - `Quarterly Changes [Q{N}]/` — CSV files: `Existing Supply NRA Changes`, `Status_Changes`, `Vacancy_Changes`
+
+**Key Architecture:**
+- `industrial_report_config.py` — Single file to update per quarter (year, quarter, paths, submarket lists)
+- `industrial_data_loader.py` — Loads Supabase (primary) + Excel (fallback) into nested dict; includes `load_quarterly_changes()` for CSV data
+- `industrial_chart_builder.py` — 3 performance charts per page (vacancy SF, absorption, rental) + regional comparison multi-line charts; imports shared primitives from `chart_builder.py`
+- `industrial_report_assembler.py` — Jinja2 template rendering + WeasyPrint PDF conversion
+- **Dual property types:** Every submarket generates 2 performance pages (Industrial + Flex)
+- **Supabase keying:** Uses `(submarket_name, property_type)` — different from office's `(aquila_micromarket, table_type)`
+- **No opex:** Industrial uses "Average Base Rent" (single bar), not office's "Full Service Rent" (Base + Opex stacked)
+
+**Page Sequence (matches InDesign report order):**
+1. Title page
+2. Table of Contents (two-pass, computed page numbers)
+3. By the Numbers (Industrial + Flex KPIs: Net Absorption, Avg Base Rent, Vacancy Rate, Market Size Change + Pipeline totals)
+4. Quarterly Changes (NRA, Status, Vacancy — from CSV files)
+5. Major Leases table
+6. Major Sales card grid
+7-8. Development Pipeline — Under Construction (page 1) + Planned/Proposed (page 2)
+9. Large Availabilities — First Generation
+10. Large Availabilities — Second Generation
+11. Regional Overall — Industrial (performance table + 3 charts)
+12. Regional Overall — Flex (performance table + 3 charts)
+13-16. Regional Comparison (Vacancy Rate + Avg Rent × 2 property types)
+17-30. Submarket sections (7 submarkets × 2 pages each: Industrial + Flex)
+31-46. Building Lists (16 sheets: 8 submarkets × 2 types)
+
+**Run Commands:**
+```bash
+# Full PDF generation (cleanup + charts + PDF)
+python reports/generate_industrial_report.py
+
+# HTML-only preview (no WeasyPrint needed)
+python reports/generate_industrial_report.py --html-only
+
+# Reuse existing chart PNGs (faster iteration on CSS/layout)
+python reports/generate_industrial_report.py --html-only --skip-charts
+
+# Full PDF with existing charts
+python reports/generate_industrial_report.py --skip-charts
+
+# Skip the data cleanup step
+python reports/generate_industrial_report.py --skip-cleanup
+```
+
+**Output:**
+```
+reports/industrial/{YEAR}_{QN}/
+├── charts/                                        # 52 PNG chart images
+├── AQUILA_Industrial_Report_{YEAR}_{QN}.html      # Intermediate HTML
+└── AQUILA_Industrial_Report_{YEAR}_{QN}.pdf       # Final ~45-page report
+```
+
+**Industrial-Specific Templates (9 Jinja2 HTML files):**
+
+| Template | Type | Instances | Data Source |
+|----------|------|-----------|-------------|
+| `page_industrial_title.html` | Cover | 1 | Config only |
+| `page_industrial_toc.html` | Table of Contents | 1 | Auto-generated from page_map |
+| `page_industrial_kpi.html` | By the Numbers (Industrial + Flex + Pipeline) | 1 | Supabase (latest quarter) |
+| `page_industrial_performance.html` | Table + 3 charts | 16 | Supabase (last 8 quarters) |
+| `page_industrial_major_leases.html` | Table | 1 | Excel |
+| `page_industrial_major_sales.html` | 2-column card grid with subtitle | 1 | Excel |
+| `page_industrial_pipeline.html` | Under Construction + Planned/Proposed | 2 | Excel (named columns) |
+| `page_industrial_large_avail.html` | Table by generation | 2 | Excel |
+| `page_regional_comparison.html` | Cross-submarket table + multi-line chart | 4 | Supabase |
+
+**Shared Templates (reused from office, read-only):**
+- `base.html` — outer HTML shell
+- `page_building_list.html` — building list table
+- `page_quarterly_changes.html` — quarterly changes tables
+
+**Performance Charts (3 per page, 52 total):**
+1. **Vacancy SF** — Stacked bar (Direct + Sublease Vacant) + line (Vacancy Rate %). Navy/Glass Blue bars, Copper line.
+2. **Net Absorption** — Bar (Net Absorption) + line (Occupancy Rate). Navy bars, Brass line.
+3. **Average Base Rent** — Single bar (Base Rent) + line (Vacancy Rate %). Navy bar, Copper line. *(No opex stacking — differs from office)*
+
+**Regional Comparison Charts (4 total):**
+- Multi-line chart with one line per submarket (7 colored lines from AQUILA_COLORS)
+- Last 8 quarters only
+- 2 metrics (Vacancy Rate, Avg Base Rent) × 2 property types (Industrial, Flex)
+
+**Chart Count Breakdown:**
+
+| Category | Count |
+|----------|-------|
+| Regional Industrial: vacancy_sf + absorption + rental | 3 |
+| Regional Flex: vacancy_sf + absorption + rental | 3 |
+| 7 submarkets × Industrial × 3 charts | 21 |
+| 7 submarkets × Flex × 3 charts | 21 |
+| Regional Comparison (vacancy + rent) × 2 types | 4 |
+| **Total** | **52** |
+
+**Submarkets & Property Types:**
+```python
+# 7 submarkets for performance pages (Southwest excluded)
+SUBMARKETS = ["East", "Hays County", "North Central", "Northeast",
+              "South", "Southeast", "Williamson County"]
+
+# 2 property types per submarket
+PROPERTY_TYPES = ["Industrial", "Flex"]
+
+# Building list: 8 submarkets × 2 types = 16 sheets (Southwest included)
+BUILDING_LIST_SUBMARKETS = SUBMARKETS + ["Southwest"]
+```
+
+**By the Numbers KPI Page:**
+- Two sections: Industrial KPIs (left) + Flex KPIs (right)
+- Per section: Net Absorption, Avg Base Rent, Vacancy Rate, Market Size Change from Prior Quarter
+- Market Size Change computed from NRA difference between last 2 quarters (`Regional_{type}`)
+- Pipeline row below: Total Under Construction SF + Total Planned/Proposed SF
+- Color arrows: green up for positive/improving, red down for negative/worsening
+
+**Pipeline Data Ingestion:**
+- Supports two spreadsheet formats (auto-detected):
+  - **New format** (named columns): `Quarter Delivery`, `Name`, `Size (SF)`, `% Leased`, `Submarket`, `Property Type`
+  - **Old format** (positional): Year/quarter embedded in data rows as header-like entries
+- Detection: checks for `Quarter Delivery` column presence
+- Proposed sheet: positional parsing (Name, Size, Submarket), skips header rows like "Future Developments"
+
+**Large Availabilities:**
+- Split by generation (First Gen / Second Gen) — different from office (which splits by submarket)
+- Columns: `property_name`, `Property Address`, `Total Available Space (SF)`, `submarket_name`
+- Column name fallback chain handles variations across quarters
+
+**Quarterly Update Process:**
+1. Update `reports/industrial_report_config.py` with new `REPORT_YEAR` and `REPORT_QUARTER` (all paths auto-derive)
+2. Ensure all source files are in the expected `Q:` drive folder structure:
+   - `Tables and Graphs [Q{N}]/Tables/`
+   - `Major Sales and Leases [Q{N}]/`
+   - `Large Availabilities [Q{N}]/`
+   - `Development Pipeline [Q{N}]/`
+   - `Building Lists [Q{N}]/`
+   - `Quarterly Changes [Q{N}]/` ← CSV exports with `[Q{N}]` suffix pattern
+3. Run `python reports/generate_industrial_report.py`
+4. Compare output PDF against InDesign reference
+
+---
+
 ## Interactive Dashboards (Local)
 
 Dashboards live in `dashboards/` and run locally via Dash. They are NOT published to GitHub Pages.
@@ -729,6 +901,15 @@ python reports/cleanup_quarterly_data.py --dry-run                  # Preview cl
 python reports/cleanup_quarterly_data.py                            # Run cleanup standalone
 ```
 
+### Industrial Quarterly Report
+```bash
+python reports/generate_industrial_report.py                            # Cleanup + full PDF
+python reports/generate_industrial_report.py --html-only                # Browser preview
+python reports/generate_industrial_report.py --html-only --skip-charts  # Fast CSS iteration
+python reports/generate_industrial_report.py --skip-charts              # Full PDF, reuse chart PNGs
+python reports/generate_industrial_report.py --skip-cleanup             # Skip data cleanup step
+```
+
 ---
 
 ## Configuration
@@ -798,6 +979,13 @@ GOOGLE_UNIVERSE_DOMAIN=googleapis.com
 | **Abbreviation over-expanded (e.g. "Bldg. E." instead of "Bldg. E")** | Single-letter cardinals use negative lookbehind `(?<!\.)` — letter preceded by `.` is never expanded |
 | **Cleanup runs on wrong quarter's files** | `cleanup_quarterly_data.py` derives paths from `report_config.py` — update `REPORT_YEAR`/`REPORT_QUARTER` first |
 | **Vertical Format tab missing after cleanup** | Tab is created only if `Major Sales` sheet exists and `Vertical Format` tab is absent; check workbook sheet names |
+| **Industrial Supabase empty** | `market_tables_industrial` uses same auth as office — ensure `SUPABASE_KEY` (service role) is set in `aquila_graph.env` |
+| **Industrial pipeline named columns not detected** | Auto-detects `Quarter Delivery` column; if spreadsheet reverts to old format, the old positional parser is used as fallback |
+| **Industrial large avail shows 0 SF** | Column name must be `Total Available Space (SF)` — fallback chain tries `Available SF`, `Available (SF)`, `available_sf` |
+| **Industrial major sales missing buyer/seller** | Excel columns are `Buyer (True) Company` and `Seller (True) Company` — fallback tries `Buyer`/`Seller` |
+| **Industrial KPI NRA change is 0** | Requires at least 2 quarters of data in `Regional_{type}` — check Supabase has consecutive quarter rows |
+| **Industrial regional comparison too many quarters** | `build_regional_comparison_chart()` takes `n_quarters=8` parameter; table also limits to last 8 via `all_quarters[-8:]` |
+| **Industrial quarterly changes CSV not found** | Industrial CSVs use `[Q{N}]` suffix pattern (e.g. `Existing Supply NRA Changes [Q4].csv`), different from office naming |
 
 ---
 
@@ -852,11 +1040,48 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 ---
 
 **Last Updated:** 2026-02-24
-**Document Version:** 3.5.0
+**Document Version:** 4.0.0
 
 ---
 
 ## Changelog
+
+### Version 4.0.0 (2026-02-24)
+- **MAJOR: Added Industrial Quarterly Report PDF generator** (`reports/` directory)
+  - Parallel architecture to office report: separate config, data loader, chart builder, assembler, and CLI orchestrator
+  - 9 new Jinja2 templates: industrial title, TOC, KPI (By the Numbers), performance, major leases, major sales, pipeline, large availability, regional comparison
+  - 52 Plotly charts: 3 dual-axis performance charts per page + 4 regional comparison multi-line charts
+  - Data from Supabase `market_tables_industrial` (primary) + 6 Excel/CSV sources on Q: drive (fallback)
+  - 7 submarkets × 2 property types (Industrial + Flex) = 14 performance pages + regional pages
+  - First test: 2025 Q4 report (45 pages, 52 charts, 5.3 MB PDF)
+- **New files (5 Python modules):**
+  - `generate_industrial_report.py` — CLI entry point with `--html-only`, `--skip-charts`, `--skip-cleanup` flags
+  - `industrial_report_config.py` — Quarter constants, data paths, submarket/property type ordering
+  - `industrial_data_loader.py` — Supabase-first + Excel fallback data loading; includes `load_quarterly_changes()` for CSV files with `[Q{N}]` suffix pattern
+  - `industrial_chart_builder.py` — `build_industrial_rental_chart()` (single bar, no opex), `build_regional_comparison_chart()` (multi-line, last 8 quarters), imports shared primitives from office `chart_builder.py`
+  - `industrial_report_assembler.py` — All render functions + `build_page_sequence()` + two-pass TOC
+- **New templates (9 Jinja2 HTML files):**
+  - `page_industrial_title.html` — "INDUSTRIAL" letter-spaced cover
+  - `page_industrial_toc.html` — Auto-generated TOC with computed page numbers
+  - `page_industrial_kpi.html` — By the Numbers: Industrial (4 KPIs) + Flex (4 KPIs) + Pipeline totals; KPIs include Net Absorption, Avg Base Rent, Vacancy Rate, Market Size Change from Prior Quarter
+  - `page_industrial_performance.html` — Table + 3 charts; "Average Base Rent" header (not "Full Service"); smaller title label, larger submarket name
+  - `page_industrial_major_leases.html` — Columns: Tenant, Building, Submarket, Size (SF), Transaction Type
+  - `page_industrial_major_sales.html` — Card grid with subtitle blurb; columns: Market, Size, Buyer, Seller
+  - `page_industrial_pipeline.html` — Auto-detects new (named columns) vs old (positional) spreadsheet format; UC grouped by quarter + Proposed table
+  - `page_industrial_large_avail.html` — Split by generation (First Gen / Second Gen); columns: Property Name, Address, Total Available Space (SF), Submarket
+  - `page_regional_comparison.html` — Cross-submarket table (last 8 quarters) + multi-line chart (7 submarket lines)
+- **Reuses from office (no modifications):** `base.html`, `page_building_list.html`, `page_quarterly_changes.html`, `report.css`, `tables.css`, shared chart primitives
+- **Key differences from office report:**
+  - Supabase keyed by `(submarket_name, property_type)` not `(aquila_micromarket, table_type)`
+  - No opex data → single-bar rental chart instead of stacked (Base + Opex)
+  - Large availabilities split by generation (1st/2nd Gen) not by submarket
+  - Pipeline data ingestion supports dual format (named columns + positional fallback)
+  - Market Size Change KPI computed from NRA delta between last 2 quarters
+  - Pipeline totals (UC SF + Proposed SF) displayed on KPI page, not pipeline page
+  - Industrial CSVs use `[Q{N}]` suffix pattern for quarterly changes
+- Added industrial report automation commands to Automation section
+- Added 8 new industrial-specific troubleshooting entries
+- Updated repository structure to include all industrial report files
 
 ### Version 3.5.0 (2026-02-24)
 - **New: Pre-report data cleanup script** (`reports/cleanup_quarterly_data.py`)

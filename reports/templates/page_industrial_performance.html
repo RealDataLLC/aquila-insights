@@ -1,0 +1,56 @@
+<div class="performance-page"{% if anchor_id %} id="{{ anchor_id }}"{% endif %}>
+    <div class="section-header">
+        <div class="sub-label" style="font-size: 8pt; letter-spacing: 1px; margin-bottom: 2px;">{{ property_type_label }} SUBMARKET PERFORMANCE</div>
+        <h2 style="font-size: 22pt; margin-top: 0;">{{ submarket_name }}</h2>
+    </div>
+
+    <!-- Data Table -->
+    <table class="perf-table">
+        <thead>
+            <tr>
+                <th>Quarter</th>
+                <th>Net Rentable<br>Area (SF)</th>
+                <th>Direct<br>Vacant SF</th>
+                <th>Sublease<br>Vacant SF</th>
+                <th>Net<br>Absorption</th>
+                <th>Total<br>Vacancy Rate</th>
+                <th>Base Rent</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.quarter }}</td>
+                <td>{{ "{:,.0f}".format(row.net_rentable_area) }}</td>
+                <td>{{ "{:,.0f}".format(row.vacant_available_sf_direct) }}</td>
+                <td>{{ "{:,.0f}".format(row.vacant_available_sf_sublet) }}</td>
+                <td>{{ "{:,.0f}".format(row.total_net_absorption) }}</td>
+                <td>{{ "{:.1%}".format(row.total_vacancy_rate) }}</td>
+                <td>${{ "{:,.2f}".format(row.average_rental_rate) if row.average_rental_rate == row.average_rental_rate else "N/A" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Charts -->
+    <div class="chart-row">
+        <div class="chart-half">
+            <div class="chart-title">Vacancy SF vs Vacancy Rate</div>
+            <img src="{{ charts.vacancy_sf }}" alt="Vacancy SF vs Vacancy Rate">
+        </div>
+        <div class="chart-half">
+            <div class="chart-title">Net Absorption</div>
+            <img src="{{ charts.absorption }}" alt="Net Absorption">
+        </div>
+    </div>
+
+    <div class="chart-row">
+        <div class="chart-half">
+            <div class="chart-title">Vacancy vs Rental Rates</div>
+            <img src="{{ charts.rental }}" alt="Vacancy vs Rental Rates">
+        </div>
+        <div class="chart-half">
+            <!-- blank space for layout symmetry -->
+        </div>
+    </div>
+</div>

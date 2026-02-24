@@ -1,0 +1,38 @@
+<div class="large-availability-page"{% if anchor_id %} id="{{ anchor_id }}"{% endif %}>
+    <div class="section-header">
+        <div class="quarter-tag">{{ quarter_label }}</div>
+        <h2>Large Availabilities</h2>
+        <div class="sub-label">{{ generation_label }}</div>
+    </div>
+
+    <p class="pipeline-blurb">{{ blurb }}</p>
+
+    <table class="avail-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Property Name</th>
+                <th>Property Address</th>
+                <th>Available (SF)</th>
+                <th>Submarket</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td class="row-num">{{ loop.index }}</td>
+                <td>{{ row.property_name }}</td>
+                <td>{{ row.property_address }}</td>
+                <td>{{ "{:,.0f}".format(row.available_sf) if row.available_sf else "---" }}</td>
+                <td>{{ row.submarket }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if total_sf %}
+    <div class="footnote" style="text-align: right; font-weight: bold; margin-top: 8px;">
+        Total {{ generation_label }} Availability Over 100K SF: {{ "{:,.0f}".format(total_sf) }} SF
+    </div>
+    {% endif %}
+</div>

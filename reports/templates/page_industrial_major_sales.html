@@ -1,0 +1,45 @@
+<div class="major-sales-page" id="major-sales">
+    <div class="section-header">
+        <div class="quarter-tag">{{ quarter_label }}</div>
+        <h2>Major Sales</h2>
+    </div>
+    <hr class="section-divider">
+
+    <p class="pipeline-blurb">The major sales that happened this quarter include:</p>
+
+    <table class="sales-table-grid">
+        <tbody>
+            {% for pair in rows | batch(2, '') %}
+            <tr class="sales-row">
+                {% for row in pair %}
+                <td class="sale-cell">
+                    {% if row %}
+                    <div class="sale-name">{{ row.property_name }}</div>
+                    <table class="sale-table">
+                        <tbody>
+                            <tr>
+                                <td class="sale-label">Market</td>
+                                <td class="sale-value">{{ row.submarket }}</td>
+                            </tr>
+                            <tr>
+                                <td class="sale-label">Size</td>
+                                <td class="sale-value">{{ "{:,.0f}".format(row.size) if row.size else "---" }} SF</td>
+                            </tr>
+                            <tr>
+                                <td class="sale-label">Buyer</td>
+                                <td class="sale-value">{{ row.buyer }}</td>
+                            </tr>
+                            <tr>
+                                <td class="sale-label">Seller</td>
+                                <td class="sale-value">{{ row.seller }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

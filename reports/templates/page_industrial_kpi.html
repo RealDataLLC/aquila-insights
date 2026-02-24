@@ -1,0 +1,82 @@
+<div class="kpi-header-page"{% if anchor_id %} id="{{ anchor_id }}"{% endif %}>
+    <div class="section-header">
+        <div class="quarter-tag">{{ quarter_label }}</div>
+        <h2>INDUSTRIAL &amp; FLEX</h2>
+        <div class="sub-label">BY THE NUMBERS</div>
+    </div>
+
+    <!-- INDUSTRIAL Section -->
+    <div class="kpi-type-section">
+        <div class="kpi-type-label">INDUSTRIAL</div>
+        <div class="kpi-grid-row">
+            <div class="kpi-card">
+                <div class="kpi-arrow {{ 'up' if industrial_kpi.net_absorption >= 0 else 'down' }}">{{ '&#9650;' if industrial_kpi.net_absorption >= 0 else '&#9660;' }}</div>
+                <div class="kpi-big-value">{{ "{:,.0f}".format(industrial_kpi.net_absorption|abs) }} SF</div>
+                <div class="kpi-card-label">Net Absorption</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-arrow {{ 'down' if industrial_kpi.avg_rent_change is defined and industrial_kpi.avg_rent_change < 0 else 'up' }}">{{ '&#9660;' if industrial_kpi.avg_rent_change is defined and industrial_kpi.avg_rent_change < 0 else '&#9650;' }}</div>
+                <div class="kpi-big-value">${{ "{:,.2f}".format(industrial_kpi.avg_rent) }}</div>
+                <div class="kpi-card-label">Avg. Base Rent</div>
+            </div>
+        </div>
+        <div class="kpi-grid-row">
+            <div class="kpi-card">
+                <div class="kpi-arrow {{ 'down' if industrial_kpi.vacancy_rate > 0.15 else 'up' }}">{{ '&#9660;' if industrial_kpi.vacancy_rate > 0.15 else '&#9650;' }}</div>
+                <div class="kpi-big-value">{{ "{:.1%}".format(industrial_kpi.vacancy_rate) }}</div>
+                <div class="kpi-card-label">Direct &amp; Sublease Vacancy Rate</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-arrow {{ 'up' if industrial_kpi.nra_change >= 0 else 'down' }}">{{ '&#9650;' if industrial_kpi.nra_change >= 0 else '&#9660;' }}</div>
+                <div class="kpi-big-value">{{ "{:,.0f}".format(industrial_kpi.nra_change|abs) }} SF</div>
+                <div class="kpi-card-label">Market Size Change from Prior Quarter</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLEX Section -->
+    <div class="kpi-type-section">
+        <div class="kpi-type-label">FLEX</div>
+        <div class="kpi-grid-row">
+            <div class="kpi-card">
+                <div class="kpi-arrow {{ 'up' if flex_kpi.net_absorption >= 0 else 'down' }}">{{ '&#9650;' if flex_kpi.net_absorption >= 0 else '&#9660;' }}</div>
+                <div class="kpi-big-value">{{ "{:,.0f}".format(flex_kpi.net_absorption|abs) }} SF</div>
+                <div class="kpi-card-label">Net Absorption</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-arrow {{ 'down' if flex_kpi.avg_rent_change is defined and flex_kpi.avg_rent_change < 0 else 'up' }}">{{ '&#9660;' if flex_kpi.avg_rent_change is defined and flex_kpi.avg_rent_change < 0 else '&#9650;' }}</div>
+                <div class="kpi-big-value">${{ "{:,.2f}".format(flex_kpi.avg_rent) }}</div>
+                <div class="kpi-card-label">Avg. Base Rent</div>
+            </div>
+        </div>
+        <div class="kpi-grid-row">
+            <div class="kpi-card">
+                <div class="kpi-arrow {{ 'up' if flex_kpi.vacancy_rate <= 0.15 else 'down' }}">{{ '&#9650;' if flex_kpi.vacancy_rate <= 0.15 else '&#9660;' }}</div>
+                <div class="kpi-big-value">{{ "{:.1%}".format(flex_kpi.vacancy_rate) }}</div>
+                <div class="kpi-card-label">Direct &amp; Sublease Vacancy Rate</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-arrow {{ 'up' if flex_kpi.nra_change >= 0 else 'down' }}">{{ '&#9650;' if flex_kpi.nra_change >= 0 else '&#9660;' }}</div>
+                <div class="kpi-big-value">{{ "{:,.0f}".format(flex_kpi.nra_change|abs) }} SF</div>
+                <div class="kpi-card-label">Market Size Change from Prior Quarter</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIPELINE Section -->
+    {% if pipeline_uc_sf or pipeline_proposed_sf %}
+    <div class="kpi-type-section">
+        <div class="kpi-type-label">PIPELINE</div>
+        <div class="kpi-grid-row">
+            <div class="kpi-card">
+                <div class="kpi-big-value">{{ "{:,.0f}".format(pipeline_uc_sf) }} SF</div>
+                <div class="kpi-card-label">Total Under Construction Citywide</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-big-value">{{ "{:,.0f}".format(pipeline_proposed_sf) }} SF</div>
+                <div class="kpi-card-label">Total Planned/Proposed Citywide</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
