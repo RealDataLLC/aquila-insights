@@ -39,7 +39,7 @@
 /home/user/aquila-insights/
 ├── charts/                                  # Published HTML charts (organized by category)
 │   ├── property-management/                 # 1 chart: AMS KPIs
-│   ├── office/                              # 17 charts: Requirements, transactions, market metrics
+│   ├── office/                              # 29 charts: Requirements, transactions, market metrics
 │   ├── industrial/                          # 9 charts: TITM demand, vacancy, NNN rent, market metrics
 │   └── economic-indicators/                 # 8 charts: Employment, wages, housing, financial
 │
@@ -73,7 +73,8 @@
 │   ├── create_office_demand_by_market.py          # Office demand by submarket (5 charts)
 │   ├── create_industrial_demand_charts.py         # Industrial TITM charts (5 charts)
 │   ├── create_industrial_nnn_rent_chart.py        # Industrial NNN rent by submarket (1 chart)
-│   └── create_austin_2025_charts.py               # Austin economy: relocations & expansions (6 charts)
+│   ├── create_austin_2025_charts.py               # Austin economy: relocations & expansions (6 charts)
+│   └── create_office_market_metrics_charts.py     # Office: vacancy, rent, opex by submarket (12 charts)
 │
 ├── DEPRECATED
 │   └── DEPRECATED_update_office_requirements.py   # Old single-tab Google Sheets (replaced by combined)
@@ -364,7 +365,7 @@ charts/property-management/
 
 ---
 
-### 8. Office Transactions (Excel)
+### 9. Office Transactions (Excel)
 
 **Script:** `create_office_transaction_charts.py`
 
@@ -383,7 +384,7 @@ charts/office/
 
 ---
 
-### 9. Office Demand by Market (Google Sheets)
+### 10. Office Demand by Market (Google Sheets)
 
 **Script:** `create_office_demand_by_market.py`
 
@@ -412,7 +413,47 @@ charts/office/
 
 ---
 
-### 10. Office Quarterly Report (PDF Generator)
+### 11. Office Market Metrics Charts (Supabase)
+
+**Script:** `create_office_market_metrics_charts.py`
+
+**Data Source:** Supabase table `market_tables_office`
+
+**Filters:**
+- CBD, Northwest, Southwest: `table_type = "competitive set"`
+- The Domain: `table_type = "micromarket"` (Domain is a micromarket subdivision of Northwest)
+
+**Date Range:** All available history (2018 Q1 → current quarter)
+
+**Outputs (12 charts):**
+```
+charts/office/
+├── office_vacancy_rate_cbd.html         # Vacancy rate % over time (line chart)
+├── office_vacancy_rate_northwest.html
+├── office_vacancy_rate_southwest.html
+├── office_vacancy_rate_domain.html
+├── office_rental_rate_cbd.html          # Base Rent + Opex stacked bar
+├── office_rental_rate_northwest.html
+├── office_rental_rate_southwest.html
+├── office_rental_rate_domain.html
+├── office_opex_cbd.html                 # Operating expenses $/SF/yr (line chart)
+├── office_opex_northwest.html
+├── office_opex_southwest.html
+└── office_opex_domain.html
+```
+
+**Chart types:**
+- Vacancy Rate: line chart, `total_vacancy_rate` as %, no markers
+- Rental Rate: stacked bar — Base Rent (Navy, bottom) + Opex (Concrete, top)
+- Operating Expenses: line chart, `average_opex` in $/SF/yr, no markers
+
+**Colors:** CBD=Navy, Northwest=Glass Blue, Southwest=Copper, The Domain=Brass
+
+**Supabase auth:** Uses `SUPABASE_KEY` (service role) via local `_get_supabase_client()` — `initialize_supabase_connection()` uses the anon key which lacks RLS access to `market_tables_office`.
+
+---
+
+### 12. Office Quarterly Report (PDF Generator)
 
 **Directory:** `reports/`
 **Entry point:** `reports/generate_office_report.py`
@@ -552,7 +593,7 @@ pip install weasyprint kaleido jinja2
 
 ---
 
-### 11. Industrial Quarterly Report (PDF Generator)
+### 13. Industrial Quarterly Report (PDF Generator)
 
 **Directory:** `reports/`
 **Entry point:** `reports/generate_industrial_report.py`
@@ -914,6 +955,7 @@ python3 create_office_transaction_charts.py
 python3 create_office_demand_by_market.py
 python3 create_industrial_demand_charts.py
 python3 create_austin_2025_charts.py         # Austin economy charts (6 charts from Excel)
+python3 create_office_market_metrics_charts.py  # Office vacancy/rent/opex by submarket (12 charts)
 ```
 
 ### Office Quarterly Report
@@ -1071,11 +1113,22 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 ---
 
 **Last Updated:** 2026-02-25
-**Document Version:** 4.2.0
+**Document Version:** 4.3.0
 
 ---
 
 ## Changelog
+
+### Version 4.3.0 (2026-02-25)
+- **New: Office Market Metrics Charts** (`create_office_market_metrics_charts.py`)
+  - 12 standalone HTML charts for CBD, Northwest, Southwest, and The Domain (competitive set / micromarket)
+  - 3 chart types per submarket: vacancy rate (line), rental rate (stacked bar: Base Rent + Opex), operating expenses (line)
+  - Outputs: `charts/office/office_{vacancy_rate|rental_rate|opex}_{cbd|northwest|southwest|domain}.html`
+  - Full history from 2018 Q1; quarterly update = re-run the script
+  - Uses `SUPABASE_KEY` (service role) directly via local `_get_supabase_client()` — anon key lacks RLS access
+  - Auto-commits and pushes on completion via `commit_and_push_all()`
+- Fixed duplicate `### 8.` section numbering in CLAUDE.md; renumbered sections 9–13
+- Updated office chart count in repo structure: 17 → 29
 
 ### Version 4.2.0 (2026-02-25)
 - **New: Austin Economy charts** (`create_austin_2025_charts.py`)
