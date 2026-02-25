@@ -60,6 +60,33 @@ Update `reports/report_config.py` with the new quarter before generating. Source
 
 [Office Weighted Average Rent by Building Size [2026-01-21]](https://realdatallc.github.io/aquila-insights/charts/office/office_rent_by_size.html)
 
+#### Vacancy Rates (Competitive Set)
+[Vacancy Rate — CBD [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_cbd.html)
+
+[Vacancy Rate — Northwest [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_northwest.html)
+
+[Vacancy Rate — Southwest [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_southwest.html)
+
+[Vacancy Rate — The Domain [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_domain.html)
+
+#### Rental Rates (Competitive Set)
+[Rental Rate — CBD [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_cbd.html)
+
+[Rental Rate — Northwest [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_northwest.html)
+
+[Rental Rate — Southwest [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_southwest.html)
+
+[Rental Rate — The Domain [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_domain.html)
+
+#### Operating Expenses (Competitive Set)
+[Operating Expenses — CBD [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_cbd.html)
+
+[Operating Expenses — Northwest [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_northwest.html)
+
+[Operating Expenses — Southwest [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_southwest.html)
+
+[Operating Expenses — The Domain [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_domain.html)
+
 
 ## Industrial
 
