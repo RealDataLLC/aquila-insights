@@ -112,53 +112,49 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Chart 1 — Jobs by Industry (horizontal bar)
+# Chart 1 — Jobs by Industry (pie chart)
 # ---------------------------------------------------------------------------
 def chart_jobs_by_industry(df):
     by_industry = (
         df.groupby("Industry")["Jobs Created"]
         .sum()
-        .sort_values(ascending=True)  # ascending for horizontal bar (largest at top)
+        .sort_values(ascending=False)
     )
 
     colors = [INDUSTRY_COLORS.get(ind, NAVY) for ind in by_industry.index]
+    total = by_industry.sum()
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=by_industry.values,
-        y=by_industry.index,
-        orientation="h",
-        marker_color=colors,
-        text=[f"{v:,}" for v in by_industry.values],
+    fig.add_trace(go.Pie(
+        labels=by_industry.index,
+        values=by_industry.values,
+        marker=dict(colors=colors, line=dict(color="white", width=2)),
+        texttemplate="<b>%{label}</b><br>%{percent}",
         textposition="outside",
-        textfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
-        hovertemplate="<b>%{y}</b><br>Jobs: %{x:,}<extra></extra>",
+        textfont=dict(family=AQUILA_FONT, size=11, color=NAVY),
+        hovertemplate="<b>%{label}</b><br>Jobs: %{value:,}<br>Share: %{percent}<extra></extra>",
+        hole=0,
+        sort=False,
     ))
 
     fig.update_layout(
-        **base_layout(
-            title=chart_title(
-                "Jobs Created by Industry — Austin Region 2025",
-                "Source: Austin Chamber of Commerce Relocations & Expansions Log · 10,621 total jobs announced"
-            ),
-            height=520,
-            margin=dict(t=110, b=60, l=260, r=120),
-            xaxis=dict(
-                title="Jobs Announced",
-                tickformat=",",
-                gridcolor="#e9e9ea",
-                linecolor="#cccccc",
-                tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
-                title_font=dict(family=AQUILA_FONT, size=13, color=NAVY),
-                range=[0, by_industry.max() * 1.18],
-            ),
-            yaxis=dict(
-                gridcolor="#e9e9ea",
-                linecolor="#cccccc",
-                tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
-            ),
-            showlegend=False,
-        )
+        title=chart_title(
+            "Jobs Created by Industry — Austin Region 2025",
+            f"Source: Austin Chamber of Commerce Relocations & Expansions Log · {total:,} total jobs announced"
+        ),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        height=580,
+        margin=dict(t=110, b=40, l=40, r=40),
+        legend=dict(
+            orientation="v",
+            yanchor="middle",
+            y=0.5,
+            xanchor="left",
+            x=1.02,
+            font=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        ),
     )
 
     path = f"{OUTPUT_DIR}/austin_2025_jobs_by_industry.html"
@@ -345,7 +341,7 @@ def chart_hq_activity(df):
 
 
 # ---------------------------------------------------------------------------
-# Chart 5 — Monthly Jobs Trend (bar chart)
+# Chart 5 — Monthly Jobs Trend (line chart)
 # ---------------------------------------------------------------------------
 def chart_jobs_by_month(df):
     by_month = df.groupby("Month")["Jobs Created"].sum()
@@ -356,12 +352,14 @@ def chart_jobs_by_month(df):
     abbrev_labels = [MONTH_ABBREV[m] for m in present_months]
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(
+    fig.add_trace(go.Scatter(
         x=abbrev_labels,
         y=by_month.values,
-        marker_color=NAVY,
+        mode="lines+markers+text",
+        line=dict(color=NAVY, width=2.5),
+        marker=dict(color=NAVY, size=8),
         text=[f"{v:,}" for v in by_month.values],
-        textposition="outside",
+        textposition="top center",
         textfont=dict(family=AQUILA_FONT, size=11, color=NAVY),
         hovertemplate="<b>%{x}</b><br>Jobs: %{y:,}<extra></extra>",
     ))
@@ -373,7 +371,7 @@ def chart_jobs_by_month(df):
                 "Source: Austin Chamber of Commerce Relocations & Expansions Log"
             ),
             height=480,
-            margin=dict(t=110, b=80, l=60, r=60),
+            margin=dict(t=110, b=80, l=80, r=60),
             showlegend=False,
             xaxis=dict(
                 tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
@@ -387,7 +385,7 @@ def chart_jobs_by_month(df):
                 linecolor="#cccccc",
                 tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
                 title_font=dict(family=AQUILA_FONT, size=13, color=NAVY),
-                range=[0, by_month.max() * 1.18],
+                range=[0, by_month.max() * 1.22],
             ),
         )
     )
@@ -398,75 +396,61 @@ def chart_jobs_by_month(df):
 
 
 # ---------------------------------------------------------------------------
-# Chart 6 — Top 10 Companies by Jobs (horizontal bar, colored by New/Expanded)
+# Chart 6 — Top 10 Companies by Jobs (Plotly table)
 # ---------------------------------------------------------------------------
 def chart_top_companies(df):
     top10 = (
-        df[["Company", "Jobs Created", "Type of Action", "Industry"]]
+        df[["Company", "Jobs Created", "Type of Action", "Industry", "Location"]]
         .sort_values("Jobs Created", ascending=False)
         .head(10)
-        .sort_values("Jobs Created", ascending=True)  # flip for horizontal bar
+        .reset_index(drop=True)
     )
+    top10.index += 1  # 1-based rank
 
-    colors = [NAVY if t == "New" else BRASS for t in top10["Type of Action"]]
+    # Alternate row shading: light gray / white
+    fill_colors = []
+    for i in range(len(top10)):
+        fill_colors.append("#F5F7FA" if i % 2 == 0 else "white")
 
-    # Build custom hover text
-    hover = [
-        f"<b>{row.Company}</b><br>Jobs: {row['Jobs Created']:,}<br>"
-        f"Industry: {row.Industry}<br>Type: {row['Type of Action']}"
-        for _, row in top10.iterrows()
-    ]
+    # Format jobs with commas
+    jobs_formatted = [f"{v:,}" for v in top10["Jobs Created"]]
 
-    fig = go.Figure()
-
-    # Add invisible traces just for the legend
-    fig.add_trace(go.Bar(
-        x=[None], y=[None], orientation="h",
-        marker_color=NAVY, name="New Operation",
-    ))
-    fig.add_trace(go.Bar(
-        x=[None], y=[None], orientation="h",
-        marker_color=BRASS, name="Expanded Operation",
-    ))
-
-    # Main bars
-    fig.add_trace(go.Bar(
-        x=top10["Jobs Created"].values,
-        y=top10["Company"].values,
-        orientation="h",
-        marker_color=colors,
-        text=[f"{v:,}" for v in top10["Jobs Created"].values],
-        textposition="outside",
-        textfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
-        hovertext=hover,
-        hoverinfo="text",
-        showlegend=False,
-    ))
+    fig = go.Figure(data=[go.Table(
+        columnwidth=[40, 200, 100, 220, 140],
+        header=dict(
+            values=["#", "Company", "Jobs Created", "Industry", "Location"],
+            fill_color=NAVY,
+            font=dict(family=AQUILA_FONT, size=13, color="white"),
+            align=["center", "left", "center", "left", "left"],
+            height=36,
+            line_color=NAVY,
+        ),
+        cells=dict(
+            values=[
+                list(top10.index),
+                top10["Company"].tolist(),
+                jobs_formatted,
+                top10["Industry"].tolist(),
+                top10["Location"].tolist(),
+            ],
+            fill_color=[fill_colors] * 5,
+            font=dict(family=AQUILA_FONT, size=12, color=NAVY),
+            align=["center", "left", "center", "left", "left"],
+            height=32,
+            line_color="#e9e9ea",
+        ),
+    )])
 
     fig.update_layout(
-        **base_layout(
-            title=chart_title(
-                "Top 10 Companies by Jobs Created — Austin 2025",
-                "Source: Austin Chamber of Commerce · Top 10 = 70% of all announced jobs"
-            ),
-            height=500,
-            margin=dict(t=110, b=100, l=180, r=130),
-            barmode="overlay",
-            xaxis=dict(
-                title="Jobs Announced",
-                tickformat=",",
-                gridcolor="#e9e9ea",
-                linecolor="#cccccc",
-                tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
-                title_font=dict(family=AQUILA_FONT, size=13, color=NAVY),
-                range=[0, top10["Jobs Created"].max() * 1.22],
-            ),
-            yaxis=dict(
-                gridcolor="#e9e9ea",
-                linecolor="#cccccc",
-                tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
-            ),
-        )
+        title=chart_title(
+            "Top 10 Companies by Jobs Created — Austin 2025",
+            "Source: Austin Chamber of Commerce · Top 10 companies account for 70% of all announced jobs"
+        ),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        height=480,
+        margin=dict(t=110, b=40, l=40, r=40),
     )
 
     path = f"{OUTPUT_DIR}/austin_2025_top_companies.html"
