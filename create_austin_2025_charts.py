@@ -112,49 +112,54 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 # ---------------------------------------------------------------------------
-# Chart 1 — Jobs by Industry (pie chart)
+# Chart 1 — Jobs by Industry (horizontal bar)
 # ---------------------------------------------------------------------------
 def chart_jobs_by_industry(df):
     by_industry = (
         df.groupby("Industry")["Jobs Created"]
         .sum()
-        .sort_values(ascending=False)
+        .sort_values(ascending=True)  # ascending so largest appears at top
     )
 
     colors = [INDUSTRY_COLORS.get(ind, NAVY) for ind in by_industry.index]
     total = by_industry.sum()
 
     fig = go.Figure()
-    fig.add_trace(go.Pie(
-        labels=by_industry.index,
-        values=by_industry.values,
-        marker=dict(colors=colors, line=dict(color="white", width=2)),
-        texttemplate="<b>%{label}</b><br>%{percent}",
+    fig.add_trace(go.Bar(
+        x=by_industry.values,
+        y=by_industry.index,
+        orientation="h",
+        marker_color=colors,
+        text=[f"{v:,}" for v in by_industry.values],
         textposition="outside",
-        textfont=dict(family=AQUILA_FONT, size=11, color=NAVY),
-        hovertemplate="<b>%{label}</b><br>Jobs: %{value:,}<br>Share: %{percent}<extra></extra>",
-        hole=0,
-        sort=False,
+        textfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        hovertemplate="<b>%{y}</b><br>Jobs: %{x:,}<extra></extra>",
     ))
 
     fig.update_layout(
-        title=chart_title(
-            "Jobs Created by Industry — Austin Region 2025",
-            f"Source: Austin Chamber of Commerce Relocations & Expansions Log · {total:,} total jobs announced"
-        ),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        font=dict(family=AQUILA_FONT, size=12, color=NAVY),
-        height=580,
-        margin=dict(t=110, b=40, l=40, r=40),
-        legend=dict(
-            orientation="v",
-            yanchor="middle",
-            y=0.5,
-            xanchor="left",
-            x=1.02,
-            font=dict(family=AQUILA_FONT, size=12, color=NAVY),
-        ),
+        **base_layout(
+            title=chart_title(
+                "Jobs Created by Industry — Austin Region 2025",
+                f"Source: Austin Chamber of Commerce Relocations & Expansions Log · {total:,} total jobs announced"
+            ),
+            height=520,
+            margin=dict(t=110, b=60, l=260, r=120),
+            showlegend=False,
+            xaxis=dict(
+                title="Jobs Announced",
+                tickformat=",",
+                gridcolor="#e9e9ea",
+                linecolor="#cccccc",
+                tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
+                title_font=dict(family=AQUILA_FONT, size=13, color=NAVY),
+                range=[0, by_industry.max() * 1.18],
+            ),
+            yaxis=dict(
+                gridcolor="#e9e9ea",
+                linecolor="#cccccc",
+                tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
+            ),
+        )
     )
 
     path = f"{OUTPUT_DIR}/austin_2025_jobs_by_industry.html"
@@ -276,63 +281,49 @@ def chart_jobs_by_location(df):
 
 
 # ---------------------------------------------------------------------------
-# Chart 4 — HQ vs. Non-HQ Jobs by Industry (grouped bar)
+# Chart 4 — HQ vs. Branch/Production Jobs (pie chart, total jobs only)
 # ---------------------------------------------------------------------------
 def chart_hq_activity(df):
-    pivot = (
-        df.groupby(["Industry", "HQ?"])["Jobs Created"]
-        .sum()
-        .unstack(fill_value=0)
-    )
-    # Only industries with at least some HQ activity
-    pivot = pivot[pivot.get("Yes", pd.Series(0, index=pivot.index)) > 0]
-    # Sort by total HQ jobs descending
-    if "Yes" in pivot.columns:
-        pivot = pivot.sort_values("Yes", ascending=False)
+    by_hq = df.groupby("HQ?")["Jobs Created"].sum()
+    hq_jobs = by_hq.get("Yes", 0)
+    branch_jobs = by_hq.get("No", 0)
+    hq_companies = (df["HQ?"] == "Yes").sum()
+    total_companies = len(df)
 
     fig = go.Figure()
-
-    if "Yes" in pivot.columns:
-        fig.add_trace(go.Bar(
-            name="Headquarters",
-            x=pivot.index,
-            y=pivot["Yes"],
-            marker_color=COPPER,
-            hovertemplate="<b>%{x}</b><br>HQ Jobs: %{y:,}<extra></extra>",
-        ))
-    if "No" in pivot.columns:
-        fig.add_trace(go.Bar(
-            name="Branch / Production",
-            x=pivot.index,
-            y=pivot["No"],
-            marker_color=NAVY,
-            hovertemplate="<b>%{x}</b><br>Non-HQ Jobs: %{y:,}<extra></extra>",
-        ))
+    fig.add_trace(go.Pie(
+        labels=["Headquarters", "Branch / Production"],
+        values=[hq_jobs, branch_jobs],
+        marker=dict(
+            colors=[COPPER, NAVY],
+            line=dict(color="white", width=2),
+        ),
+        texttemplate="<b>%{label}</b><br>%{value:,} jobs<br>%{percent}",
+        textposition="outside",
+        textfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        hovertemplate="<b>%{label}</b><br>Jobs: %{value:,}<br>Share: %{percent}<extra></extra>",
+        hole=0,
+        sort=False,
+    ))
 
     fig.update_layout(
-        **base_layout(
-            title=chart_title(
-                "Headquarters vs. Branch/Production Jobs by Industry — Austin 2025",
-                "Source: Austin Chamber of Commerce · Headquarters operations = 41 of 71 companies"
-            ),
-            barmode="group",
-            height=520,
-            margin=dict(t=110, b=160, l=60, r=60),
-            xaxis=dict(
-                tickangle=-35,
-                tickfont=dict(family=AQUILA_FONT, size=11, color=NAVY),
-                linecolor="#cccccc",
-                gridcolor="#e9e9ea",
-            ),
-            yaxis=dict(
-                title="Jobs Announced",
-                tickformat=",",
-                gridcolor="#e9e9ea",
-                linecolor="#cccccc",
-                tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
-                title_font=dict(family=AQUILA_FONT, size=13, color=NAVY),
-            ),
-        )
+        title=chart_title(
+            "Headquarters vs. Branch/Production — Austin 2025",
+            f"Source: Austin Chamber of Commerce · {hq_companies} of {total_companies} companies designated as headquarters operations"
+        ),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        height=520,
+        margin=dict(t=110, b=60, l=60, r=60),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.08,
+            xanchor="center",
+            x=0.5,
+            font=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        ),
     )
 
     path = f"{OUTPUT_DIR}/austin_2025_hq_activity.html"
