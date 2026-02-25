@@ -336,12 +336,12 @@ charts/economic-indicators/
 **Outputs (6 charts):**
 ```
 charts/economic-indicators/
-├── austin_2025_jobs_by_industry.html       # Jobs by industry (horizontal bar, 10 categories)
+├── austin_2025_jobs_by_industry.html       # Jobs by industry (horizontal bar, 10 categories, distinct colors)
 ├── austin_2025_new_vs_expanded.html        # New relocations vs. expansions by industry (stacked bar)
 ├── austin_2025_jobs_by_location.html       # Top 10 cities by jobs (horizontal bar)
-├── austin_2025_hq_activity.html            # HQ vs. branch/production jobs by industry (grouped bar)
-├── austin_2025_jobs_by_month.html          # Monthly job announcements Jan–Dec (bar)
-└── austin_2025_top_companies.html          # Top 10 companies by jobs, colored by New/Expanded
+├── austin_2025_hq_activity.html            # HQ vs. branch/production total jobs (pie chart, 2 slices)
+├── austin_2025_jobs_by_month.html          # Monthly job announcements Jan–Dec (line chart with markers)
+└── austin_2025_top_companies.html          # Top 10 companies (Plotly table: Company, Jobs, Industry, Location)
 ```
 
 **Key Stats (2025):** 10,621 total jobs · 10 industries · 71 companies · 62% new operations · 41 HQ designations
@@ -1081,7 +1081,7 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 - **New: Austin Economy charts** (`create_austin_2025_charts.py`)
   - 6 Plotly HTML charts supporting the article "The Industries and Companies That Came to Austin in 2025"
   - Data source: `data/Industries and Companies 2025.xlsx` (Austin Chamber relocations/expansions log; 71 companies, 10,621 jobs)
-  - Charts: jobs by industry (horizontal bar) · new vs. expanded by industry (stacked bar) · jobs by location top 10 · HQ vs. branch/production by industry (grouped bar) · monthly jobs trend · top 10 companies by jobs
+  - Chart types (final): jobs by industry (horizontal bar, 10 distinct colors) · new vs. expanded by industry (stacked bar) · jobs by location top 10 (horizontal bar) · HQ vs. branch/production (pie chart, 2 slices: Copper/Navy) · monthly jobs Jan–Dec (line chart with markers) · top 10 companies (Plotly table: Company, Jobs, Industry, Location)
   - Published to `charts/economic-indicators/austin_2025_*.html`
   - README: new `## Austin Economy` section added above `## Development & Permitting`
   - No external API dependencies — reads directly from Excel via `pandas.read_excel()`
