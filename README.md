@@ -121,6 +121,21 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 ### Housing Indicators
 [Austin Housing Starts (Monthly) [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_housing_starts.html)
 
+## Austin Economy
+
+### Industries and Companies That Came to Austin in 2025
+[Jobs Created by Industry — Austin Region 2025 [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_2025_jobs_by_industry.html)
+
+[New Relocations vs. Expansions by Industry — Austin 2025 [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_2025_new_vs_expanded.html)
+
+[Jobs by Location — Austin Region 2025 [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_2025_jobs_by_location.html)
+
+[Headquarters vs. Branch/Production Jobs by Industry — Austin 2025 [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_2025_hq_activity.html)
+
+[Monthly Jobs Announced — Austin Region 2025 [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_2025_jobs_by_month.html)
+
+[Top 10 Companies by Jobs Created — Austin 2025 [2026-02-25]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_2025_top_companies.html)
+
 ## Development & Permitting
 
 ### Development Pipeline Analysis
