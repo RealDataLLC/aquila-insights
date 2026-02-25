@@ -526,6 +526,9 @@ def _render_sublease_report(env, config, data, rows_per_page=30):
         r.submarket = row.get('submarket_name', row.get('Submarket Name', ''))
         all_rows.append(r)
 
+    # Sort by sublease SF descending (largest first)
+    all_rows.sort(key=lambda r: r.sublease_sf, reverse=True)
+
     # Paginate — first page gets anchor_id, subsequent pages do not
     pages = []
     for i in range(0, len(all_rows), rows_per_page):

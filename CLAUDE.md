@@ -407,7 +407,7 @@ Programmatically recreates the AQUILA Office Quarterly Report (previously a 56-p
 
 **Key Architecture:**
 - `report_config.py` — Single file to update per quarter (year, quarter, paths, submarket lists)
-- `cleanup_quarterly_data.py` — Pre-report data cleanup; runs automatically as Step 0 of `generate_office_report.py`
+- `cleanup_quarterly_data.py` — Pre-report data cleanup; runs automatically as Step 0 of both `generate_office_report.py` and `generate_industrial_report.py`. Auto-detects report type (office vs industrial) from config module. Features: abbreviation standardization, Vertical Format tab creation, Major Leases sort/format/name-matching (via Supabase inventory), Major Sales portfolio consolidation, pipeline UC verification (warnings), Proposed sorting
 - `data_loader.py` — Loads Supabase (service role key) + Excel into nested dict
 - `chart_builder.py` — 3 dual-axis Plotly charts per performance page (vacancy SF, absorption, rental rates), exported as PNG via Kaleido
 - `report_assembler.py` — Jinja2 template rendering + WeasyPrint PDF conversion
@@ -986,6 +986,12 @@ GOOGLE_UNIVERSE_DOMAIN=googleapis.com
 | **Industrial KPI NRA change is 0** | Requires at least 2 quarters of data in `Regional_{type}` — check Supabase has consecutive quarter rows |
 | **Industrial regional comparison too many quarters** | `build_regional_comparison_chart()` takes `n_quarters=8` parameter; table also limits to last 8 via `all_quarters[-8:]` |
 | **Industrial quarterly changes CSV not found** | Industrial CSVs use `[Q{N}]` suffix pattern (e.g. `Existing Supply NRA Changes [Q4].csv`), different from office naming |
+| **Cleanup AttributeError on industrial config** | Industrial config uses `cfg.PIPELINE` / `cfg.LARGE_AVAIL` not `cfg.CITYWIDE_PIPELINE` / `cfg.OFFICE_AVAIL` — `_get_files_to_process()` auto-detects report type |
+| **Cleanup Supabase connection fails** | Inventory loading is optional — building name matching and pipeline verification are skipped with a warning; abbreviation standardization continues |
+| **Major Leases not sorted after cleanup** | `Major Leases` sheet must exist in the workbook; SF column detected via fallback chain (`SF Leased` → `Size (SF)` → `Size` → `Square Feet`) |
+| **Major Sales not consolidated** | Buyer/Seller columns detected case-insensitively; grouping is by normalized (lowercased, stripped) buyer+seller names |
+| **Pipeline verification shows false warnings** | Building name matching uses normalized comparison (lowercase, strip punctuation) — check if the building name in Excel differs significantly from Supabase `property_name`/`building_park` |
+| **Proposed not re-sorted** | Submarket/SF columns detected by keyword or positional fallback; header-like rows (`Future Developments`, etc.) are filtered before sorting |
 
 ---
 
@@ -1039,8 +1045,8 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 
 ---
 
-**Last Updated:** 2026-02-24
-**Document Version:** 4.0.0
+**Last Updated:** 2026-02-25
+**Document Version:** 4.1.0
 
 ---
 
@@ -1082,6 +1088,20 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 - Added industrial report automation commands to Automation section
 - Added 8 new industrial-specific troubleshooting entries
 - Updated repository structure to include all industrial report files
+
+### Version 4.1.0 (2026-02-25)
+- **Enhanced cleanup script** (`reports/cleanup_quarterly_data.py`) with 6 new data quality features for both office and industrial reports:
+  - **Report type auto-detection:** `_detect_report_type()` checks config module attributes; `_get_files_to_process()` now handles both office (`cfg.OFFICE_AVAIL`, `cfg.CITYWIDE_PIPELINE`) and industrial (`cfg.LARGE_AVAIL`, `cfg.PIPELINE`) config paths via role-tagged file list
+  - **Supabase inventory loading:** Connects to `inventory_office` or `inventory_industrial` at cleanup start for building name matching and pipeline verification; graceful degradation if Supabase unavailable
+  - **Major Leases cleanup** (`_cleanup_major_leases`): sorts by SF ascending, formats SF with commas, matches building names against Supabase `report_name` (normalized string comparison on `property_name`/`building_park`)
+  - **Major Sales consolidation** (`_cleanup_major_sales`): merges portfolio sales with same buyer+seller (case-insensitive); sums SF, joins building names, combines unique submarkets
+  - **Pipeline UC verification** (`_verify_pipeline_buildings`): checks Under Construction buildings against Supabase inventory; prints warnings for missing buildings, `aquila_competitive_set=False`, or empty `report_name` — no data modification
+  - **Proposed sorting** (`_sort_proposed`): sorts Planned/Proposed sheet by Submarket (A-Z) then SF (ascending); filters header-like rows before sorting
+  - Shared helper `_rewrite_sheet()` for atomic sheet replacement (preserves other sheets in workbook at same index)
+  - All new functions respect `--dry-run` flag
+- **Sublease report sorting** (`reports/report_assembler.py`): `_render_sublease_report()` now sorts rows by sublease SF descending (largest first) before pagination
+- **Header consistency verified:** All performance table templates already use "Sublease Vacant SF" consistently — no changes needed
+- 7 new troubleshooting entries (industrial config AttributeError, Supabase connection, Major Leases sort, Major Sales consolidation, pipeline verification, Proposed sort)
 
 ### Version 3.5.0 (2026-02-24)
 - **New: Pre-report data cleanup script** (`reports/cleanup_quarterly_data.py`)
