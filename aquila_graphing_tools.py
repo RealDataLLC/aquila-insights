@@ -57,7 +57,7 @@ def initialize_supabase_connection():
     load_dotenv(env_path)
 
     url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_PUBLIC_KEY")
+    key = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_PUBLIC_KEY")
     if not url or not key:
         raise ValueError(
             "SUPABASE_URL and SUPABASE_KEY must be set in aquila_graph.env"

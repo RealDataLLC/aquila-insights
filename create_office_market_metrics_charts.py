@@ -145,7 +145,7 @@ def fetch_data(supabase):
 
 # ── Chart builders ────────────────────────────────────────────────────────────
 
-def build_vacancy_chart(df, display_name, line_color):
+def build_vacancy_chart(df, display_name, line_color, y_range=None, dtick=None):
     """Line chart — total vacancy rate over time."""
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -161,11 +161,15 @@ def build_vacancy_chart(df, display_name, line_color):
         y_title='Total Vacancy Rate',
     )
     layout['yaxis']['tickformat'] = '.0%'
+    if y_range is not None:
+        layout['yaxis']['range'] = y_range
+    if dtick is not None:
+        layout['yaxis']['dtick'] = dtick
     fig.update_layout(**layout)
     return fig
 
 
-def build_rental_chart(df, display_name):
+def build_rental_chart(df, display_name, y_range=None, dtick=None):
     """Stacked bar chart — base rent (bottom, Navy) + opex (top, Concrete)."""
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -187,13 +191,17 @@ def build_rental_chart(df, display_name):
         y_title='Rent ($/SF/YR)',
     )
     layout['yaxis']['tickprefix'] = '$'
+    if y_range is not None:
+        layout['yaxis']['range'] = y_range
+    if dtick is not None:
+        layout['yaxis']['dtick'] = dtick
     layout['barmode'] = 'stack'
     layout['bargap'] = 0.3
     fig.update_layout(**layout)
     return fig
 
 
-def build_opex_chart(df, display_name, line_color):
+def build_opex_chart(df, display_name, line_color, y_range=None, dtick=None):
     """Line chart — average operating expenses over time."""
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -209,6 +217,10 @@ def build_opex_chart(df, display_name, line_color):
         y_title='Opex ($/SF/YR)',
     )
     layout['yaxis']['tickprefix'] = '$'
+    if y_range is not None:
+        layout['yaxis']['range'] = y_range
+    if dtick is not None:
+        layout['yaxis']['dtick'] = dtick
     fig.update_layout(**layout)
     return fig
 
@@ -229,6 +241,19 @@ def main():
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         charts_saved = []
 
+        # ── Standardized y-axis scales for cross-submarket comparison ───
+        # Vacancy: all 4 submarkets share 0-30% in 5% increments
+        VACANCY_RANGE = [0, 0.30]
+        VACANCY_DTICK = 0.05
+        # Rental rate: CBD/NW/SW share $0-$70 in $10 increments; Domain uses auto
+        RENT_RANGE_SHARED = [0, 70]
+        RENT_DTICK_SHARED = 10
+        # Opex: CBD/NW/SW share $10-$25 in $5 increments; Domain uses auto
+        OPEX_RANGE_SHARED = [10, 25]
+        OPEX_DTICK_SHARED = 5
+
+        domain_slug = 'domain'
+
         print("\nBuilding charts...")
         for display_name, _micro, _ttype, slug, line_color in SUBMARKETS:
             df = data[slug]
@@ -236,21 +261,34 @@ def main():
                 print(f"  WARNING: No data for {display_name} — skipping")
                 continue
 
-            # Vacancy rate
+            is_domain = (slug == domain_slug)
+
+            # Vacancy rate — all share same scale
             path = os.path.join(OUTPUT_DIR, f'office_vacancy_rate_{slug}.html')
-            build_vacancy_chart(df, display_name, line_color).write_html(path)
+            build_vacancy_chart(
+                df, display_name, line_color,
+                y_range=VACANCY_RANGE, dtick=VACANCY_DTICK,
+            ).write_html(path)
             charts_saved.append(path)
             print(f"  Saved: {path}")
 
-            # Rental rate (stacked bar: base + opex)
+            # Rental rate (stacked bar: base + opex) — Domain uses own scale
             path = os.path.join(OUTPUT_DIR, f'office_rental_rate_{slug}.html')
-            build_rental_chart(df, display_name).write_html(path)
+            build_rental_chart(
+                df, display_name,
+                y_range=None if is_domain else RENT_RANGE_SHARED,
+                dtick=None if is_domain else RENT_DTICK_SHARED,
+            ).write_html(path)
             charts_saved.append(path)
             print(f"  Saved: {path}")
 
-            # Operating expenses
+            # Operating expenses — Domain uses own scale
             path = os.path.join(OUTPUT_DIR, f'office_opex_{slug}.html')
-            build_opex_chart(df, display_name, line_color).write_html(path)
+            build_opex_chart(
+                df, display_name, line_color,
+                y_range=None if is_domain else OPEX_RANGE_SHARED,
+                dtick=None if is_domain else OPEX_DTICK_SHARED,
+            ).write_html(path)
             charts_saved.append(path)
             print(f"  Saved: {path}")
 

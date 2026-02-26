@@ -36,7 +36,14 @@ def fetch_industrial_data(supabase):
         print(f"✓ Loaded {len(df)} rows of industrial data")
 
         # Convert types
-        df['quarter'] = pd.to_datetime(df['quarter'])
+        import re
+        def _parse_quarter(q_str):
+            m = re.match(r'(\d{4})\s*[Qq](\d)', str(q_str))
+            if m:
+                year, q = int(m.group(1)), int(m.group(2))
+                return pd.Timestamp(f"{year}-{(q-1)*3+1:02d}-01")
+            return pd.NaT
+        df['quarter'] = df['quarter'].apply(_parse_quarter)
         df['total_vacancy_rate'] = pd.to_numeric(df['total_vacancy_rate'], errors='coerce')
 
         return df

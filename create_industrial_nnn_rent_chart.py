@@ -25,11 +25,11 @@ START_QUARTER = '2022 Q1'
 END_QUARTER   = '2025 Q4'          # Update this as new data arrives
 OUTPUT_PATH   = 'charts/industrial/industrial_nnn_rent_by_submarket.html'
 
-# Colors matched to Tableau screenshot order: Northeast=Navy, Southeast=Brass, Williamson=Concrete
+# Colors follow hierarchy order: Northeast=[0], Southeast=[1], Williamson=[2]
 SUBMARKET_COLORS = {
-    'Northeast':        AQUILA_COLORS[0],   # AQUILA Navy
-    'Southeast':        AQUILA_COLORS[5],   # Brass
-    'Williamson County': AQUILA_COLORS[3],  # Concrete
+    'Northeast':        AQUILA_COLORS[0],   # Navy
+    'Southeast':        AQUILA_COLORS[1],   # Glass Blue
+    'Williamson County': AQUILA_COLORS[2],  # Glass Blue Alt
 }
 
 
