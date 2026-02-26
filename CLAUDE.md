@@ -149,20 +149,27 @@ aquila_styled_line_chart(df, x, y, color=None, facet_row=None, title="", height=
 **Brand Colors (2026 Palette):**
 ```python
 AQUILA_COLORS = [
-    "#172344",  # AQUILA Navy (primary)
-    "#C2DAF1",  # Glass Blue (secondary)
-    "#AB6D3A",  # Copper (tertiary)
-    "#DEB76D",  # Brass (tertiary)
-    "#556B30",  # Greenspace (tertiary)
-    "#AAA9A8",  # Concrete (tertiary)
-    "#BF4040",  # Signal (extended)
-    "#D6B69C",  # Pennybacker (extended)
-    "#FFDB99",  # Texas Sun (extended)
-    "#B2C48C",  # Zilker (extended)
-    "#E8E8E8",  # Mopac Gray (extended)
-    "#F2ACAC",  # SoCo (extended)
+    "#172344",  # [0]  AQUILA Navy (primary)
+    "#C2DAF1",  # [1]  Glass Blue (secondary)
+    "#88ABC8",  # [2]  Glass Blue Alt (secondary)
+    "#AAA9A8",  # [3]  Concrete (tertiary)
+    "#AB6D3A",  # [4]  Copper (tertiary)
+    "#DEB76D",  # [5]  Brass (tertiary)
+    "#556B30",  # [6]  Greenspace (tertiary)
+    "#E8E8E8",  # [7]  Mopac Gray (extended)
+    "#D6B69C",  # [8]  Pennybacker (extended)
+    "#FFD899",  # [9]  Texas Sun (extended)
+    "#B2C48C",  # [10] Zilker (extended)
+    "#BF4040",  # [11] Signal (extended)
+    "#F2ACAC",  # [12] SoCo (extended)
 ]
 ```
+
+**Color Usage Guidelines:**
+- All chart titles must be **centered** (`x=0.5, xanchor='center'` in title dict, or `title_x=0.5, title_xanchor='center'` in layout)
+- Use colors in **hierarchy order** for categorical series (index [0] first, [1] second, etc.)
+- Named aliases for common colors: Navy=[0], Glass=[1], GlassAlt=[2], Concrete=[3], Copper=[4], Brass=[5], Greenspace=[6], MopacGray=[7], Pennybacker=[8], TexasSun=[9], Zilker=[10], Signal=[11], SoCo=[12]
+- On Windows (CP1252 shell), use `PYTHONUTF8=1 python script.py` or replace Unicode chars (✓, →, ⚠) with ASCII equivalents ([OK], ->, [WARN]) in print statements
 
 **Font:** `AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"`
 
@@ -1112,12 +1119,30 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 
 ---
 
-**Last Updated:** 2026-02-25
-**Document Version:** 4.3.0
+**Last Updated:** 2026-02-26
+**Document Version:** 4.4.0
 
 ---
 
 ## Changelog
+
+### Version 4.4.0 (2026-02-26)
+- **Brand color palette updated to 13-color 2026 hierarchy** (`aquila_graphing_tools.py`)
+  - Added **Glass Blue Alt** (#88ABC8) at index [2] — new color between Glass Blue and Concrete
+  - Reordered: Concrete moved from [5]→[3], Copper [2]→[4], Brass [3]→[5], Greenspace [4]→[6], Mopac Gray [10]→[7], Pennybacker [7]→[8], Texas Sun [8]→[9] (hex #FFDB99→#FFD899), Zilker [9]→[10], Signal [6]→[11], SoCo [11]→[12]
+  - All chart scripts updated to use correct new color indices for named aliases
+- **All chart titles centered** — `aquila_styled_line_chart` now sets `title_x=0.5, title_xanchor='center'` globally; all custom `update_layout` title dicts also updated with `'x': 0.5, 'xanchor': 'center'`
+- **Austin 2025 chart updates** (`create_austin_2025_charts.py`):
+  - Jobs by Industry: colors now follow hierarchy order [0]–[9] sequentially
+  - New Relocations vs. Expansions: rewritten from stacked bar → **pie chart** (New Operations vs Expansions, Navy + Glass Blue)
+  - Jobs by Location (Top 10): each bar now gets a distinct color cycling through the 13-color palette
+  - HQ vs Branch/Production: colors changed from Copper/Navy → **Navy/Glass Blue** (indices [0] and [1])
+- **Sequential category colors** applied to all size-range charts: Mega=[0], next=[1], next=[2], etc. (was using old non-sequential indices)
+  - Scripts updated: `update_office_combined_requirements.py`, `create_office_demand_by_market.py`, `create_industrial_demand_charts.py`
+- **Bug fixes** (pre-existing, discovered during run):
+  - `create_industrial_demand_charts.py`: replaced deprecated `titlefont=` with `title=dict(text=..., font=dict(...))` for yaxis/yaxis2
+  - `create_ams_kpi_chart.py`, `create_office_demand_by_market.py`: replaced Unicode `✓`, `→`, `⚠` with ASCII equivalents for Windows CP1252 compatibility
+- **Windows run tip**: Use `PYTHONUTF8=1 python script.py` to avoid CP1252 encoding errors when scripts contain Unicode print chars
 
 ### Version 4.3.0 (2026-02-25)
 - **New: Office Market Metrics Charts** (`create_office_market_metrics_charts.py`)

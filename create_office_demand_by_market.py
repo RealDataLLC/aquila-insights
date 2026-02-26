@@ -349,7 +349,7 @@ test_cases = [
 ]
 for test in test_cases:
     result = map_markets(test)
-    print(f"    '{test}' → {result}")
+    print(f"    '{test}' -> {result}")
 
 # ============================================================================
 # STEP 5: Expand data by market
@@ -502,10 +502,10 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
     years = sorted(annual_by_size['year'].unique())
 
     if len(years) == 0:
-        print(f"    ⚠ No annual data for {market_code}, skipping")
+        print(f"    [SKIP] No annual data for {market_code}, skipping")
         continue
 
-    print(f"    YTD {_current_year}: {ytd_market_2026:,.0f} SF → Projected: {projected_market_total:,.0f} SF")
+    print(f"    YTD {_current_year}: {ytd_market_2026:,.0f} SF -> Projected: {projected_market_total:,.0f} SF")
 
     min_year = min(years)
     max_year = max(years)
@@ -684,7 +684,7 @@ for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
     # Save chart
     filename = f'charts/office/requirements_demand_by_tenant_size_{market_code.lower()}.html'
     fig.write_html(filename)
-    print(f"    ✓ Saved {filename}")
+    print(f"    [OK] Saved {filename}")
 
 # ============================================================================
 # SUMMARY
@@ -696,8 +696,8 @@ print(f"\nMarket-specific charts generated:")
 for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
     filename = f'charts/office/requirements_demand_by_tenant_size_{market_code.lower()}.html'
     if os.path.exists(filename):
-        print(f"  ✓ {filename}")
+        print(f"  [OK] {filename}")
 
 print("\n" + "="*80)
-print("✓ Complete!")
+print("[OK] Complete!")
 print("="*80)

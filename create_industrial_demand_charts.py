@@ -262,8 +262,7 @@ fig.update_layout(
         tickangle=-45,
     ),
     yaxis=dict(
-        title='Segment Demand (SF)',
-        titlefont=dict(size=14),
+        title=dict(text='Segment Demand (SF)', font=dict(size=14)),
         showgrid=True,
         gridcolor='#e9e9ea',
         showline=True,
@@ -273,8 +272,7 @@ fig.update_layout(
         rangemode='tozero',
     ),
     yaxis2=dict(
-        title='Total Demand (SF)',
-        titlefont=dict(size=14),
+        title=dict(text='Total Demand (SF)', font=dict(size=14)),
         overlaying='y',
         side='right',
         showgrid=False,
@@ -572,10 +570,9 @@ fig5.update_layout(
         tickformat=','
     ),
     yaxis2=dict(
-        title="Count",
+        title=dict(text="Count", font=dict(family=AQUILA_FONT, size=12, color=COLORS['text'])),
         overlaying='y',
         side='right',
-        titlefont=dict(family=AQUILA_FONT, size=12, color=COLORS['text']),
         tickfont=dict(family=AQUILA_FONT, size=12, color=COLORS['text'])
     ),
     legend=dict(orientation="h", y=-0.2),
