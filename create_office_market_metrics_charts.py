@@ -45,9 +45,9 @@ def _get_supabase_client():
 # ── Brand color aliases ──────────────────────────────────────────────────────
 NAVY       = AQUILA_COLORS[0]   # #172344
 GLASS_BLUE = AQUILA_COLORS[1]   # #C2DAF1
-COPPER     = AQUILA_COLORS[2]   # #AB6D3A
-BRASS      = AQUILA_COLORS[3]   # #DEB76D
-CONCRETE   = AQUILA_COLORS[5]   # #AAA9A8
+COPPER     = AQUILA_COLORS[4]   # #AB6D3A
+BRASS      = AQUILA_COLORS[5]   # #DEB76D
+CONCRETE   = AQUILA_COLORS[3]   # #AAA9A8
 
 # ── Submarket configuration ───────────────────────────────────────────────────
 # Each entry: (display_name, aquila_micromarket, table_type, slug, line_color)

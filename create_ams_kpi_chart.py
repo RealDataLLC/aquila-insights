@@ -80,7 +80,8 @@ fig.add_trace(
 fig.update_layout(
     title={
         'text': 'AMS Property Management KPIs',
-        'font': {'size': 24, 'family': AQUILA_FONT, 'color': '#172344'}
+        'font': {'size': 24, 'family': AQUILA_FONT, 'color': '#172344'},
+        'x': 0.5, 'xanchor': 'center'
     },
     height=600,
     plot_bgcolor='white',
@@ -112,7 +113,7 @@ fig.update_annotations(font=dict(size=14, family=AQUILA_FONT, color='#172344'))
 # Save to charts directory
 output_file = 'charts/property-management/ams_managed_properties_kpi.html'
 fig.write_html(output_file)
-print(f"✓ Chart saved to {output_file}")
+print(f"OK: Chart saved to {output_file}")
 
 # Print summary
 print("\n" + "="*60)

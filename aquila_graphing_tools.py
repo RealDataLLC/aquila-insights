@@ -6,21 +6,21 @@ import plotly.express as px
 from datetime import datetime
 
 # Aquila Brand Colors (2026 Updated Palette)
-# For charts: Use Primary + Secondary as foundation, add Tertiary for larger datasets,
-# and Extended colors sparingly for very large datasets to maintain clarity.
+# Use colors in hierarchy order: Navy first, then Glass Blue, Glass Blue Alt, etc.
 AQUILA_COLORS = [
-    "#172344",  # AQUILA Navy (primary)
-    "#C2DAF1",  # Glass Blue (secondary)
-    "#AB6D3A",  # Copper (tertiary)
-    "#DEB76D",  # Brass (tertiary)
-    "#556B30",  # Greenspace (tertiary)
-    "#AAA9A8",  # Concrete (tertiary)
-    "#BF4040",  # Signal (extended)
-    "#D6B69C",  # Pennybacker (extended)
-    "#FFDB99",  # Texas Sun (extended)
-    "#B2C48C",  # Zilker (extended)
-    "#E8E8E8",  # Mopac Gray (extended)
-    "#F2ACAC",  # SoCo (extended)
+    "#172344",  # 1. AQUILA Navy (primary)
+    "#C2DAF1",  # 2. Glass Blue
+    "#88ABC8",  # 3. Glass Blue Alt
+    "#AAA9A8",  # 4. Concrete
+    "#AB6D3A",  # 5. Copper
+    "#DEB76D",  # 6. Brass
+    "#556B30",  # 7. Greenspace
+    "#E8E8E8",  # 8. Mopac Gray
+    "#D6B69C",  # 9. Pennybacker
+    "#FFD899",  # 10. Texas Sun
+    "#B2C48C",  # 11. Zilker
+    "#BF4040",  # 12. Signal
+    "#F2ACAC",  # 13. SoCo
 ]
 AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"
 
@@ -137,6 +137,8 @@ def aquila_styled_line_chart(
         paper_bgcolor="white",
         font=dict(family=AQUILA_FONT, color="#172344"),
         title_font_family=AQUILA_FONT,
+        title_x=0.5,
+        title_xanchor="center",
         legend=dict(
             title_font_family=AQUILA_FONT,
             orientation="h",

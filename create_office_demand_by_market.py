@@ -400,11 +400,11 @@ df_expanded['year'] = df_expanded['date'].dt.year
 
 # Colors for each size category
 category_colors = {
-    'Mega Requirements': AQUILA_COLORS[0],   # AQUILA Navy
-    '50k-100k SF':       AQUILA_COLORS[4],   # Greenspace
-    '25k-50k SF':        AQUILA_COLORS[3],   # Brass
-    '10k-25k SF':        AQUILA_COLORS[2],   # Copper
-    'Sub 10k SF':        AQUILA_COLORS[7],   # Pennybacker
+    'Mega Requirements': AQUILA_COLORS[0],   # Navy
+    '50k-100k SF':       AQUILA_COLORS[1],   # Glass Blue
+    '25k-50k SF':        AQUILA_COLORS[2],   # Glass Blue Alt
+    '10k-25k SF':        AQUILA_COLORS[3],   # Concrete
+    'Sub 10k SF':        AQUILA_COLORS[4],   # Copper
 }
 
 category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']

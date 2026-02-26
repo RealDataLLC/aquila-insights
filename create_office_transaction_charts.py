@@ -331,7 +331,8 @@ def main():
     fig_sf.update_layout(
         title=dict(
             text='Transaction Volume by Quarter and Platform (Total SF)',
-            font=dict(family=AQUILA_FONT, size=20, color='#172344')
+            font=dict(family=AQUILA_FONT, size=20, color='#172344'),
+            x=0.5, xanchor='center'
         ),
         barmode='stack',
         height=650,
@@ -402,7 +403,8 @@ def main():
     fig_count.update_layout(
         title=dict(
             text='Transaction Count by Quarter and Platform',
-            font=dict(family=AQUILA_FONT, size=20, color='#172344')
+            font=dict(family=AQUILA_FONT, size=20, color='#172344'),
+            x=0.5, xanchor='center'
         ),
         barmode='stack',
         height=650,

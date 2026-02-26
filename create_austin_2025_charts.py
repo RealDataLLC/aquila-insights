@@ -22,27 +22,27 @@ OUTPUT_DIR = "charts/economic-indicators"
 
 NAVY   = AQUILA_COLORS[0]   # #172344
 GLASS  = AQUILA_COLORS[1]   # #C2DAF1
-COPPER = AQUILA_COLORS[2]   # #AB6D3A
-BRASS  = AQUILA_COLORS[3]   # #DEB76D
-GREEN  = AQUILA_COLORS[4]   # #556B30
-CONCRETE = AQUILA_COLORS[5] # #AAA9A8
-SIGNAL = AQUILA_COLORS[6]   # #BF4040
-PENNY  = AQUILA_COLORS[7]   # #D6B69C
-SUN    = AQUILA_COLORS[8]   # #FFDB99
-ZILKER = AQUILA_COLORS[9]   # #B2C48C
+COPPER = AQUILA_COLORS[4]   # #AB6D3A
+BRASS  = AQUILA_COLORS[5]   # #DEB76D
+GREEN  = AQUILA_COLORS[6]   # #556B30
+CONCRETE = AQUILA_COLORS[3] # #AAA9A8
+SIGNAL = AQUILA_COLORS[11]  # #BF4040
+PENNY  = AQUILA_COLORS[8]   # #D6B69C
+SUN    = AQUILA_COLORS[9]   # #FFD899
+ZILKER = AQUILA_COLORS[10]  # #B2C48C
 
-# One color per industry (10 industries, 10 colors)
+# One color per industry (10 industries), assigned in hierarchy order
 INDUSTRY_COLORS = {
-    "Semiconductors & Electronics":           NAVY,
-    "Energy, Battery & Materials":            COPPER,
-    "Corporate / Office HQ":                  BRASS,
-    "Aerospace & Defense":                    GREEN,
-    "Software, AI & Technology":              GLASS,
-    "Logistics, Distribution & Supply Chain": CONCRETE,
-    "Advanced Manufacturing":                 SIGNAL,
-    "Construction & Building Products":       PENNY,
-    "Healthcare & Life Sciences":             SUN,
-    "Food & Beverage Manufacturing":          ZILKER,
+    "Semiconductors & Electronics":           AQUILA_COLORS[0],   # Navy
+    "Energy, Battery & Materials":            AQUILA_COLORS[1],   # Glass Blue
+    "Corporate / Office HQ":                  AQUILA_COLORS[2],   # Glass Blue Alt
+    "Aerospace & Defense":                    AQUILA_COLORS[3],   # Concrete
+    "Software, AI & Technology":              AQUILA_COLORS[4],   # Copper
+    "Logistics, Distribution & Supply Chain": AQUILA_COLORS[5],   # Brass
+    "Advanced Manufacturing":                 AQUILA_COLORS[6],   # Greenspace
+    "Construction & Building Products":       AQUILA_COLORS[7],   # Mopac Gray
+    "Healthcare & Life Sciences":             AQUILA_COLORS[8],   # Pennybacker
+    "Food & Beverage Manufacturing":          AQUILA_COLORS[9],   # Texas Sun
 }
 
 MONTH_ORDER = [
@@ -95,9 +95,8 @@ def chart_title(text, subtitle=None):
     return dict(
         text=full,
         font=dict(family=AQUILA_FONT, size=18, color=NAVY),
-        x=0.0,
-        xanchor="left",
-        pad=dict(l=0),
+        x=0.5,
+        xanchor="center",
     )
 
 
@@ -168,56 +167,49 @@ def chart_jobs_by_industry(df):
 
 
 # ---------------------------------------------------------------------------
-# Chart 2 — New Relocations vs. Expansions by Industry (stacked vertical bar)
+# Chart 2 — New Relocations vs. Expansions (pie chart, total jobs by action type)
 # ---------------------------------------------------------------------------
 def chart_new_vs_expanded(df):
-    pivot = (
-        df.groupby(["Industry", "Type of Action"])["Jobs Created"]
-        .sum()
-        .unstack(fill_value=0)
-    )
-    # Sort by total descending
-    pivot["_total"] = pivot.sum(axis=1)
-    pivot = pivot.sort_values("_total", ascending=False).drop(columns="_total")
+    by_action = df.groupby("Type of Action")["Jobs Created"].sum()
+    new_jobs = by_action.get("New", 0)
+    expanded_jobs = by_action.get("Expanded", 0)
+    total = new_jobs + expanded_jobs
+    new_pct = new_jobs / total * 100 if total > 0 else 0
 
     fig = go.Figure()
-    action_colors = {"New": NAVY, "Expanded": BRASS}
-
-    for action in ["New", "Expanded"]:
-        if action not in pivot.columns:
-            continue
-        fig.add_trace(go.Bar(
-            name=f"{action} Operation",
-            x=pivot.index,
-            y=pivot[action],
-            marker_color=action_colors[action],
-            hovertemplate=f"<b>%{{x}}</b><br>{action}: %{{y:,}} jobs<extra></extra>",
-        ))
+    fig.add_trace(go.Pie(
+        labels=["New Operations", "Expansions"],
+        values=[new_jobs, expanded_jobs],
+        marker=dict(
+            colors=[NAVY, GLASS],
+            line=dict(color="white", width=2),
+        ),
+        texttemplate="<b>%{label}</b><br>%{value:,} jobs<br>%{percent}",
+        textposition="outside",
+        textfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        hovertemplate="<b>%{label}</b><br>Jobs: %{value:,}<br>Share: %{percent}<extra></extra>",
+        hole=0,
+        sort=False,
+    ))
 
     fig.update_layout(
-        **base_layout(
-            title=chart_title(
-                "New Relocations vs. Expansions by Industry — Austin 2025",
-                "Source: Austin Chamber of Commerce · New operations = 62% of jobs announced"
-            ),
-            barmode="stack",
-            height=520,
-            margin=dict(t=110, b=140, l=60, r=60),
-            xaxis=dict(
-                tickangle=-35,
-                tickfont=dict(family=AQUILA_FONT, size=11, color=NAVY),
-                linecolor="#cccccc",
-                gridcolor="#e9e9ea",
-            ),
-            yaxis=dict(
-                title="Jobs Announced",
-                tickformat=",",
-                gridcolor="#e9e9ea",
-                linecolor="#cccccc",
-                tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
-                title_font=dict(family=AQUILA_FONT, size=13, color=NAVY),
-            ),
-        )
+        title=chart_title(
+            "New Relocations vs. Expansions — Austin 2025",
+            f"Source: Austin Chamber of Commerce · {new_pct:.0f}% of jobs from new operations"
+        ),
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        font=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        height=520,
+        margin=dict(t=110, b=60, l=60, r=60),
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.08,
+            xanchor="center",
+            x=0.5,
+            font=dict(family=AQUILA_FONT, size=12, color=NAVY),
+        ),
     )
 
     path = f"{OUTPUT_DIR}/austin_2025_new_vs_expanded.html"
@@ -237,12 +229,15 @@ def chart_jobs_by_location(df):
         .sort_values(ascending=True)  # flip for horizontal bar (largest at top)
     )
 
+    # Different color per bar, cycling through the hierarchy
+    bar_colors = [AQUILA_COLORS[i % len(AQUILA_COLORS)] for i in range(len(by_loc))]
+
     fig = go.Figure()
     fig.add_trace(go.Bar(
         x=by_loc.values,
         y=by_loc.index,
         orientation="h",
-        marker_color=NAVY,
+        marker_color=bar_colors,
         text=[f"{v:,}" for v in by_loc.values],
         textposition="outside",
         textfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
@@ -295,7 +290,7 @@ def chart_hq_activity(df):
         labels=["Headquarters", "Branch / Production"],
         values=[hq_jobs, branch_jobs],
         marker=dict(
-            colors=[COPPER, NAVY],
+            colors=[NAVY, GLASS],
             line=dict(color="white", width=2),
         ),
         texttemplate="<b>%{label}</b><br>%{value:,} jobs<br>%{percent}",

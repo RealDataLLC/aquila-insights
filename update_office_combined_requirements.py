@@ -271,8 +271,8 @@ os.makedirs("charts/office", exist_ok=True)
 COLORS = {
     'background': '#FFFFFF',
     'text': '#172344',  # AQUILA Navy
-    'blue': '#00008B',
-    'orange': '#DAA520',
+    'blue': AQUILA_COLORS[0],    # Navy
+    'orange': AQUILA_COLORS[4],  # Copper
     'gridcolor': '#e9e9ea',
     'light_gray': '#F8F9F9'
 }
@@ -315,7 +315,7 @@ fig1.update_layout(
     plot_bgcolor=COLORS['background'],
     paper_bgcolor=COLORS['background'],
     font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
-    title={'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])},
+    title={'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]), 'x': 0.5, 'xanchor': 'center'},
     xaxis=dict(
         gridcolor=COLORS['light_gray'],
         showgrid=True,
@@ -371,7 +371,8 @@ fig2.add_trace(go.Bar(
 fig2.update_layout(
     title={
         'text': 'Monthly Average Square Footage Metrics (Combined Historical Data)',
-        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
+        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
+        'x': 0.5, 'xanchor': 'center'
     },
     plot_bgcolor=COLORS['background'],
     paper_bgcolor=COLORS['background'],
@@ -456,7 +457,8 @@ fig3 = go.Figure(
 fig3.update_layout(
     title={
         'text': f'Tenant Demand by Industry (Combined Historical Data) {date_range_note}',
-        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
+        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
+        'x': 0.5, 'xanchor': 'center'
     },
     plot_bgcolor=COLORS['background'],
     paper_bgcolor=COLORS['background'],
@@ -506,7 +508,8 @@ fig4 = go.Figure(
 fig4.update_layout(
     title={
         'text': 'Total Cumulative SF Requested by Size Range (Combined Historical Data)',
-        'font': dict(family=AQUILA_FONT, size=22, color=AQUILA_COLORS[0])
+        'font': dict(family=AQUILA_FONT, size=22, color=AQUILA_COLORS[0]),
+        'x': 0.5, 'xanchor': 'center'
     },
     xaxis=dict(
         title='Total Cumulative Requested SF',
@@ -643,7 +646,8 @@ if absorption_quarterly is not None:
     fig5.update_layout(
         title={
             'text': 'Office Requirements vs Absorption (Quarterly, 2018+)',
-            'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
+            'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
+            'x': 0.5, 'xanchor': 'center'
         },
         plot_bgcolor='white',
         paper_bgcolor='white',
@@ -755,7 +759,8 @@ fig6.add_trace(go.Bar(
 fig6.update_layout(
     title={
         'text': 'Rolling 12-Month Requirements: Year-over-Year Comparison',
-        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
+        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
+        'x': 0.5, 'xanchor': 'center'
     },
     plot_bgcolor='white',
     paper_bgcolor='white',
@@ -948,11 +953,11 @@ years = sorted(annual_by_size['year'].unique())
 
 # Colors for each size category
 category_colors = {
-    'Mega Requirements': AQUILA_COLORS[0],   # AQUILA Navy
-    '50k-100k SF':       AQUILA_COLORS[4],   # Greenspace
-    '25k-50k SF':        AQUILA_COLORS[3],   # Brass
-    '10k-25k SF':        AQUILA_COLORS[2],   # Copper
-    'Sub 10k SF':        AQUILA_COLORS[7],   # Pennybacker
+    'Mega Requirements': AQUILA_COLORS[0],   # Navy
+    '50k-100k SF':       AQUILA_COLORS[1],   # Glass Blue
+    '25k-50k SF':        AQUILA_COLORS[2],   # Glass Blue Alt
+    '10k-25k SF':        AQUILA_COLORS[3],   # Concrete
+    'Sub 10k SF':        AQUILA_COLORS[4],   # Copper
 }
 
 fig7 = go.Figure()

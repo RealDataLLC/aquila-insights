@@ -182,11 +182,11 @@ print(f"    - Quarters: {len(quarters)} ({quarters[0].to_period('Q')} to {quarte
 
 # Colors for each size category
 category_colors = {
-    'Mega (250k+)':  AQUILA_COLORS[0],   # AQUILA Navy
-    '100k-250k SF':  AQUILA_COLORS[4],   # Greenspace
-    '50k-100k SF':   AQUILA_COLORS[3],   # Brass
-    '25k-50k SF':    AQUILA_COLORS[2],   # Copper
-    'Sub 25k SF':    AQUILA_COLORS[7],   # Pennybacker
+    'Mega (250k+)':  AQUILA_COLORS[0],   # Navy
+    '100k-250k SF':  AQUILA_COLORS[1],   # Glass Blue
+    '50k-100k SF':   AQUILA_COLORS[2],   # Glass Blue Alt
+    '25k-50k SF':    AQUILA_COLORS[3],   # Concrete
+    'Sub 25k SF':    AQUILA_COLORS[4],   # Copper
 }
 
 category_order = ['Mega (250k+)', '100k-250k SF', '50k-100k SF', '25k-50k SF', 'Sub 25k SF']
@@ -359,7 +359,8 @@ fig2 = go.Figure(
 fig2.update_layout(
     title={
         'text': f'Industrial Tenant Demand by Use Type {date_range_note}',
-        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
+        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
+        'x': 0.5, 'xanchor': 'center'
     },
     plot_bgcolor='white',
     paper_bgcolor='white',
@@ -413,7 +414,8 @@ fig3 = go.Figure(
 fig3.update_layout(
     title={
         'text': f'Industrial: Total Cumulative SF Requested by Size Range {date_range_note}',
-        'font': dict(family=AQUILA_FONT, size=22, color=AQUILA_COLORS[0])
+        'font': dict(family=AQUILA_FONT, size=22, color=AQUILA_COLORS[0]),
+        'x': 0.5, 'xanchor': 'center'
     },
     xaxis=dict(
         title='Total Cumulative Requested SF',
@@ -461,8 +463,8 @@ monthly_data.columns = [
 COLORS = {
     'background': '#FFFFFF',
     'text': '#172344',
-    'blue': '#00008B',
-    'orange': '#DAA520',
+    'blue': AQUILA_COLORS[0],    # Navy
+    'orange': AQUILA_COLORS[4],  # Copper
     'gridcolor': '#e9e9ea',
     'light_gray': '#F8F9F9'
 }
@@ -486,7 +488,7 @@ fig4.update_layout(
     plot_bgcolor=COLORS['background'],
     paper_bgcolor=COLORS['background'],
     font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
-    title={'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])},
+    title={'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]), 'x': 0.5, 'xanchor': 'center'},
     xaxis=dict(
         gridcolor=COLORS['light_gray'],
         showgrid=True,
@@ -548,7 +550,9 @@ fig5.add_trace(go.Bar(
 fig5.update_layout(
     title={
         'text': 'Industrial: Monthly Average Square Footage Metrics',
-        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0])
+        'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
+        'x': 0.5,
+        'xanchor': 'center',
     },
     plot_bgcolor=COLORS['background'],
     paper_bgcolor=COLORS['background'],
