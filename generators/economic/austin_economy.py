@@ -65,7 +65,7 @@ def base_layout(**kwargs):
         plot_bgcolor="white",
         paper_bgcolor="white",
         font=dict(family=AQUILA_FONT, size=13, color=NAVY),
-        margin=dict(t=110, b=80, l=60, r=60),
+        margin=dict(t=130, b=80, l=60, r=60),
         xaxis=dict(
             gridcolor="#e9e9ea",
             linecolor="#cccccc",
@@ -92,7 +92,7 @@ def base_layout(**kwargs):
 
 
 def chart_title(text, subtitle=None):
-    full = text if not subtitle else f"{text}<br><sup style='color:#555'>{subtitle}</sup>"
+    full = text if not subtitle else f"{text}<br><br><sup style='color:#555'>{subtitle}</sup>"
     return dict(
         text=full,
         font=dict(family=AQUILA_FONT, size=18, color=NAVY),
@@ -145,7 +145,7 @@ def main():
                     f"Source: Austin Chamber of Commerce Relocations & Expansions Log · {total:,} total jobs announced"
                 ),
                 height=520,
-                margin=dict(t=110, b=60, l=260, r=120),
+                margin=dict(t=130, b=60, l=260, r=120),
                 showlegend=False,
                 xaxis=dict(
                     title="Jobs Announced",
@@ -204,7 +204,7 @@ def main():
             paper_bgcolor="white",
             font=dict(family=AQUILA_FONT, size=12, color=NAVY),
             height=520,
-            margin=dict(t=110, b=60, l=60, r=60),
+            margin=dict(t=130, b=60, l=60, r=60),
             legend=dict(
                 orientation="h",
                 yanchor="top",
@@ -232,8 +232,9 @@ def main():
             .sort_values(ascending=True)  # flip for horizontal bar (largest at top)
         )
 
-        # Different color per bar, cycling through the hierarchy
-        bar_colors = [AQUILA_COLORS[i % len(AQUILA_COLORS)] for i in range(len(by_loc))]
+        # Colors reversed so top bar (largest) gets hierarchy [0] Navy, descending
+        n = len(by_loc)
+        bar_colors = [AQUILA_COLORS[(n - 1 - i) % len(AQUILA_COLORS)] for i in range(n)]
 
         fig = go.Figure()
         fig.add_trace(go.Bar(
@@ -254,7 +255,7 @@ def main():
                     "Source: Austin Chamber of Commerce Relocations & Expansions Log"
                 ),
                 height=480,
-                margin=dict(t=110, b=60, l=160, r=120),
+                margin=dict(t=130, b=60, l=160, r=120),
                 showlegend=False,
                 xaxis=dict(
                     title="Jobs Announced",
@@ -313,7 +314,7 @@ def main():
             paper_bgcolor="white",
             font=dict(family=AQUILA_FONT, size=12, color=NAVY),
             height=520,
-            margin=dict(t=110, b=60, l=60, r=60),
+            margin=dict(t=130, b=60, l=60, r=60),
             legend=dict(
                 orientation="h",
                 yanchor="top",
@@ -360,7 +361,7 @@ def main():
                     "Source: Austin Chamber of Commerce Relocations & Expansions Log"
                 ),
                 height=480,
-                margin=dict(t=110, b=80, l=80, r=60),
+                margin=dict(t=130, b=80, l=80, r=60),
                 showlegend=False,
                 xaxis=dict(
                     tickfont=dict(family=AQUILA_FONT, size=12, color=NAVY),
@@ -439,11 +440,16 @@ def main():
             paper_bgcolor="white",
             font=dict(family=AQUILA_FONT, size=12, color=NAVY),
             height=480,
-            margin=dict(t=110, b=40, l=40, r=40),
+            margin=dict(t=130, b=40, l=40, r=40),
         )
 
         path = f"{OUTPUT_DIR}/austin_2025_top_companies.html"
-        fig.write_html(path)
+        # Inject CSS to vertically center text in Plotly SVG table cells
+        html = fig.to_html(full_html=True, include_plotlyjs=True)
+        css_fix = "<style>g.table g.cells text { dominant-baseline: central !important; }</style>"
+        html = html.replace('</head>', css_fix + '\n</head>', 1)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(html)
         print(f"  Saved: {path}")
 
 
