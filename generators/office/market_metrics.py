@@ -38,19 +38,18 @@ def _get_supabase_client():
     return get_supabase_client(use_service_role=True)
 
 # -- Brand color aliases ------------------------------------------------------
-NAVY       = AQUILA_COLORS[0]   # #172344
-GLASS_BLUE = AQUILA_COLORS[1]   # #C2DAF1
-COPPER     = AQUILA_COLORS[4]   # #AB6D3A
-BRASS      = AQUILA_COLORS[5]   # #DEB76D
-CONCRETE   = AQUILA_COLORS[3]   # #AAA9A8
+NAVY           = AQUILA_COLORS[0]   # #172344
+GLASS_BLUE     = AQUILA_COLORS[1]   # #C2DAF1
+GLASS_BLUE_ALT = AQUILA_COLORS[2]   # #88ABC8
+CONCRETE       = AQUILA_COLORS[3]   # #AAA9A8
 
 # -- Submarket configuration ---------------------------------------------------
 # Each entry: (display_name, aquila_micromarket, table_type, slug, line_color)
 SUBMARKETS = [
     ('CBD',        'CBD',       'competitive set', 'cbd',       NAVY),
     ('Northwest',  'Northwest', 'competitive set', 'northwest', GLASS_BLUE),
-    ('Southwest',  'Southwest', 'competitive set', 'southwest', COPPER),
-    ('The Domain', 'Domain',    'micromarket',     'domain',    BRASS),
+    ('Southwest',  'Southwest', 'competitive set', 'southwest', GLASS_BLUE_ALT),
+    ('The Domain', 'Domain',    'micromarket',     'domain',    CONCRETE),
 ]
 
 OUTPUT_DIR = 'charts/office'
@@ -178,7 +177,7 @@ def build_rental_chart(df, display_name, y_range=None, dtick=None):
         x=df['quarter'],
         y=df['average_opex'],
         name='Opex',
-        marker_color=CONCRETE,
+        marker_color=GLASS_BLUE,
         hovertemplate='Quarter: %{x}<br>Opex: $%{y:.2f}/SF<extra></extra>',
     ))
     layout = _shared_layout(

@@ -266,7 +266,7 @@ charts/industrial/
 └── industrial_nnn_rent_by_submarket.html
 ```
 
-**Colors:** Navy (Northeast), Brass (Southeast), Concrete (Williamson County)
+**Colors:** Navy (Northeast), Glass Blue (Southeast), Copper (Williamson County)
 
 ---
 
@@ -446,10 +446,10 @@ charts/office/
 
 **Chart types:**
 - Vacancy Rate: line chart, `total_vacancy_rate` as %, no markers
-- Rental Rate: stacked bar — Base Rent (Navy, bottom) + Opex (Concrete, top)
+- Rental Rate: stacked bar — Base Rent (Navy, bottom) + Opex (Glass Blue, top)
 - Operating Expenses: line chart, `average_opex` in $/SF/yr, no markers
 
-**Colors:** CBD=Navy, Northwest=Glass Blue, Southwest=Copper, The Domain=Brass
+**Colors (vacancy/opex line charts):** CBD=Navy, Northwest=Glass Blue, Southwest=Glass Blue Alt, The Domain=Concrete
 
 **Supabase auth:** Uses `aquila.connectors.supabase.get_supabase_client(use_service_role=True)` — the anon key lacks RLS access to `market_tables_office`.
 
