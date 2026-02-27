@@ -1,86 +1,119 @@
 #!/usr/bin/env python3
 """
 Update All Charts
-Regenerates all charts from all data sources (Google Sheets, Supabase, FRED)
+Regenerates all charts from all data sources (Google Sheets, Supabase, FRED).
 
 Usage:
-    python3 update_all_charts.py
-    python3 update_all_charts.py --update-readme
+    python update_all_charts.py                   # Run all generators
+    python update_all_charts.py --group office     # Office charts only
+    python update_all_charts.py --group industrial # Industrial charts only
+    python update_all_charts.py --group economic   # Economic charts only
+    python update_all_charts.py --update-readme    # Also update README dates
 
-This script runs:
-1. update_office_combined_requirements.py (7 Office requirement charts)
-2. update_industrial_vacancy.py (1 Industrial vacancy chart)
-3. update_fred_housing_chart.py (1 Housing chart)
-4. update_building_performance_charts.py (4 Office & Industrial charts)
-5. update_fred_economic_indicators.py (7 Economic charts)
+Generators:
+  office:      requirements (7), building_performance (2), market_metrics (12),
+               demand_by_market (5), transactions (2)
+  industrial:  vacancy (1), building_performance (2), demand (5), nnn_rent (1)
+  economic:    fred_indicators (7), fred_housing (1), austin_economy (6)
+  property_mgmt: ams_kpi (1)
+  development: permits (2)
 """
 
-import subprocess
 import sys
+import os
+import argparse
+import traceback
 from datetime import datetime
 
-def run_script(script_name, description):
-    """Run a Python script and capture output"""
+# Ensure repo root is on sys.path so generators can resolve aquila imports
+_REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+
+# ── Generator registry ──────────────────────────────────────────────────────
+# Each entry: (module_path, description, group)
+
+GENERATORS = [
+    # --- Office ---
+    ('generators.office.requirements',          'Office Combined Requirements (7 charts)',       'office'),
+    ('generators.office.building_performance',   'Building Performance by Size (4 charts)',       'office'),
+    ('generators.office.market_metrics',         'Office Market Metrics (12 charts)',             'office'),
+    ('generators.office.demand_by_market',       'Office Demand by Market (5 charts)',            'office'),
+    ('generators.office.transactions',           'Office Transaction Charts (2 charts)',          'office'),
+    # --- Industrial ---
+    ('generators.industrial.vacancy',            'Industrial Vacancy (1 chart)',                  'industrial'),
+    ('generators.industrial.demand',             'Industrial Demand Charts (5 charts)',           'industrial'),
+    ('generators.industrial.nnn_rent',           'Industrial NNN Rent (1 chart)',                 'industrial'),
+    # --- Economic ---
+    ('generators.economic.fred_indicators',      'FRED Economic Indicators (7 charts)',           'economic'),
+    ('generators.economic.fred_housing',         'FRED Housing Starts (1 chart)',                 'economic'),
+    ('generators.economic.austin_economy',       'Austin Economy Charts (6 charts)',              'economic'),
+    # --- Property Management ---
+    ('generators.property_mgmt.ams_kpi',         'AMS KPI Chart (1 chart)',                      'property_mgmt'),
+    # --- Development ---
+    ('generators.development.permits',           'Austin Permits Charts (2 charts)',              'development'),
+]
+
+GROUPS = sorted(set(g for _, _, g in GENERATORS))
+
+
+def run_generator(module_path, description):
+    """Import a generator module and call its main() function."""
     print(f"\n{'=' * 70}")
     print(f"Running: {description}")
+    print(f"  Module: {module_path}")
     print(f"{'=' * 70}\n")
 
-    cmd = ["python3", script_name]
-    if '--update-readme' in sys.argv:
-        cmd.append('--update-readme')
-
     try:
-        result = subprocess.run(
-            cmd,
-            check=True,
-            capture_output=False,  # Show output in real-time
-            text=True
-        )
+        # Clear cached sys.argv so generators that use argparse don't choke
+        saved_argv = sys.argv
+        sys.argv = [module_path]
+
+        mod = __import__(module_path, fromlist=['main'])
+        mod.main()
+
+        sys.argv = saved_argv
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"\n✗ ERROR running {script_name}")
+
+    except SystemExit as e:
+        sys.argv = saved_argv
+        # Some generators call sys.exit(0) on success
+        if e.code == 0 or e.code is None:
+            return True
+        print(f"\n[ERROR] {module_path} exited with code {e.code}")
         return False
 
+    except Exception:
+        sys.argv = saved_argv
+        print(f"\n[ERROR] {module_path} failed:")
+        traceback.print_exc()
+        return False
+
+
 def main():
-    """Main execution"""
+    parser = argparse.ArgumentParser(description='Update all Aquila Insights charts')
+    parser.add_argument('--group', choices=GROUPS,
+                        help='Run only generators in this group')
+    parser.add_argument('--update-readme', action='store_true',
+                        help='Update README.md dates after generation')
+    args = parser.parse_args()
+
+    generators = GENERATORS
+    if args.group:
+        generators = [(m, d, g) for m, d, g in GENERATORS if g == args.group]
+
     print("=" * 70)
-    print("UPDATING ALL CHARTS")
+    print("UPDATING ALL CHARTS" if not args.group else f"UPDATING {args.group.upper()} CHARTS")
     print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Generators to run: {len(generators)}")
     print("=" * 70)
 
     results = {}
+    for module_path, description, _group in generators:
+        results[module_path] = run_generator(module_path, description)
 
-    # 1. Office Combined Requirements Charts (Google Sheets)
-    results['office_requirements'] = run_script(
-        'update_office_combined_requirements.py',
-        'Office Combined Requirements (7 charts)'
-    )
-
-    # 2. Industrial Vacancy Charts (Supabase)
-    results['industrial_vacancy'] = run_script(
-        'update_industrial_vacancy.py',
-        'Industrial Vacancy (1 chart)'
-    )
-
-    # 3. FRED Housing Chart
-    results['fred_housing'] = run_script(
-        'update_fred_housing_chart.py',
-        'FRED Housing Starts (1 chart)'
-    )
-
-    # 4. Building Performance Charts (Supabase - Office & Industrial)
-    results['building_performance'] = run_script(
-        'update_building_performance_charts.py',
-        'Building Performance by Size (4 charts)'
-    )
-
-    # 5. FRED Economic Indicators
-    results['fred_economic'] = run_script(
-        'update_fred_economic_indicators.py',
-        'FRED Economic Indicators (7 charts)'
-    )
-
-    # Summary
+    # ── Summary ──────────────────────────────────────────────────────────
     print("\n" + "=" * 70)
     print("SUMMARY")
     print("=" * 70)
@@ -88,56 +121,23 @@ def main():
     success_count = sum(results.values())
     total_count = len(results)
 
-    print(f"\nCompleted: {success_count}/{total_count} data sources")
+    print(f"\nCompleted: {success_count}/{total_count} generators")
     print("\nResults:")
-    for source, success in results.items():
-        status = "✓ SUCCESS" if success else "✗ FAILED"
-        print(f"  {status}: {source}")
+    for module_path, success in results.items():
+        status = "[OK]" if success else "[FAILED]"
+        print(f"  {status}  {module_path}")
 
     if success_count == total_count:
-        print("\n✓ ALL CHARTS UPDATED SUCCESSFULLY")
-
-        print("\nTotal charts generated (20 charts):")
-        print("\n  Office Requirements (7):")
-        print("    • requirements_sf_total.html")
-        print("    • requirements_sf_avg.html")
-        print("    • requirements_sf_avg_by_industry.html")
-        print("    • requirements_by_size_range.html")
-        print("    • requirements_vs_absorption_office.html")
-        print("    • requirements_yoy_rolling_12m.html")
-        print("    • requirements_demand_by_tenant_size.html")
-        print("\n  Industrial (1):")
-        print("    • vacancy_rate_industrial.html")
-        print("\n  Building Performance (4):")
-        print("    • office_occupancy_by_size.html")
-        print("    • office_rent_by_size.html")
-        print("    • industrial_occupancy_by_size.html")
-        print("    • industrial_rent_by_size.html")
-        print("\n  Economic Indicators (8):")
-        print("    • austin_housing_starts.html")
-        print("    • austin_employment_office_sectors.html")
-        print("    • austin_employment_industrial.html")
-        print("    • austin_employment_retail.html")
-        print("    • austin_vs_national_tech_employment.html")
-        print("    • austin_vs_dallas_vs_national_wage_growth.html")
-        print("    • interest_rates_treasury_mortgage.html")
-        print("    • inflation_cpi_ppi_office.html")
-
-        if '--update-readme' in sys.argv:
-            print("\n✓ README.md dates updated")
-
-        print("\nNext steps:")
-        print("  1. Review all charts in browser")
-        print("  2. Commit: git add charts/ README.md && git commit -m 'Update all charts'")
-        print("  3. Push: git push")
-        print("")
-
-        sys.exit(0)
+        print(f"\n[OK] ALL {total_count} GENERATORS COMPLETED SUCCESSFULLY")
     else:
-        print("\n⚠ SOME UPDATES FAILED")
-        print("Check error messages above for details")
-        print("")
-        sys.exit(1)
+        failed = [m for m, s in results.items() if not s]
+        print(f"\n[WARN] {len(failed)} generator(s) FAILED:")
+        for m in failed:
+            print(f"  - {m}")
+
+    print(f"\nFinished: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    sys.exit(0 if success_count == total_count else 1)
+
 
 if __name__ == '__main__':
     main()

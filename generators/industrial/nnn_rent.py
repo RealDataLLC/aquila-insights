@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa: E402
 """
 Create Industrial NNN Rental Rates Chart
 Generates a line chart of average NNN rental rates for Northeast, Southeast,
@@ -19,7 +20,7 @@ from aquila_graphing_tools import initialize_supabase_connection, AQUILA_COLORS,
 # Load environment
 load_dotenv('aquila_graph.env')
 
-# ── Config ──────────────────────────────────────────────────────────────────
+# -- Config ------------------------------------------------------------------
 SUBMARKETS = ['Northeast', 'Southeast', 'Williamson County']
 START_QUARTER = '2022 Q1'
 END_QUARTER   = '2025 Q4'          # Update this as new data arrives
@@ -34,7 +35,7 @@ SUBMARKET_COLORS = {
 
 
 def parse_quarter(q_str):
-    """Convert '2022 Q1' → pd.Timestamp for sorting."""
+    """Convert '2022 Q1' -> pd.Timestamp for sorting."""
     m = re.match(r'(\d{4})\s*[Qq](\d)', str(q_str))
     if m:
         year, q = int(m.group(1)), int(m.group(2))

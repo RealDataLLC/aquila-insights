@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa: E402
 """
 Create Office Market Metrics Charts
 Generates vacancy rate, rental rate, and operating expense charts
@@ -42,14 +43,14 @@ def _get_supabase_client():
         raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in aquila_graph.env")
     return create_client(url, key)
 
-# ── Brand color aliases ──────────────────────────────────────────────────────
+# -- Brand color aliases ------------------------------------------------------
 NAVY       = AQUILA_COLORS[0]   # #172344
 GLASS_BLUE = AQUILA_COLORS[1]   # #C2DAF1
 COPPER     = AQUILA_COLORS[4]   # #AB6D3A
 BRASS      = AQUILA_COLORS[5]   # #DEB76D
 CONCRETE   = AQUILA_COLORS[3]   # #AAA9A8
 
-# ── Submarket configuration ───────────────────────────────────────────────────
+# -- Submarket configuration ---------------------------------------------------
 # Each entry: (display_name, aquila_micromarket, table_type, slug, line_color)
 SUBMARKETS = [
     ('CBD',        'CBD',       'competitive set', 'cbd',       NAVY),
@@ -61,10 +62,10 @@ SUBMARKETS = [
 OUTPUT_DIR = 'charts/office'
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# -- Helpers -------------------------------------------------------------------
 
 def _quarter_sort_key(q_str):
-    """Convert '2025 Q4' → sortable float 2025.4"""
+    """Convert '2025 Q4' -> sortable float 2025.4"""
     m = re.match(r'(\d{4})\s*[Qq](\d)', str(q_str))
     if m:
         return int(m.group(1)) + int(m.group(2)) / 10
@@ -109,12 +110,12 @@ def _shared_layout(title_text, y_title):
     )
 
 
-# ── Data fetching ─────────────────────────────────────────────────────────────
+# -- Data fetching -------------------------------------------------------------
 
 def fetch_data(supabase):
     """
     Load market_tables_office for all 4 submarkets.
-    Returns a dict keyed by slug → DataFrame (sorted ascending by quarter).
+    Returns a dict keyed by slug -> DataFrame (sorted ascending by quarter).
     """
     print("Querying market_tables_office...")
     response = (
@@ -143,7 +144,7 @@ def fetch_data(supabase):
     return result
 
 
-# ── Chart builders ────────────────────────────────────────────────────────────
+# -- Chart builders ------------------------------------------------------------
 
 def build_vacancy_chart(df, display_name, line_color, y_range=None, dtick=None):
     """Line chart — total vacancy rate over time."""
@@ -225,7 +226,7 @@ def build_opex_chart(df, display_name, line_color, y_range=None, dtick=None):
     return fig
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# -- Main ----------------------------------------------------------------------
 
 def main():
     print("=" * 60)
@@ -241,7 +242,7 @@ def main():
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         charts_saved = []
 
-        # ── Standardized y-axis scales for cross-submarket comparison ───
+        # -- Standardized y-axis scales for cross-submarket comparison ---
         # Vacancy: all 4 submarkets share 0-30% in 5% increments
         VACANCY_RANGE = [0, 0.30]
         VACANCY_DTICK = 0.05

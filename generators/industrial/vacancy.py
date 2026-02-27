@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa: E402
 """
 Update Supabase/SQL Charts
 Regenerates industrial vacancy charts from Supabase database
@@ -33,7 +34,7 @@ def fetch_industrial_data(supabase):
             .execute()
 
         df = pd.DataFrame(response.data)
-        print(f"✓ Loaded {len(df)} rows of industrial data")
+        print(f"[OK] Loaded {len(df)} rows of industrial data")
 
         # Convert types
         import re
@@ -50,7 +51,7 @@ def fetch_industrial_data(supabase):
 
     except Exception as e:
         if '403' in str(e):
-            print(f"✗ ERROR: 403 Forbidden - Check Supabase RLS policies")
+            print(f"[ERROR] ERROR: 403 Forbidden - Check Supabase RLS policies")
             print("  Solution: Use service_role key OR adjust RLS policies")
         raise
 
@@ -62,7 +63,7 @@ def generate_industrial_vacancy_chart(df):
     df_industrial = df[df["property_type"] == "Industrial"]
 
     if len(df_industrial) == 0:
-        print("  ⚠ No Industrial data found")
+        print("  [WARN] No Industrial data found")
         return
 
     # Create chart
@@ -86,7 +87,7 @@ def generate_industrial_vacancy_chart(df):
     # Save
     os.makedirs("charts", exist_ok=True)
     fig.write_html("charts/industrial/vacancy_rate_industrial.html")
-    print("  ✓ Saved: charts/vacancy_rate_industrial.html")
+    print("  [OK] Saved: charts/vacancy_rate_industrial.html")
 
 def update_readme_dates():
     """Update README.md with today's date for Supabase charts"""
@@ -110,9 +111,9 @@ def update_readme_dates():
         with open('README.md', 'w') as f:
             f.write(content)
 
-        print(f"  ✓ Updated README.md date to {today}")
+        print(f"  [OK] Updated README.md date to {today}")
     else:
-        print("  ⚠ Could not find chart link in README.md")
+        print("  [WARN] Could not find chart link in README.md")
 
 def main():
     """Main execution"""
@@ -124,7 +125,7 @@ def main():
         # Connect to Supabase
         print("\nConnecting to Supabase...")
         supabase = initialize_supabase_connection()
-        print("✓ Connected")
+        print("[OK] Connected")
 
         # Fetch data
         df = fetch_industrial_data(supabase)
@@ -133,7 +134,7 @@ def main():
         generate_industrial_vacancy_chart(df)
 
         print("\n" + "=" * 70)
-        print("✓ SUCCESS: All Supabase charts updated")
+        print("[OK] SUCCESS: All Supabase charts updated")
         print("=" * 70)
 
         # Update README if requested
@@ -141,7 +142,7 @@ def main():
             update_readme_dates()
 
         print("\nGenerated charts:")
-        print("  • vacancy_rate_industrial.html")
+        print("  - vacancy_rate_industrial.html")
         print("\nNext steps:")
         print("  1. Review chart in browser")
         print("  2. Commit: git add charts/ README.md && git commit -m 'Update industrial vacancy chart'")
@@ -149,7 +150,7 @@ def main():
         print("")
 
     except Exception as e:
-        print(f"\n✗ ERROR: {e}")
+        print(f"\n[ERROR] ERROR: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

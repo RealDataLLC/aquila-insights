@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa: E402
 """
 Update FRED API Charts
 Regenerates economic indicator charts from Federal Reserve Economic Data
@@ -55,7 +56,7 @@ def generate_housing_starts_chart(fred_api_key):
     print(f"  Fetching FRED series: {series_id}")
 
     df = fetch_fred_series(series_id, fred_api_key)
-    print(f"  ✓ Loaded {len(df)} observations")
+    print(f"  [OK] Loaded {len(df)} observations")
 
     # Convert types
     df["units"] = pd.to_numeric(df["value"], errors="coerce")
@@ -64,7 +65,7 @@ def generate_housing_starts_chart(fred_api_key):
     # Remove null values
     df = df.dropna(subset=["units"])
 
-    print(f"  ✓ Date range: {df['date'].min()} to {df['date'].max()}")
+    print(f"  [OK] Date range: {df['date'].min()} to {df['date'].max()}")
 
     # Create chart
     fig = aquila_styled_line_chart(
@@ -86,7 +87,7 @@ def generate_housing_starts_chart(fred_api_key):
     # Save
     os.makedirs("charts", exist_ok=True)
     fig.write_html("charts/economic-indicators/austin_housing_starts.html")
-    print("  ✓ Saved: charts/austin_housing_starts.html")
+    print("  [OK] Saved: charts/austin_housing_starts.html")
 
 def update_readme_dates():
     """Update README.md with today's date for FRED charts"""
@@ -110,9 +111,9 @@ def update_readme_dates():
         with open('README.md', 'w') as f:
             f.write(content)
 
-        print(f"  ✓ Updated README.md date to {today}")
+        print(f"  [OK] Updated README.md date to {today}")
     else:
-        print("  ⚠ Could not find chart link in README.md")
+        print("  [WARN] Could not find chart link in README.md")
 
 def main():
     """Main execution"""
@@ -126,13 +127,13 @@ def main():
         if not fred_api_key:
             raise ValueError("FRED_API_KEY not found in aquila_graph.env")
 
-        print(f"✓ API key loaded")
+        print(f"[OK] API key loaded")
 
         # Generate charts
         generate_housing_starts_chart(fred_api_key)
 
         print("\n" + "=" * 70)
-        print("✓ SUCCESS: All FRED charts updated")
+        print("[OK] SUCCESS: All FRED charts updated")
         print("=" * 70)
 
         # Update README if requested
@@ -148,7 +149,7 @@ def main():
         print("")
 
     except Exception as e:
-        print(f"\n✗ ERROR: {e}")
+        print(f"\n[ERROR] ERROR: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

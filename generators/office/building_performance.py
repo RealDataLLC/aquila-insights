@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa: E402
 """
 Update Building Performance Charts by Size
 
@@ -186,7 +187,8 @@ def generate_charts(occ_data, rent_data, property_type):
     """Generate and save occupancy and rent charts"""
 
     # Occupancy chart
-    occ_filename = f'charts/{property_type}_occupancy_by_size.html'
+    os.makedirs(f'charts/{property_type}', exist_ok=True)
+    occ_filename = f'charts/{property_type}/{property_type}_occupancy_by_size.html'
     fig_occ = aquila_styled_line_chart(
         occ_data,
         x='date',
@@ -197,11 +199,11 @@ def generate_charts(occ_data, rent_data, property_type):
     fig_occ.update_yaxes(tickformat='.1%', title='Occupancy Rate')
     fig_occ.update_xaxes(title='Quarter')
     fig_occ.write_html(occ_filename)
-    print(f"  ✓ Saved {occ_filename}")
+    print(f"  [OK] Saved {occ_filename}")
 
     # Rent chart - drop NaN values before plotting
     rent_data_clean = rent_data.dropna(subset=['date', 'weighted_avg_rent'])
-    rent_filename = f'charts/{property_type}_rent_by_size.html'
+    rent_filename = f'charts/{property_type}/{property_type}_rent_by_size.html'
     fig_rent = aquila_styled_line_chart(
         rent_data_clean,
         x='date',
@@ -212,7 +214,7 @@ def generate_charts(occ_data, rent_data, property_type):
     fig_rent.update_yaxes(tickprefix='$', tickformat=',.2f', title='Rent ($/SF)')
     fig_rent.update_xaxes(title='Quarter')
     fig_rent.write_html(rent_filename)
-    print(f"  ✓ Saved {rent_filename}")
+    print(f"  [OK] Saved {rent_filename}")
 
 
 def update_readme_dates():
@@ -244,14 +246,14 @@ def update_readme_dates():
         with open(readme_path, 'w') as f:
             f.write(content)
 
-        print(f"\n✓ Updated README.md with date: {today}")
+        print(f"\n[OK] Updated README.md with date: {today}")
         return True
 
     except FileNotFoundError:
-        print(f"\n⚠ README.md not found")
+        print(f"\n[WARN] README.md not found")
         return False
     except Exception as e:
-        print(f"\n⚠ Error updating README.md: {e}")
+        print(f"\n[WARN] Error updating README.md: {e}")
         return False
 
 
@@ -269,7 +271,7 @@ def main():
         # Load environment and connect to Supabase
         load_dotenv('aquila_graph.env')
         supabase = initialize_supabase_connection()
-        print("✓ Connected to Supabase")
+        print("[OK] Connected to Supabase")
 
         # Process Office data
         print("\n" + "=" * 70)
@@ -297,15 +299,15 @@ def main():
         print("SUCCESS - All building performance charts updated!")
         print("=" * 70)
         print("\nGenerated charts:")
-        print("  - charts/office_occupancy_by_size.html")
-        print("  - charts/office_rent_by_size.html")
-        print("  - charts/industrial_occupancy_by_size.html")
-        print("  - charts/industrial_rent_by_size.html")
+        print("  - charts/office/office_occupancy_by_size.html")
+        print("  - charts/office/office_rent_by_size.html")
+        print("  - charts/industrial/industrial_occupancy_by_size.html")
+        print("  - charts/industrial/industrial_rent_by_size.html")
 
         return 0
 
     except Exception as e:
-        print(f"\n✗ ERROR: {e}")
+        print(f"\n[ERROR] ERROR: {e}")
         import traceback
         traceback.print_exc()
         return 1

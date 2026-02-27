@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))  # noqa: E402
 """
 Update FRED Economic Indicators Charts
 Regenerates 7 economic indicator charts from Federal Reserve Economic Data
@@ -69,7 +70,7 @@ def fetch_fred_series(series_id, series_name=None):
         # Drop NaN values
         df = df.dropna()
 
-        print(f"    ✓ Fetched {len(df)} observations for {series_id} ({column_name})")
+        print(f"    [OK] Fetched {len(df)} observations for {series_id} ({column_name})")
         return df
 
     except Exception as e:
@@ -112,7 +113,7 @@ def generate_office_employment_chart():
     # Save chart
     os.makedirs("charts", exist_ok=True)
     fig.write_html('charts/economic-indicators/austin_employment_office_sectors.html')
-    print("    ✓ Saved: charts/austin_employment_office_sectors.html")
+    print("    [OK] Saved: charts/austin_employment_office_sectors.html")
 
 
 def generate_industrial_employment_chart():
@@ -136,7 +137,7 @@ def generate_industrial_employment_chart():
     # Save chart
     os.makedirs("charts", exist_ok=True)
     fig.write_html('charts/economic-indicators/austin_employment_industrial.html')
-    print("    ✓ Saved: charts/austin_employment_industrial.html")
+    print("    [OK] Saved: charts/austin_employment_industrial.html")
 
 
 def generate_retail_employment_chart():
@@ -160,7 +161,7 @@ def generate_retail_employment_chart():
     # Save chart
     os.makedirs("charts", exist_ok=True)
     fig.write_html('charts/economic-indicators/austin_employment_retail.html')
-    print("    ✓ Saved: charts/austin_employment_retail.html")
+    print("    [OK] Saved: charts/austin_employment_retail.html")
 
 
 def generate_tech_comparison_chart():
@@ -204,7 +205,7 @@ def generate_tech_comparison_chart():
         # Save chart
         os.makedirs("charts", exist_ok=True)
         fig.write_html('charts/economic-indicators/austin_vs_national_tech_employment.html')
-        print("    ✓ Saved: charts/austin_vs_national_tech_employment.html")
+        print("    [OK] Saved: charts/austin_vs_national_tech_employment.html")
     else:
         print("    Warning: No overlapping data for tech employment comparison")
 
@@ -254,7 +255,7 @@ def generate_wage_comparison_chart():
         # Save chart
         os.makedirs("charts", exist_ok=True)
         fig.write_html('charts/economic-indicators/austin_vs_dallas_vs_national_wage_growth.html')
-        print("    ✓ Saved: charts/austin_vs_dallas_vs_national_wage_growth.html")
+        print("    [OK] Saved: charts/austin_vs_dallas_vs_national_wage_growth.html")
     else:
         print("    Warning: No overlapping data for wage comparison")
 
@@ -292,7 +293,7 @@ def generate_interest_rates_chart():
     # Save chart
     os.makedirs("charts", exist_ok=True)
     fig.write_html('charts/economic-indicators/interest_rates_treasury_mortgage.html')
-    print("    ✓ Saved: charts/interest_rates_treasury_mortgage.html")
+    print("    [OK] Saved: charts/interest_rates_treasury_mortgage.html")
 
 
 def generate_inflation_chart():
@@ -355,7 +356,7 @@ def generate_inflation_chart():
         # Save chart
         os.makedirs("charts", exist_ok=True)
         fig.write_html('charts/economic-indicators/inflation_cpi_ppi_office.html')
-        print("    ✓ Saved: charts/inflation_cpi_ppi_office.html")
+        print("    [OK] Saved: charts/inflation_cpi_ppi_office.html")
     else:
         print("    Warning: No overlapping data for inflation/ppi comparison")
 
@@ -392,9 +393,9 @@ def update_readme_dates():
         with open('README.md', 'w') as f:
             f.write(content)
 
-        print(f"  ✓ Updated {updated_count} chart dates to {today} in README.md")
+        print(f"  [OK] Updated {updated_count} chart dates to {today} in README.md")
     else:
-        print("  ⚠ Could not find chart links in README.md")
+        print("  [WARN] Could not find chart links in README.md")
 
 
 def main():
@@ -409,7 +410,7 @@ def main():
         if not fred_api_key:
             raise ValueError("FRED_API_KEY not found in aquila_graph.env")
 
-        print(f"✓ API key loaded")
+        print(f"[OK] API key loaded")
 
         # Generate all 7 charts
         generate_office_employment_chart()
@@ -421,7 +422,7 @@ def main():
         generate_inflation_chart()
 
         print("\n" + "=" * 70)
-        print("✓ SUCCESS: All 7 FRED economic indicator charts updated")
+        print("[OK] SUCCESS: All 7 FRED economic indicator charts updated")
         print("=" * 70)
 
         # Update README if requested
@@ -443,7 +444,7 @@ def main():
         print("")
 
     except Exception as e:
-        print(f"\n✗ ERROR: {e}")
+        print(f"\n[ERROR] ERROR: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
