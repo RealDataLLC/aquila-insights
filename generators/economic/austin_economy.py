@@ -255,7 +255,7 @@ def main():
                     "Source: Austin Chamber of Commerce Relocations & Expansions Log"
                 ),
                 height=480,
-                margin=dict(t=130, b=60, l=160, r=120),
+                margin=dict(t=160, b=60, l=160, r=120),
                 showlegend=False,
                 xaxis=dict(
                     title="Jobs Announced",
