@@ -36,114 +36,109 @@
 ## Repository Structure
 
 ```
-/home/user/aquila-insights/
-├── charts/                                  # Published HTML charts (organized by category)
-│   ├── property-management/                 # 1 chart: AMS KPIs
-│   ├── office/                              # 29 charts: Requirements, transactions, market metrics
-│   ├── industrial/                          # 9 charts: TITM demand, vacancy, NNN rent, market metrics
-│   └── economic-indicators/                 # 8 charts: Employment, wages, housing, financial
+aquila-insights/
+├── aquila/                          # Shared Python package
+│   ├── __init__.py                  #   Re-exports AQUILA_COLORS, AQUILA_FONT
+│   ├── brand.py                     #   13-color palette, AQUILA_FONT, named aliases
+│   ├── charts.py                    #   aquila_styled_line_chart()
+│   ├── dateutil.py                  #   parse_quarter(), quarter_sort_key()
+│   ├── git.py                       #   commit_and_push_all()
+│   └── connectors/                  #   Data source clients (auto-loads aquila_graph.env)
+│       ├── __init__.py
+│       ├── supabase.py              #     get_supabase_client(use_service_role=True)
+│       ├── gsheets.py               #     get_gsheets_client()
+│       └── fred.py                  #     fetch_fred_series()
 │
-├── dashboards/                              # Interactive Dash apps (local, not published)
-│   ├── office_requirements_dashboard.py     # Austin office requirements interactive dashboard
-│   ├── office_requirements_dashboard_v1_backup.py  # Pre-v2 backup
-│   └── requirements.txt                     # Dashboard-specific dependencies
+├── generators/                      # Chart generators (organized by domain)
+│   ├── __init__.py                  #   Adds repo root to sys.path
+│   ├── office/                      #   5 generators -> 29 charts
+│   │   ├── requirements.py          #     7 requirement charts (Google Sheets)
+│   │   ├── demand_by_market.py      #     5 submarket demand charts (Google Sheets)
+│   │   ├── transactions.py          #     2 transaction charts (Excel)
+│   │   ├── market_metrics.py        #     12 vacancy/rent/opex charts (Supabase)
+│   │   └── building_performance.py  #     4 occupancy/rent by size (Supabase)
+│   ├── industrial/                  #   3 generators -> 9 charts
+│   │   ├── vacancy.py               #     1 vacancy chart (Supabase)
+│   │   ├── demand.py                #     5 TITM demand charts (Google Sheets)
+│   │   └── nnn_rent.py              #     1 NNN rent chart (Supabase)
+│   ├── economic/                    #   3 generators -> 14 charts
+│   │   ├── fred_indicators.py       #     7 FRED indicator charts
+│   │   ├── fred_housing.py          #     1 housing starts chart
+│   │   └── austin_economy.py        #     6 Austin 2025 economy charts (Excel)
+│   ├── property_mgmt/               #   1 generator -> 1 chart
+│   │   └── ams_kpi.py               #     AMS managed properties KPI (Excel)
+│   └── development/                 #   1 generator -> 6 charts
+│       └── permits.py               #     Development pipeline charts (API)
 │
-├── data/                                    # Input data files
-│   ├── AMS- Property Split List.xlsx
-│   └── TransactionRequestForm_Data_*.xlsx
+├── charts/                          # Published HTML charts (GitHub Pages)
+│   ├── property-management/         # 1 chart: AMS KPIs
+│   ├── office/                      # 29 charts: Requirements, transactions, market metrics
+│   ├── industrial/                  # 9 charts: TITM demand, vacancy, NNN rent
+│   ├── economic-indicators/         # 14 charts: Employment, wages, housing, Austin economy
+│   └── development/                 # 6 charts: Pipeline, permitting
 │
-├── NOTEBOOKS (Development)
-│   ├── office_requirements_combined.ipynb         # Office: 7 requirements charts (Google Sheets)
-│   ├── industrial_vacancy_supabase.ipynb          # Industrial: 1 vacancy chart (Supabase)
-│   ├── building-performance-by-size.ipynb         # Both: 4 size-based charts (Supabase)
-│   ├── fred-economic-indicators.ipynb             # Economic: 7 indicator charts (FRED API)
-│   └── supabase-graphs.ipynb                      # Example/documentation
+├── reports/                         # Quarterly Report generators (PDF)
+│   ├── office/{YEAR}_{QN}/          # Office output per quarter
+│   ├── industrial/{YEAR}_{QN}/      # Industrial output per quarter
+│   ├── templates/                   # Jinja2 HTML page templates (14 office + 9 industrial)
+│   ├── static/                      # CSS: report.css, tables.css
+│   ├── generate_office_report.py    # Office report orchestrator (CLI)
+│   ├── generate_industrial_report.py# Industrial report orchestrator (CLI)
+│   ├── cleanup_quarterly_data.py    # Pre-report data cleanup
+│   ├── data_loader.py              # Office: Supabase + Excel -> DataFrames
+│   ├── industrial_data_loader.py   # Industrial: Supabase + Excel -> DataFrames
+│   ├── chart_builder.py            # Office: Plotly -> PNG via Kaleido
+│   ├── industrial_chart_builder.py # Industrial: Plotly -> PNG via Kaleido
+│   ├── report_assembler.py         # Office: Jinja2 render + WeasyPrint -> PDF
+│   └── industrial_report_assembler.py # Industrial: Jinja2 render + WeasyPrint -> PDF
 │
-├── UPDATE SCRIPTS (Automation)
-│   ├── update_all_charts.py                       # Master: Runs all 5 update scripts
-│   ├── update_office_combined_requirements.py     # Office: 7 charts (Google Sheets)
-│   ├── update_industrial_vacancy.py               # Industrial: 1 chart (Supabase)
-│   ├── update_building_performance_charts.py      # Both: 4 charts (Supabase)
-│   ├── update_fred_housing_chart.py               # Economic: 1 chart (FRED)
-│   └── update_fred_economic_indicators.py         # Economic: 7 charts (FRED)
+├── dashboards/                      # Interactive Dash apps (local, not published)
+│   ├── office_requirements_dashboard.py
+│   └── requirements.txt
 │
-├── GENERATOR SCRIPTS (On-demand)
-│   ├── create_ams_kpi_chart.py                    # Property management KPIs
-│   ├── create_office_transaction_charts.py        # Office transaction volume (2 charts)
-│   ├── create_office_demand_by_market.py          # Office demand by submarket (5 charts)
-│   ├── create_industrial_demand_charts.py         # Industrial TITM charts (5 charts)
-│   ├── create_industrial_nnn_rent_chart.py        # Industrial NNN rent by submarket (1 chart)
-│   ├── create_austin_2025_charts.py               # Austin economy: relocations & expansions (6 charts)
-│   └── create_office_market_metrics_charts.py     # Office: vacancy, rent, opex by submarket (12 charts)
+├── data/                            # Input data files (Excel, CSV)
+├── notebooks/                       # Jupyter development notebooks
+├── archive/                         # Deprecated/test scripts
 │
-├── DEPRECATED
-│   └── DEPRECATED_update_office_requirements.py   # Old single-tab Google Sheets (replaced by combined)
-│
-├── reports/                                 # Quarterly Report generators (PDF)
-│   ├── office/{YEAR}_{QN}/                  # Office output per quarter
-│   │   ├── charts/                          # Intermediate PNG chart images
-│   │   └── AQUILA_Office_Report_{YEAR}_{QN}.pdf
-│   ├── industrial/{YEAR}_{QN}/              # Industrial output per quarter
-│   │   ├── charts/                          # 52 PNG chart images
-│   │   └── AQUILA_Industrial_Report_{YEAR}_{QN}.pdf
-│   ├── templates/                           # Jinja2 HTML page templates
-│   │   ├── base.html                        # Outer shell: <html>, CSS, page counters
-│   │   ├── page_title.html                  # Office cover page
-│   │   ├── page_kpi_header.html             # Office: 4 KPI boxes + placeholder map
-│   │   ├── page_performance.html            # Office: data table + 3 charts (15 instances)
-│   │   ├── page_major_leases.html           # Office: major leases table
-│   │   ├── page_major_sales.html            # Office: major sales card grid
-│   │   ├── page_large_availability.html     # Office: large availability table
-│   │   ├── page_building_list.html          # Building list with totals (shared)
-│   │   ├── page_sublease_report.html        # Office: sublease table (paginated)
-│   │   ├── page_quarterly_changes.html      # Quarterly changes tables (shared)
-│   │   ├── page_industrial_title.html       # Industrial cover page
-│   │   ├── page_industrial_toc.html         # Industrial TOC
-│   │   ├── page_industrial_kpi.html         # Industrial: By the Numbers (Ind + Flex KPIs)
-│   │   ├── page_industrial_performance.html # Industrial: table + 3 charts
-│   │   ├── page_industrial_major_leases.html# Industrial: major leases table
-│   │   ├── page_industrial_major_sales.html # Industrial: major sales card grid
-│   │   ├── page_industrial_pipeline.html    # Industrial: UC + Planned/Proposed
-│   │   ├── page_industrial_large_avail.html # Industrial: large avail by generation
-│   │   └── page_regional_comparison.html    # Industrial: cross-submarket comparison
-│   ├── static/
-│   │   ├── report.css                       # Master stylesheet (brand, @page, layout)
-│   │   └── tables.css                       # Table-specific styling
-│   ├── __init__.py
-│   ├── generate_office_report.py            # Office report orchestrator (CLI)
-│   ├── generate_industrial_report.py        # Industrial report orchestrator (CLI)
-│   ├── cleanup_quarterly_data.py            # Pre-report data cleanup (run automatically)
-│   ├── report_config.py                     # Office: quarter-specific constants & paths
-│   ├── industrial_report_config.py          # Industrial: quarter-specific constants & paths
-│   ├── data_loader.py                       # Office: Supabase + Excel → DataFrames
-│   ├── industrial_data_loader.py            # Industrial: Supabase + Excel → DataFrames
-│   ├── chart_builder.py                     # Office: Plotly → PNG via Kaleido
-│   ├── industrial_chart_builder.py          # Industrial: Plotly → PNG via Kaleido
-│   ├── report_assembler.py                  # Office: Jinja2 render + WeasyPrint → PDF
-│   └── industrial_report_assembler.py       # Industrial: Jinja2 render + WeasyPrint → PDF
-│
-├── aquila_graphing_tools.py                 # Shared utilities (styling, Supabase, git)
-├── aquila_graph.env                         # CREDENTIALS (gitignored)
-├── .gitignore                               # Excludes: aquila_graph.env, *.json
-└── README.md                                # Public chart index
+├── update_all_charts.py             # Master orchestrator (runs all generators)
+├── aquila_graphing_tools.py         # Backward-compat shim (imports from aquila/)
+├── aquila_graph.env                 # CREDENTIALS (gitignored)
+├── .gitignore
+├── README.md                        # Public chart index
+└── CLAUDE.md                        # This file
 ```
 
 ---
 
 ## Key Files & Functions
 
-### aquila_graphing_tools.py
+### aquila/ Package
 
-**Core Functions:**
+The `aquila/` package consolidates shared utilities. All generators and reports import from here.
+
 ```python
-# Supabase connection
-initialize_supabase_connection() → supabase.Client
+# Brand constants
+from aquila.brand import AQUILA_COLORS, AQUILA_FONT, NAVY, GLASS_BLUE, COPPER, BRASS
 
-# Git automation
-commit_and_push_all(commit_message)
+# Data connectors (auto-loads aquila_graph.env)
+from aquila.connectors.supabase import get_supabase_client
+from aquila.connectors.gsheets import get_gsheets_client
+from aquila.connectors.fred import fetch_fred_series
 
-# Styled charts
-aquila_styled_line_chart(df, x, y, color=None, facet_row=None, title="", height=800)
+# Utilities
+from aquila.dateutil import parse_quarter, quarter_sort_key
+from aquila.charts import aquila_styled_line_chart
+from aquila.git import commit_and_push_all
+```
+
+### aquila_graphing_tools.py (Backward-Compat Shim)
+
+Re-exports from `aquila/` package. Existing code using old imports continues to work:
+```python
+# These still work via the shim:
+from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+from aquila_graphing_tools import initialize_supabase_connection
+from aquila_graphing_tools import aquila_styled_line_chart, commit_and_push_all
 ```
 
 **Brand Colors (2026 Palette):**
@@ -179,8 +174,8 @@ AQUILA_COLORS = [
 
 ### 1. Office Requirements (Google Sheets)
 
-**Notebook:** `office_requirements_combined.ipynb`
-**Script:** `update_office_combined_requirements.py`
+**Notebook:** `notebooks/office_requirements_combined.ipynb`
+**Script:** `generators/office/requirements.py`
 
 **Data Source:**
 - Spreadsheet ID: `1bzpRnUrpBH6l_zX7DtTypczZf5bpYVwqPUG3tzg2vec`
@@ -219,8 +214,8 @@ charts/office/
 
 ### 2. Industrial Vacancy (Supabase)
 
-**Notebook:** `industrial_vacancy_supabase.ipynb`
-**Script:** `update_industrial_vacancy.py`
+**Notebook:** `notebooks/industrial_vacancy_supabase.ipynb`
+**Script:** `generators/industrial/vacancy.py`
 
 **Data Source:** Supabase table `market_tables_industrial`
 
@@ -234,7 +229,7 @@ charts/industrial/
 
 ### 3. Industrial Demand (Google Sheets TITM)
 
-**Script:** `create_industrial_demand_charts.py`
+**Script:** `generators/industrial/demand.py`
 
 **Data Source:**
 - Spreadsheet ID: `1natA0ALaQnX3U_vGC5Vrchy1QqmbW8k0zvTKwuE2wys`
@@ -257,7 +252,7 @@ charts/industrial/
 
 ### 4. Industrial NNN Rental Rates (Supabase)
 
-**Script:** `create_industrial_nnn_rent_chart.py`
+**Script:** `generators/industrial/nnn_rent.py`
 
 **Data Source:** Supabase table `market_tables_industrial`
 
@@ -277,8 +272,8 @@ charts/industrial/
 
 ### 5. Building Performance (Supabase)
 
-**Notebook:** `building-performance-by-size.ipynb`
-**Script:** `update_building_performance_charts.py`
+**Notebook:** `notebooks/building-performance-by-size.ipynb`
+**Script:** `generators/office/building_performance.py`
 
 **Data Source:**
 - `quarterly_report_data_office` (12,000+ records)
@@ -309,10 +304,10 @@ charts/industrial/
 
 ### 6. Economic Indicators (FRED API)
 
-**Notebook:** `fred-economic-indicators.ipynb`
+**Notebook:** `notebooks/fred-economic-indicators.ipynb`
 **Scripts:**
-- `update_fred_housing_chart.py` (1 chart)
-- `update_fred_economic_indicators.py` (7 charts)
+- `generators/economic/fred_housing.py` (1 chart)
+- `generators/economic/fred_indicators.py` (7 charts)
 
 **Data Source:** Federal Reserve Economic Data API
 
@@ -335,7 +330,7 @@ charts/economic-indicators/
 
 ### 7. Austin Economy — Relocations & Expansions (Excel)
 
-**Script:** `create_austin_2025_charts.py`
+**Script:** `generators/economic/austin_economy.py`
 
 **Data Source:** `data/Industries and Companies 2025.xlsx`
 - Sheet `"2025"`: 71 rows — Company, Type of Operation, Jobs Created, Location, Type of Action (New/Expanded), Month, Industry, HQ?
@@ -358,7 +353,7 @@ charts/economic-indicators/
 
 ### 8. Property Management (Excel)
 
-**Script:** `create_ams_kpi_chart.py`
+**Script:** `generators/property_mgmt/ams_kpi.py`
 
 **Data Source:** `data/AMS- Property Split List (Updated 1.9.26).xlsx`
 
@@ -374,7 +369,7 @@ charts/property-management/
 
 ### 9. Office Transactions (Excel)
 
-**Script:** `create_office_transaction_charts.py`
+**Script:** `generators/office/transactions.py`
 
 **Data Source:** `data/TransactionRequestForm_Data_*.xlsx`
 
@@ -393,7 +388,7 @@ charts/office/
 
 ### 10. Office Demand by Market (Google Sheets)
 
-**Script:** `create_office_demand_by_market.py`
+**Script:** `generators/office/demand_by_market.py`
 
 **Inclusive Market Mapping:**
 - **Citywide/Flexible** → All markets (CBD, SW, NW, E, C)
@@ -422,7 +417,7 @@ charts/office/
 
 ### 11. Office Market Metrics Charts (Supabase)
 
-**Script:** `create_office_market_metrics_charts.py`
+**Script:** `generators/office/market_metrics.py`
 
 **Data Source:** Supabase table `market_tables_office`
 
@@ -456,7 +451,7 @@ charts/office/
 
 **Colors:** CBD=Navy, Northwest=Glass Blue, Southwest=Copper, The Domain=Brass
 
-**Supabase auth:** Uses `SUPABASE_KEY` (service role) via local `_get_supabase_client()` — `initialize_supabase_connection()` uses the anon key which lacks RLS access to `market_tables_office`.
+**Supabase auth:** Uses `aquila.connectors.supabase.get_supabase_client(use_service_role=True)` — the anon key lacks RLS access to `market_tables_office`.
 
 ---
 
@@ -822,44 +817,38 @@ df['size_category'] = pd.cut(df['sf_avg'], bins=bins, labels=labels, right=False
 
 ### Chart Generation
 
-1. **Load environment**
+1. **Load environment** (handled automatically by `aquila.connectors`)
 ```python
-from dotenv import load_dotenv
-load_dotenv('aquila_graph.env')
+# No manual load_dotenv needed — aquila connectors auto-load aquila_graph.env
 ```
 
 2. **Fetch & process data**
 ```python
-# Supabase
-from aquila_graphing_tools import initialize_supabase_connection
-supabase = initialize_supabase_connection()
+# Supabase (preferred: aquila connector)
+from aquila.connectors.supabase import get_supabase_client
+supabase = get_supabase_client()  # or use_service_role=True for RLS-restricted tables
 response = supabase.table('table_name').select('*').execute()
 df = pd.DataFrame(response.data)
 
 # Google Sheets
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-# ... (build credentials from env vars) ...
-client = gspread.authorize(creds)
+from aquila.connectors.gsheets import get_gsheets_client
+client = get_gsheets_client()
 sheet = client.open_by_key('sheet_id')
 df = pd.DataFrame(sheet.get_worksheet(0).get_all_records())
 
 # FRED API
-import requests
-url = "https://api.stlouisfed.org/fred/series/observations"
-params = {"series_id": "SERIES_ID", "api_key": fred_api_key, "file_type": "json"}
-response = requests.get(url, params=params)
-df = pd.DataFrame(response.json()['observations'])
+from aquila.connectors.fred import fetch_fred_series
+df = fetch_fred_series('SERIES_ID')
 ```
 
 3. **Generate chart**
 ```python
-from aquila_graphing_tools import aquila_styled_line_chart
+from aquila.charts import aquila_styled_line_chart
+from aquila.brand import AQUILA_COLORS, AQUILA_FONT
 fig = aquila_styled_line_chart(df, x='date', y='value', color='category', title='Chart Title')
 
 # Or custom chart
 import plotly.express as px
-from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 fig = px.bar(df, x='x', y='y', color_discrete_sequence=AQUILA_COLORS)
 fig.update_layout(plot_bgcolor='white', font=dict(family=AQUILA_FONT, color='#172344'))
 ```
@@ -878,7 +867,7 @@ fig.write_html('charts/category/chart_name.html')
 
 6. **Commit & push**
 ```python
-from aquila_graphing_tools import commit_and_push_all
+from aquila.git import commit_and_push_all
 commit_and_push_all("Update chart description")
 ```
 
@@ -935,34 +924,42 @@ fig.update_layout(height=650)
 
 ### Update All Charts
 ```bash
-python3 update_all_charts.py                    # Generate 20 charts
-python3 update_all_charts.py --update-readme    # + Update README dates
+python update_all_charts.py                    # Run all 13 generators (~59 charts)
+python update_all_charts.py --group office     # Office generators only (29 charts)
+python update_all_charts.py --group industrial # Industrial generators only (9 charts)
+python update_all_charts.py --group economic   # Economic generators only (14 charts)
+python update_all_charts.py --group property_mgmt
+python update_all_charts.py --group development
 ```
 
-**Runs 5 scripts:**
-1. `update_office_combined_requirements.py` (7 Office charts)
-2. `update_industrial_vacancy.py` (1 Industrial chart)
-3. `update_fred_housing_chart.py` (1 Economic chart)
-4. `update_building_performance_charts.py` (4 Office & Industrial charts)
-5. `update_fred_economic_indicators.py` (7 Economic charts)
+**Runs 13 generators organized by domain:**
 
-### Individual Updates
-```bash
-python3 update_office_combined_requirements.py
-python3 update_industrial_vacancy.py
-python3 update_building_performance_charts.py
-python3 update_fred_housing_chart.py
-python3 update_fred_economic_indicators.py
-```
+| Domain | Generator | Charts |
+|--------|-----------|--------|
+| office | `generators/office/requirements.py` | 7 (Google Sheets) |
+| office | `generators/office/building_performance.py` | 4 (Supabase) |
+| office | `generators/office/market_metrics.py` | 12 (Supabase) |
+| office | `generators/office/demand_by_market.py` | 5 (Google Sheets) |
+| office | `generators/office/transactions.py` | 2 (Excel) |
+| industrial | `generators/industrial/vacancy.py` | 1 (Supabase) |
+| industrial | `generators/industrial/demand.py` | 5 (Google Sheets) |
+| industrial | `generators/industrial/nnn_rent.py` | 1 (Supabase) |
+| economic | `generators/economic/fred_indicators.py` | 7 (FRED API) |
+| economic | `generators/economic/fred_housing.py` | 1 (FRED API) |
+| economic | `generators/economic/austin_economy.py` | 6 (Excel) |
+| property_mgmt | `generators/property_mgmt/ams_kpi.py` | 1 (Excel) |
+| development | `generators/development/permits.py` | 6 (API) |
 
-### On-Demand Generators
+### Individual Generators
 ```bash
-python3 create_ams_kpi_chart.py
-python3 create_office_transaction_charts.py
-python3 create_office_demand_by_market.py
-python3 create_industrial_demand_charts.py
-python3 create_austin_2025_charts.py         # Austin economy charts (6 charts from Excel)
-python3 create_office_market_metrics_charts.py  # Office vacancy/rent/opex by submarket (12 charts)
+python -m generators.office.requirements
+python -m generators.office.market_metrics
+python -m generators.industrial.vacancy
+python -m generators.industrial.demand
+python -m generators.economic.fred_indicators
+python -m generators.economic.austin_economy
+python -m generators.property_mgmt.ams_kpi
+python -m generators.development.permits
 ```
 
 ### Office Quarterly Report
@@ -1119,12 +1116,37 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 
 ---
 
-**Last Updated:** 2026-02-26
-**Document Version:** 4.4.0
+**Last Updated:** 2026-02-27
+**Document Version:** 5.0.0
 
 ---
 
 ## Changelog
+
+### Version 5.0.0 (2026-02-27)
+- **MAJOR: Repository architecture refactoring**
+  - Created `aquila/` shared Python package consolidating all duplicated utilities:
+    - `aquila/brand.py` — AQUILA_COLORS (13-color palette), AQUILA_FONT, named color aliases
+    - `aquila/connectors/supabase.py` — `get_supabase_client(use_service_role=False)` with auto-env-loading
+    - `aquila/connectors/gsheets.py` — `get_gsheets_client()` with auto-env-loading
+    - `aquila/connectors/fred.py` — `fetch_fred_series()` with auto-env-loading
+    - `aquila/dateutil.py` — `parse_quarter()`, `quarter_sort_key()`
+    - `aquila/charts.py` — `aquila_styled_line_chart()`
+    - `aquila/git.py` — `commit_and_push_all()`
+  - Converted `aquila_graphing_tools.py` to backward-compat shim (re-exports from `aquila/`)
+  - Moved 13 chart generators to `generators/` organized by domain:
+    - `generators/office/` (5 generators, 29 charts)
+    - `generators/industrial/` (3 generators, 9 charts)
+    - `generators/economic/` (3 generators, 14 charts)
+    - `generators/property_mgmt/` (1 generator, 1 chart)
+    - `generators/development/` (1 generator, 6 charts)
+  - Rewrote `update_all_charts.py` as direct-import orchestrator with `--group` flag
+  - Migrated `reports/data_loader.py`, `reports/industrial_data_loader.py`, and `reports/cleanup_quarterly_data.py` to use `aquila.connectors.supabase` (eliminated 3 duplicate `_get_supabase_client()` copies)
+  - Moved 6 notebooks to `notebooks/`, 7 deprecated scripts to `archive/`
+  - Fixed `building_performance.py` output paths (`charts/` root -> `charts/{type}/`)
+  - Fixed all Unicode chars (U+2192, U+2022, U+2500) for Windows CP1252 compatibility
+  - All 13/13 generators verified passing end-to-end
+  - Updated README.md and CLAUDE.md with new architecture documentation
 
 ### Version 4.4.0 (2026-02-26)
 - **Brand color palette updated to 13-color 2026 hierarchy** (`aquila_graphing_tools.py`)

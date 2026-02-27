@@ -186,17 +186,80 @@ Todo:
 
 ---
 
-## Embedding Instructions
+## Repository Architecture
 
-To embed a chart on your website, you can use the following HTML code as an example:
+### Directory Structure
+```
+aquila-insights/
+├── aquila/                    # Shared Python package
+│   ├── brand.py               #   AQUILA_COLORS, AQUILA_FONT, named aliases
+│   ├── charts.py              #   aquila_styled_line_chart()
+│   ├── dateutil.py            #   parse_quarter(), quarter_sort_key()
+│   ├── git.py                 #   commit_and_push_all()
+│   └── connectors/            #   Data source clients
+│       ├── supabase.py        #     get_supabase_client()
+│       ├── gsheets.py         #     get_gsheets_client()
+│       └── fred.py            #     fetch_fred_series()
+│
+├── generators/                # Chart generators (organized by domain)
+│   ├── office/                #   5 generators (29 charts)
+│   │   ├── requirements.py    #     7 requirement charts (Google Sheets)
+│   │   ├── demand_by_market.py#     5 submarket demand charts
+│   │   ├── transactions.py    #     2 transaction charts (Excel)
+│   │   ├── market_metrics.py  #     12 vacancy/rent/opex charts (Supabase)
+│   │   └── building_performance.py  # 4 occupancy/rent by size
+│   ├── industrial/            #   3 generators (9 charts)
+│   │   ├── vacancy.py         #     1 vacancy chart (Supabase)
+│   │   ├── demand.py          #     5 TITM demand charts (Google Sheets)
+│   │   └── nnn_rent.py        #     1 NNN rent chart (Supabase)
+│   ├── economic/              #   3 generators (14 charts)
+│   │   ├── fred_indicators.py #     7 FRED indicator charts
+│   │   ├── fred_housing.py    #     1 housing starts chart
+│   │   └── austin_economy.py  #     6 Austin 2025 economy charts
+│   ├── property_mgmt/         #   1 generator (1 chart)
+│   │   └── ams_kpi.py
+│   └── development/           #   1 generator (6 charts)
+│       └── permits.py
+│
+├── reports/                   # Quarterly PDF report generators
+├── dashboards/                # Local interactive Dash apps
+├── charts/                    # Published HTML charts (GitHub Pages)
+├── data/                      # Input data files (Excel, CSV)
+├── notebooks/                 # Jupyter development notebooks
+├── archive/                   # Deprecated/test scripts
+├── update_all_charts.py       # Master orchestrator
+├── aquila_graphing_tools.py   # Backward-compat shim
+└── aquila_graph.env           # Credentials (gitignored)
+```
+
+### Running Charts
+
+```bash
+# Regenerate all charts (13 generators)
+python update_all_charts.py
+
+# Run a specific domain group
+python update_all_charts.py --group office
+python update_all_charts.py --group industrial
+python update_all_charts.py --group economic
+python update_all_charts.py --group property_mgmt
+python update_all_charts.py --group development
+
+# Run a single generator directly
+python -m generators.office.requirements
+python -m generators.industrial.vacancy
+python -m generators.economic.fred_indicators
+```
+
+### Embedding Charts
 
 ```html
 <iframe
-  src="https://yourdomain.com/charts/revenue_by_day.html"
+  src="https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html"
   width="100%"
   height="500"
   frameborder="0">
 </iframe>
 ```
 
-Simply replace the `src` URL with the link to your own chart if needed.
+All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}/{filename}.html`

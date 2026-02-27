@@ -33,15 +33,9 @@ load_dotenv('aquila_graph.env')
 
 
 def _get_supabase_client():
-    """Use service role key (SUPABASE_KEY) for full access to market_tables_office."""
-    from supabase import create_client
-    from dotenv import dotenv_values
-    vals = dotenv_values('aquila_graph.env')
-    url = vals.get('SUPABASE_URL', '')
-    key = vals.get('SUPABASE_KEY', vals.get('SUPABASE_PUBLIC_KEY', ''))
-    if not url or not key:
-        raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in aquila_graph.env")
-    return create_client(url, key)
+    """Use service role key via aquila package for full access to market_tables_office."""
+    from aquila.connectors.supabase import get_supabase_client
+    return get_supabase_client(use_service_role=True)
 
 # -- Brand color aliases ------------------------------------------------------
 NAVY       = AQUILA_COLORS[0]   # #172344

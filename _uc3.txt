@@ -1,8 +1,0 @@
-generators\industrial\nnn_rent.py:23: {'U+2500'}
-generators\office\market_metrics.py:46: {'U+2500'}
-generators\office\market_metrics.py:53: {'U+2500'}
-generators\office\market_metrics.py:65: {'U+2500'}
-generators\office\market_metrics.py:113: {'U+2500'}
-generators\office\market_metrics.py:147: {'U+2500'}
-generators\office\market_metrics.py:229: {'U+2500'}
-generators\office\market_metrics.py:245: {'U+2500'}

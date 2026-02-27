@@ -7,22 +7,10 @@ import sys
 import re
 import pandas as pd
 
-# Add repo root to path so we can import aquila_graphing_tools
+# Add repo root to path so we can import aquila package
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from dotenv import load_dotenv
-
-load_dotenv(os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    'aquila_graph.env'
-))
-
-
-def _parse_quarter_sort_key(q_str):
-    """Convert '2025 Q4' to a sortable value like 2025.4"""
-    m = re.match(r'(\d{4})\s*Q(\d)', str(q_str))
-    if m:
-        return int(m.group(1)) + int(m.group(2)) / 10
-    return 0
+from aquila.connectors.supabase import get_supabase_client as _get_supabase_client  # noqa: E402
+from aquila.dateutil import quarter_sort_key as _parse_quarter_sort_key  # noqa: E402
 
 
 def _parse_formatted_value(val):
@@ -41,22 +29,6 @@ def _parse_formatted_value(val):
         return f / 100.0 if is_pct else f
     except ValueError:
         return float('nan')
-
-
-def _get_supabase_client():
-    """Create a Supabase client using the service role key for full table access."""
-    from supabase import create_client
-    from dotenv import dotenv_values
-    env_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        'aquila_graph.env'
-    )
-    vals = dotenv_values(env_path)
-    url = vals.get('SUPABASE_URL', '')
-    key = vals.get('SUPABASE_KEY', vals.get('SUPABASE_PUBLIC_KEY', ''))
-    if not url or not key:
-        raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in aquila_graph.env")
-    return create_client(url, key)
 
 
 def load_supabase_industrial_data():

@@ -252,8 +252,8 @@ def _load_inventory(report_type):
     Returns empty DataFrame if Supabase is unavailable.
     """
     try:
-        from reports.data_loader import _get_supabase_client
-        supabase = _get_supabase_client()
+        from aquila.connectors.supabase import get_supabase_client
+        supabase = get_supabase_client(use_service_role=True)
         table_name = 'inventory_office' if report_type == 'office' else 'inventory_industrial'
         response = supabase.table(table_name).select(
             'costar_property_id, property_name, building_park, report_name, '
