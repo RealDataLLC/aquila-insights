@@ -14,6 +14,7 @@ import requests
 import pandas as pd
 from dotenv import load_dotenv
 from aquila_graphing_tools import aquila_styled_line_chart
+from aquila.charts import write_chart_html
 from datetime import datetime
 import sys
 
@@ -86,7 +87,7 @@ def generate_housing_starts_chart(fred_api_key):
 
     # Save
     os.makedirs("charts", exist_ok=True)
-    fig.write_html("charts/economic-indicators/austin_housing_starts.html")
+    write_chart_html(fig, "charts/economic-indicators/austin_housing_starts.html")
     print("  [OK] Saved: charts/austin_housing_starts.html")
 
 def update_readme_dates():

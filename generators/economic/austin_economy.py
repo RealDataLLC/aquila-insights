@@ -14,6 +14,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+from aquila.charts import write_chart_html, add_aquila_logo
 
 # ---------------------------------------------------------------------------
 # Config
@@ -165,7 +166,7 @@ def main():
         )
 
         path = f"{OUTPUT_DIR}/austin_2025_jobs_by_industry.html"
-        fig.write_html(path)
+        write_chart_html(fig, path)
         print(f"  Saved: {path}")
 
 
@@ -216,7 +217,7 @@ def main():
         )
 
         path = f"{OUTPUT_DIR}/austin_2025_new_vs_expanded.html"
-        fig.write_html(path)
+        write_chart_html(fig, path)
         print(f"  Saved: {path}")
 
 
@@ -275,7 +276,7 @@ def main():
         )
 
         path = f"{OUTPUT_DIR}/austin_2025_jobs_by_location.html"
-        fig.write_html(path)
+        write_chart_html(fig, path)
         print(f"  Saved: {path}")
 
 
@@ -326,7 +327,7 @@ def main():
         )
 
         path = f"{OUTPUT_DIR}/austin_2025_hq_activity.html"
-        fig.write_html(path)
+        write_chart_html(fig, path)
         print(f"  Saved: {path}")
 
 
@@ -381,7 +382,7 @@ def main():
         )
 
         path = f"{OUTPUT_DIR}/austin_2025_jobs_by_month.html"
-        fig.write_html(path)
+        write_chart_html(fig, path)
         print(f"  Saved: {path}")
 
 
@@ -444,6 +445,7 @@ def main():
         )
 
         path = f"{OUTPUT_DIR}/austin_2025_top_companies.html"
+        add_aquila_logo(fig)
         # Inject CSS to vertically center text in Plotly SVG table cells
         html = fig.to_html(full_html=True, include_plotlyjs=True)
         css_fix = "<style>g.table g.cells text { dominant-baseline: central !important; }</style>"

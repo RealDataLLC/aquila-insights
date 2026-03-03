@@ -168,6 +168,52 @@ AQUILA_COLORS = [
 
 **Font:** `AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"`
 
+### Logo Watermarking
+
+All 59 interactive HTML charts published to GitHub Pages include an Aquila logo watermark in the bottom-right corner. PDF charts generated in `reports/` (via Kaleido/WeasyPrint) are excluded.
+
+**Logo Implementation:**
+- Source: `data/Aquila_Logo2.png` (embedded as base64 in each HTML)
+- Functions in `aquila/charts.py`:
+  - `_get_logo_b64()` — lazy-loads and caches logo (once per process)
+  - `add_aquila_logo(fig, sizex=0.12, opacity=0.7)` — adds logo to Plotly figure
+  - `write_chart_html(fig, path, sizex=0.12, opacity=0.7)` — convenience wrapper: adds logo then writes HTML
+- Placement: bottom-right (`xref="paper"`, `yref="paper"`, `x=1.0`, `y=0.0`, `xanchor="right"`, `yanchor="bottom"`)
+- Size: 12% of figure width, proportional height
+- Opacity: 0.7 (subtle watermark)
+
+**Usage in generators:**
+```python
+# Standard pattern (11 generators):
+from aquila.charts import write_chart_html
+write_chart_html(fig, 'charts/category/chart_name.html')
+
+# Special case with custom HTML write (austin_economy.py):
+from aquila.charts import add_aquila_logo
+add_aquila_logo(fig)
+html = fig.to_html(full_html=True, include_plotlyjs=True)
+# ... custom CSS injection ...
+with open(path, 'w') as f:
+    f.write(html)
+
+# Special case with retry wrapper (permits.py):
+from aquila.charts import add_aquila_logo
+add_aquila_logo(fig)  # Apply logo once to figure
+for attempt in range(3):
+    try:
+        fig.write_html(filepath)
+        return
+    except OSError:
+        # retry logic
+```
+
+**All 13 generators updated:**
+- `generators/office/` (5): requirements, market_metrics, building_performance, transactions, demand_by_market
+- `generators/industrial/` (3): vacancy, demand, nnn_rent
+- `generators/economic/` (3): fred_housing, fred_indicators, austin_economy
+- `generators/property_mgmt/` (1): ams_kpi
+- `generators/development/` (1): permits
+
 ---
 
 ## Data Sources & Chart Outputs

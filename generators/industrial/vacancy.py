@@ -15,6 +15,7 @@ from aquila_graphing_tools import (
     initialize_supabase_connection,
     aquila_styled_line_chart
 )
+from aquila.charts import write_chart_html
 from datetime import datetime
 import sys
 import os
@@ -86,7 +87,7 @@ def generate_industrial_vacancy_chart(df):
 
     # Save
     os.makedirs("charts", exist_ok=True)
-    fig.write_html("charts/industrial/vacancy_rate_industrial.html")
+    write_chart_html(fig, "charts/industrial/vacancy_rate_industrial.html")
     print("  [OK] Saved: charts/vacancy_rate_industrial.html")
 
 def update_readme_dates():

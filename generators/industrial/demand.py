@@ -20,6 +20,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from dotenv import load_dotenv
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+from aquila.charts import write_chart_html
 
 
 def main():
@@ -301,7 +302,7 @@ def main():
     )
 
     chart_path = 'charts/industrial/industrial_demand_by_tenant_size.html'
-    fig.write_html(chart_path)
+    write_chart_html(fig, chart_path)
     print(f"    OK: Saved {chart_path}")
 
     # ============================================================================
@@ -373,7 +374,7 @@ def main():
     )
 
     chart2_path = 'charts/industrial/industrial_demand_by_use_type.html'
-    fig2.write_html(chart2_path)
+    write_chart_html(fig2, chart2_path)
     print(f"    OK: Saved {chart2_path}")
 
     # ============================================================================
@@ -441,7 +442,7 @@ def main():
     )
 
     chart3_path = 'charts/industrial/industrial_requirements_by_size_range.html'
-    fig3.write_html(chart3_path)
+    write_chart_html(fig3, chart3_path)
     print(f"    OK: Saved {chart3_path}")
 
     # ============================================================================
@@ -514,7 +515,7 @@ def main():
     )
 
     chart4_path = 'charts/industrial/industrial_requirements_sf_total.html'
-    fig4.write_html(chart4_path)
+    write_chart_html(fig4, chart4_path)
     print(f"    OK: Saved {chart4_path}")
 
     # ============================================================================
@@ -583,7 +584,7 @@ def main():
     )
 
     chart5_path = 'charts/industrial/industrial_requirements_sf_avg.html'
-    fig5.write_html(chart5_path)
+    write_chart_html(fig5, chart5_path)
     print(f"    OK: Saved {chart5_path}")
 
     # ============================================================================

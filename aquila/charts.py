@@ -3,8 +3,74 @@ Plotly chart helpers with Aquila brand styling.
 All chart titles are centered by default.
 """
 
+import base64
+from pathlib import Path
+
 import plotly.express as px
 from .brand import AQUILA_COLORS, AQUILA_FONT
+
+# ── Logo watermark ─────────────────────────────────────────────────────────────
+_LOGO_PATH = Path(__file__).parent.parent / "data" / "Aquila_Logo2.png"
+_LOGO_B64: str | None = None
+
+
+def _get_logo_b64() -> str:
+    """Lazy-load and cache the Aquila logo as a base64 string."""
+    global _LOGO_B64
+    if _LOGO_B64 is None:
+        with open(_LOGO_PATH, "rb") as f:
+            _LOGO_B64 = base64.b64encode(f.read()).decode()
+    return _LOGO_B64
+
+
+def add_aquila_logo(fig, sizex: float = 0.12, opacity: float = 0.7):
+    """Add Aquila logo watermark to the bottom-right corner of a Plotly figure.
+
+    Parameters
+    ----------
+    fig : plotly.graph_objects.Figure
+    sizex : float
+        Width of the logo as a fraction of the figure width (default 0.12 = 12%).
+    opacity : float
+        Logo opacity from 0 (transparent) to 1 (opaque).
+
+    Returns
+    -------
+    plotly.graph_objects.Figure  (same object, modified in place)
+    """
+    fig.add_layout_image(dict(
+        source=f"data:image/png;base64,{_get_logo_b64()}",
+        xref="paper",
+        yref="paper",
+        x=1.0,
+        y=0.0,
+        sizex=sizex,
+        sizey=sizex,
+        xanchor="right",
+        yanchor="bottom",
+        opacity=opacity,
+        layer="above",
+    ))
+    return fig
+
+
+def write_chart_html(fig, path, sizex: float = 0.12, opacity: float = 0.7):
+    """Add Aquila logo watermark and write the figure as a standalone HTML file.
+
+    Use this instead of ``fig.write_html(path)`` in all chart generators.
+
+    Parameters
+    ----------
+    fig : plotly.graph_objects.Figure
+    path : str | Path
+        Destination HTML file path.
+    sizex : float
+        Logo width as a fraction of figure width (default 0.12).
+    opacity : float
+        Logo opacity (default 0.7).
+    """
+    add_aquila_logo(fig, sizex=sizex, opacity=opacity)
+    fig.write_html(path)
 
 
 def aquila_styled_line_chart(

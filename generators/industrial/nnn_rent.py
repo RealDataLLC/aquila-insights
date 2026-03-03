@@ -16,6 +16,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from dotenv import load_dotenv
 from aquila_graphing_tools import initialize_supabase_connection, AQUILA_COLORS, AQUILA_FONT
+from aquila.charts import write_chart_html
 
 # Load environment
 load_dotenv('aquila_graph.env')
@@ -150,7 +151,7 @@ def main():
         fig = build_chart(df)
 
         os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-        fig.write_html(OUTPUT_PATH)
+        write_chart_html(fig, OUTPUT_PATH)
         print(f"\nSaved: {OUTPUT_PATH}")
 
         print("\nNext steps:")
