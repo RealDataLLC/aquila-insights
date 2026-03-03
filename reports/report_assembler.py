@@ -167,16 +167,18 @@ def _render_major_sales(env, config, data):
     )
 
 
-def _render_large_availability(env, config, data, submarket):
-    """Render a large availability page for a submarket."""
+def _render_large_availability(env, config, data, submarket, rows_per_page=35):
+    """Render large availability page(s) for a submarket.
+    Returns a list of HTML strings (one per page) with pagination labels.
+    """
     avail_data = data.get('office_avail', {})
     if submarket not in avail_data or avail_data[submarket].empty:
-        return None
+        return []
 
     df = avail_data[submarket].copy()
     tmpl = env.get_template('page_large_availability.html')
 
-    rows = []
+    all_rows = []
     for _, row in df.iterrows():
         class Row:
             pass
@@ -191,24 +193,35 @@ def _render_large_availability(env, config, data, submarket):
         r.max_contiguous = pd.to_numeric(
             str(row.get('Max Contiguous SF', row.get('Max Building Contiguous Space', 0)))
             .replace(',', ''), errors='coerce') or 0
-        rows.append(r)
+        all_rows.append(r)
 
-    return tmpl.render(
-        submarket_name=submarket,
-        rows=rows,
-    )
+    total_pages = max(1, (len(all_rows) + rows_per_page - 1) // rows_per_page)
+
+    pages = []
+    for i in range(0, len(all_rows), rows_per_page):
+        chunk = all_rows[i:i + rows_per_page]
+        page_idx = i // rows_per_page + 1
+        page_label = f"(Page {page_idx} of {total_pages})" if total_pages > 1 else ""
+        pages.append(tmpl.render(
+            submarket_name=submarket,
+            rows=chunk,
+            page_label=page_label,
+        ))
+    return pages
 
 
-def _render_building_list(env, config, data, submarket):
-    """Render a building list page for a submarket/micromarket."""
+def _render_building_list(env, config, data, submarket, rows_per_page=35):
+    """Render building list page(s) for a submarket/micromarket.
+    Returns a list of HTML strings (one per page) with pagination labels.
+    """
     bl_data = data.get('building_list', {})
     if submarket not in bl_data or bl_data[submarket].empty:
-        return None
+        return []
 
     df = bl_data[submarket].copy()
     tmpl = env.get_template('page_building_list.html')
 
-    rows = []
+    all_rows = []
     for _, row in df.iterrows():
         class Row:
             pass
@@ -220,21 +233,33 @@ def _render_building_list(env, config, data, submarket):
             str(row.get('Direct Vacant SF', 0)).replace(',', ''), errors='coerce') or 0
         r.sublease_vacant = pd.to_numeric(
             str(row.get('Sublease Vacant SF', 0)).replace(',', ''), errors='coerce') or 0
-        rows.append(r)
+        all_rows.append(r)
 
-    # Compute totals
+    # Compute totals across ALL rows
     class Totals:
         pass
     t = Totals()
-    t.nra = sum(r.nra for r in rows)
-    t.direct_vacant = sum(r.direct_vacant for r in rows)
-    t.sublease_vacant = sum(r.sublease_vacant for r in rows)
+    t.nra = sum(r.nra for r in all_rows)
+    t.direct_vacant = sum(r.direct_vacant for r in all_rows)
+    t.sublease_vacant = sum(r.sublease_vacant for r in all_rows)
 
-    return tmpl.render(
-        submarket_name=submarket,
-        rows=rows,
-        totals=t,
-    )
+    total_pages = max(1, (len(all_rows) + rows_per_page - 1) // rows_per_page)
+
+    pages = []
+    for i in range(0, len(all_rows), rows_per_page):
+        chunk = all_rows[i:i + rows_per_page]
+        page_idx = i // rows_per_page + 1
+        # Page label for multi-page sections
+        page_label = f"(Page {page_idx} of {total_pages})" if total_pages > 1 else ""
+        # Totals row only on the last page (and only if single page or last chunk)
+        show_totals = t if page_idx == total_pages else None
+        pages.append(tmpl.render(
+            submarket_name=submarket,
+            rows=chunk,
+            totals=show_totals,
+            page_label=page_label,
+        ))
+    return pages
 
 
 def _render_toc(env, config, page_map, city_photo_path=None):
@@ -357,15 +382,16 @@ def _render_quarterly_changes(env, config, data):
 
 def _render_pipeline(env, config, data):
     """
-    Render the development pipeline page.
-    Left column: Under Construction (grouped by year/quarter).
-    Right column: Planned/Proposed (two-column grid).
+    Render the development pipeline as two separate pages.
+    Returns (uc_html, proposed_html) tuple so each gets its own
+    page-counter increment for accurate TOC page numbers.
     """
     pipeline = data.get('pipeline', {})
     if not pipeline:
-        return None
+        return None, None
 
-    tmpl = env.get_template('page_pipeline.html')
+    uc_tmpl = env.get_template('page_pipeline_uc.html')
+    prop_tmpl = env.get_template('page_pipeline_proposed.html')
 
     # ── Under Construction ────────────────────────────────────────
     # Parse the 'Under Construction' sheet: rows are either group headers
@@ -444,13 +470,19 @@ def _render_pipeline(env, config, data):
             })
 
     if not uc_groups and not proposed_rows:
-        return None
+        return None, None
 
-    return tmpl.render(
+    uc_html = uc_tmpl.render(
         quarter_label=config.REPORT_LABEL,
         uc_groups=uc_groups,
+    ) if uc_groups else None
+
+    prop_html = prop_tmpl.render(
+        quarter_label=config.REPORT_LABEL,
         proposed_rows=proposed_rows,
-    )
+    ) if proposed_rows else None
+
+    return uc_html, prop_html
 
 
 def _render_long_term_submarkets(env, config, charts, anchor_id=None):
@@ -624,12 +656,14 @@ def build_page_sequence(env, config, data, charts):
         print("  Rendered: Major Sales")
 
     # ── 4b. Development Pipeline ─────────────────────────────────
-    # anchor is hard-coded in template as id="development-pipeline"
-    # Pipeline renders 2 physical PDF pages (UC + Planned/Proposed divs)
-    pipeline_page = _render_pipeline(env, config, data)
-    _add(pipeline_page, anchor='development-pipeline', pdf_pages=2)
-    if pipeline_page:
-        print("  Rendered: Development Pipeline")
+    # Split into two separate pages for correct TOC pagination
+    pipeline_uc, pipeline_prop = _render_pipeline(env, config, data)
+    _add(pipeline_uc, anchor='development-pipeline')
+    if pipeline_uc:
+        print("  Rendered: Development Pipeline - Under Construction")
+    _add(pipeline_prop)
+    if pipeline_prop:
+        print("  Rendered: Development Pipeline - Planned/Proposed")
 
     # ── 5. Submarket sections (KPI → comp set → large availability) ──
     # Anchor mapping for the four major submarkets
@@ -653,10 +687,11 @@ def build_page_sequence(env, config, data, charts):
         if perf:
             print(f"  Rendered: {submarket} competitive set performance")
 
-        avail_page = _render_large_availability(env, config, data, submarket)
-        _add(avail_page)
-        if avail_page:
-            print(f"  Rendered: {submarket} large availability")
+        avail_pages = _render_large_availability(env, config, data, submarket)
+        for ap in avail_pages:
+            _add(ap)
+        if avail_pages:
+            print(f"  Rendered: {submarket} large availability ({len(avail_pages)} page(s))")
 
     # ── 6. Micromarket performance pages ─────────────────────────
     first_micro = True
@@ -705,10 +740,11 @@ def build_page_sequence(env, config, data, charts):
     # ── 9. Building lists (all regions) ──────────────────────────
     building_list_data = data.get('building_list', {})
     for submarket in building_list_data.keys():
-        bl_page = _render_building_list(env, config, data, submarket)
-        _add(bl_page)
-        if bl_page:
-            print(f"  Rendered: {submarket} building list")
+        bl_pages = _render_building_list(env, config, data, submarket)
+        for bp in bl_pages:
+            _add(bp)
+        if bl_pages:
+            print(f"  Rendered: {submarket} building list ({len(bl_pages)} page(s))")
 
     # ── Build TOC now that page numbers are known ─────────────────
     # Place an austin_skyline.jpg in reports/static/ to populate the TOC photo.

@@ -1,0 +1,30 @@
+<!-- Planned / Proposed (Page 2 of 2) -->
+<div class="pipeline-page proposed-page">
+    <div class="section-header">
+        <div class="quarter-tag">{{ quarter_label }}</div>
+        <h2>Development Pipeline</h2>
+        <div class="page-of-label">(Page 2 of 2)</div>
+    </div>
+    <hr class="section-divider">
+
+    <div class="proposed-header">Planned / Proposed</div>
+    <table class="pipeline-table dev-table proposed-table">
+        <thead>
+            <tr>
+                <th>Name (Office Portion)</th>
+                <th>Size (SF)</th>
+                <th>Submarket</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in proposed_rows %}
+            <tr>
+                <td>{{ row.name }}</td>
+                <td>{{ row.size }}</td>
+                <td>{{ row.submarket }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p class="pipeline-footnote">All square footages are representative of office space only.</p>
+</div>

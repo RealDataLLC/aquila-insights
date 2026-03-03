@@ -140,9 +140,10 @@ body {
 
 .toc-heading {
     font-size: 26pt;
-    font-weight: 400;
+    font-weight: 300;
     font-style: italic;
-    color: var(--copper);
+    font-family: 'Futura LT', 'Futura Light', 'Futura', 'Arial', sans-serif;
+    color: var(--navy);
     letter-spacing: 3px;
     text-transform: uppercase;
     margin-bottom: 10px;
@@ -151,7 +152,7 @@ body {
 
 .toc-rule {
     border: none;
-    border-top: 2px solid var(--brass);
+    border-top: 2px solid var(--glass-blue);
     margin-bottom: 20px;
 }
 
@@ -237,7 +238,7 @@ body {
     font-size: 6pt;
     color: var(--text-light);
     line-height: 1.5;
-    margin-top: 20px;
+    margin-top: auto;         /* push to very bottom of flex column */
     padding-top: 12px;
     border-top: 1px solid var(--border-gray);
     max-width: 85%;
@@ -499,9 +500,11 @@ body {
 .sales-table-grid {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 0 12px;
+    border-spacing: 40px 12px;   /* 40px horizontal gap between columns */
     margin-top: 8px;
     margin-bottom: 0;
+    margin-left: -20px;          /* offset half the gap so columns center on page */
+    margin-right: -20px;
 }
 
 .sales-table-grid thead {
@@ -511,14 +514,15 @@ body {
 .sales-row td.sale-cell {
     width: 50%;
     vertical-align: top;
-    padding: 0 10px 12px 0;
-    border-bottom: none;
+    padding: 0 0 12px 0;
+    border: none;                /* no borders at all between cells */
     background-color: transparent;
     text-align: left;
 }
 
 .sales-row td.sale-cell:last-child {
     padding-right: 0;
+    padding-left: 0;
 }
 
 .sale-cell {
@@ -657,14 +661,15 @@ body {
 }
 
 .pipeline-quarter-header {
-    background-color: var(--navy);
-    color: white;
+    background-color: white;
+    color: var(--navy);
     font-size: 7pt;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
     padding: 3px 8px;
     margin-bottom: 0;
+    border-bottom: 1px solid var(--border-gray);
 }
 
 /* RIGHT column: Planned/Proposed */
