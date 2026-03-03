@@ -1116,12 +1116,67 @@ Charts:     https://realdatallc.github.io/aquila-insights/charts/{category}/{fil
 
 ---
 
-**Last Updated:** 2026-02-27
-**Document Version:** 5.0.0
+**Last Updated:** 2026-03-02
+**Document Version:** 5.3.0
 
 ---
 
 ## Changelog
+
+### Version 5.3.0 (2026-03-02)
+- **Report layout and pagination improvements** (`reports/static/report.css`, `reports/report_assembler.py`, `reports/templates/`):
+  - **TOC disclaimer pushed to bottom** (`report.css`, `.toc-disclaimer`): Changed `margin-top: 20px` → `margin-top: auto` so the disclaimer text sits at the very bottom of the TOC page in PDF output (leverages existing `flex-direction: column` on `.toc-page`)
+  - **Major Sales column gap — clean white space** (`report.css`, `.sales-table-grid`): Replaced padding-based gap with `border-spacing: 40px 12px` on the grid table; added `border: none` on `.sales-row td.sale-cell` to eliminate any visible dividing line between the two card columns; negative margins (`margin-left/right: -20px`) keep the columns centered on the page
+  - **Pipeline UC quarter row — white/navy style** (`report.css`, `.pipeline-quarter-header`): Changed from navy background + white text to white background + navy text (`background-color: white; color: var(--navy)`) with a subtle bottom border
+  - **Multi-page chunking pagination for building lists** (`report_assembler.py`, `_render_building_list()`): Function now returns a `list` of HTML page strings instead of a single string; rows chunked at 35 per page; each page receives a `page_label` of `(Page X of Y)` when total pages > 1; totals row (`<tfoot>`) appears only on the last page
+  - **Multi-page chunking pagination for large availabilities** (`report_assembler.py`, `_render_large_availability()`): Same pattern as building lists — returns list of pages, 35 rows/page, `(Page X of Y)` label
+  - **`page_label` support in templates** (`page_building_list.html`, `page_large_availability.html`): `BUILDING LIST` / `LARGE AVAILABILITIES` sub-label now appends `{{ page_label }}` (e.g. `BUILDING LIST (Page 1 of 2)`)
+  - **`build_page_sequence()` updated** (`report_assembler.py`): Iterates over paginated lists for large availability and building list sections; pipeline still uses `(uc_html, prop_html)` tuple pattern from v5.2.0
+  - **New pipeline templates** (`reports/templates/`):
+    - `page_pipeline_uc.html` — Under Construction only (Page 1 of 2); retains `id="development-pipeline"` anchor for TOC
+    - `page_pipeline_proposed.html` — Planned/Proposed only (Page 2 of 2); standalone `.pipeline-page` class
+
+### Version 5.2.0 (2026-03-02)
+- **Report layout and style fixes** (`reports/static/report.css`, `reports/static/tables.css`, `reports/report_assembler.py`, `reports/templates/`):
+  - **TOC heading style** (`report.css`, `.toc-heading`): Font weight changed 400→300 (Futura Light), font family explicitly set to `'Futura LT', 'Futura Light', 'Futura', 'Arial', sans-serif`, color changed from Copper (`var(--copper)`) to Navy (`var(--navy)`)
+  - **TOC rule color** (`report.css`, `.toc-rule`): Horizontal rule below TOC heading changed from Brass to Glass Blue (`var(--glass-blue)`)
+  - **Major Sales column gap** (`report.css`, `.sales-row td.sale-cell:last-child`): Added `padding-left: 20px` to the right card column for a visible white-space gap between the two sale card columns
+  - **Second column left-alignment** (`tables.css`): Added `th/td:nth-child(2) { text-align: left }` rules to `.avail-table` (Large Availability) and `.sublease-table` (Sublease Report) so the property/building name column is left-aligned when column 1 is a row-number index
+  - **Building list TOTAL suppression** (`report_assembler.py`, `_render_building_list()`): Totals row passed as `None` when `len(rows) > 35`, suppressing the TOTAL `<tfoot>` row on long building lists (e.g. CBD at 55 rows) that overflow to a second page
+  - **Pipeline split into two page-counted sections** (`report_assembler.py`):
+    - `_render_pipeline()` now returns `(uc_html, proposed_html)` tuple instead of a single combined string
+    - `build_page_sequence()` unpacks the tuple and calls `_add()` twice (each section gets its own page counter increment for accurate TOC page numbers)
+    - Removed `pdf_pages=2` workaround on the old single `_add()` call
+  - **New pipeline templates** (`reports/templates/`):
+    - `page_pipeline_uc.html` — Under Construction only (PAGE 1 of 2); retains `id="development-pipeline"` anchor for TOC
+    - `page_pipeline_proposed.html` — Planned/Proposed only (PAGE 2 of 2); standalone `.pipeline-page` class
+  - **Vacancy line color fix** (`reports/industrial_chart_builder.py`, `build_industrial_rental_chart()`): Vacancy Rate line changed from Copper to Glass Blue Alt (`GLASS_ALT = #88ABC8`) to match office chart color hierarchy; secondary y-axis range changed from `rangemode='nonnegative'` to `range=[0, None]`
+
+### Version 5.1.0 (2026-03-02)
+- **Report design improvements** across office and industrial quarterly report generators:
+  - **Arrow icon assets** (`reports/static/arrows/`): New PNG icons for KPI direction indicators
+    - `arrow_up.png` — Greenspace (#556B30) filled circle with white upward triangle (22×22 px)
+    - `arrow_down.png` — Signal (#BF4040) filled circle with white downward triangle (22×22 px)
+    - Generated via PIL at 2× scale (44px) then downsampled with LANCZOS for crisp rendering
+  - **KPI template updates** (`page_kpi_header.html`, `page_industrial_kpi.html`): Replaced Unicode arrow spans (`&#9650;`/`&#9660;`) with conditional `<img>` tags using base64 data URIs; falls back to Unicode if PNGs not found
+  - **Assembler updates** (`report_assembler.py`, `industrial_report_assembler.py`):
+    - Added `_load_arrow_uris(static_dir)` helper: reads `arrows/arrow_up.png` and `arrows/arrow_down.png`, encodes as `data:image/png;base64,...` URIs
+    - `_render_kpi_header()` and `_render_industrial_kpi()` now accept and pass `arrow_uris` dict to templates
+    - Arrow URIs loaded once at start of `build_page_sequence()`
+  - **CSS additions** (`report.css`):
+    - `.kpi-arrow-img`: `width: 22px; height: 22px; vertical-align: middle; margin-right: 4px`
+    - `.toc-entry`: `margin-bottom` increased for more vertical breathing room
+    - `.toc-section-group`: increased `margin-top` and `margin-bottom`
+    - `.toc-disclaimer`: `margin-top: auto` to push disclaimer to bottom of TOC flex column
+    - `.section-divider`: `border-top` color changed from Navy to Glass Blue (`var(--glass-blue)`)
+    - `.section-header h2`, `.lt-heading`: `font-weight` changed from 400 → 300 (Futura Light)
+    - `.pipeline-blurb`: `max-width` changed from `45%` → `100%` (full page width)
+    - `.page-of-label`: new class for "Page X of Y" sub-labels (7pt, letter-spaced, `var(--text-light)`)
+  - **TOC layout** (`page_toc.html`, `page_industrial_toc.html`): Moved disclaimer `<div>` outside `.toc-body` to be a direct child of `.toc-page`, paired with `margin-top: auto` to push it to the bottom of the page
+  - **Pipeline page headers** (`page_pipeline.html`, `page_industrial_pipeline.html`): Added `(Page 1 of 2)` / `(Page 2 of 2)` sub-labels below section h2 using `.page-of-label` class
+  - **Vacancy/Absorption charts** (`chart_builder.py`): Added `fig.update_yaxes(rangemode='nonnegative', secondary_y=True)` to `build_vacancy_sf_chart()`, `build_long_term_vacancy_chart()`, `build_absorption_chart()`, `build_cbd_suburban_vacancy_chart()` — secondary y-axis (vacancy/occupancy rate %) now always starts at 0%
+  - **Industrial rental chart** (`industrial_chart_builder.py`): Added same `rangemode='nonnegative'` to `build_industrial_rental_chart()` secondary y-axis
+  - **Rental rate chart Opex color** (`chart_builder.py`, `build_rental_chart()`): Opex stacked bar changed from Concrete (`#AAA9A8`) to Glass Blue (`#C2DAF1`) for better brand hierarchy
 
 ### Version 5.0.0 (2026-02-27)
 - **MAJOR: Repository architecture refactoring**
