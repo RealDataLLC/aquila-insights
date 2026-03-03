@@ -20,6 +20,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from dotenv import load_dotenv
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+from aquila.charts import write_chart_html
 
 
 def main():
@@ -686,7 +687,7 @@ def main():
 
         # Save chart
         filename = f'charts/office/requirements_demand_by_tenant_size_{market_code.lower()}.html'
-        fig.write_html(filename)
+        write_chart_html(fig, filename)
         print(f"    [OK] Saved {filename}")
 
     # ============================================================================

@@ -10,6 +10,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+from aquila.charts import write_chart_html
 
 
 def main():
@@ -115,7 +116,7 @@ def main():
 
     # Save to charts directory
     output_file = 'charts/property-management/ams_managed_properties_kpi.html'
-    fig.write_html(output_file)
+    write_chart_html(fig, output_file)
     print(f"OK: Chart saved to {output_file}")
 
     # Print summary

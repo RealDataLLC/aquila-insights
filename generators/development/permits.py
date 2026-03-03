@@ -32,6 +32,7 @@ except ImportError as e:
 import time
 
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+from aquila.charts import add_aquila_logo
 
 # Base directory for output (absolute path avoids OneDrive sync issues)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +42,7 @@ OUTPUT_DIR = os.path.join(BASE_DIR, 'charts', 'development')
 def save_chart(fig, filename):
     """Save chart with retry logic to handle OneDrive file locks"""
     filepath = os.path.join(OUTPUT_DIR, filename)
+    add_aquila_logo(fig)
     for attempt in range(3):
         try:
             fig.write_html(filepath)

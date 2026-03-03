@@ -31,6 +31,7 @@ import re
 from datetime import datetime
 from dotenv import load_dotenv
 from aquila_graphing_tools import initialize_supabase_connection, aquila_styled_line_chart
+from aquila.charts import write_chart_html
 import pandas as pd
 import numpy as np
 
@@ -198,7 +199,7 @@ def generate_charts(occ_data, rent_data, property_type):
     )
     fig_occ.update_yaxes(tickformat='.1%', title='Occupancy Rate')
     fig_occ.update_xaxes(title='Quarter')
-    fig_occ.write_html(occ_filename)
+    write_chart_html(fig_occ, occ_filename)
     print(f"  [OK] Saved {occ_filename}")
 
     # Rent chart - drop NaN values before plotting
@@ -213,7 +214,7 @@ def generate_charts(occ_data, rent_data, property_type):
     )
     fig_rent.update_yaxes(tickprefix='$', tickformat=',.2f', title='Rent ($/SF)')
     fig_rent.update_xaxes(title='Quarter')
-    fig_rent.write_html(rent_filename)
+    write_chart_html(fig_rent, rent_filename)
     print(f"  [OK] Saved {rent_filename}")
 
 

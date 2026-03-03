@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 from dotenv import load_dotenv
 from aquila_graphing_tools import aquila_styled_line_chart
+from aquila.charts import write_chart_html
 from datetime import datetime
 import sys
 import re
@@ -112,7 +113,7 @@ def generate_office_employment_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/economic-indicators/austin_employment_office_sectors.html')
+    write_chart_html(fig, 'charts/economic-indicators/austin_employment_office_sectors.html')
     print("    [OK] Saved: charts/austin_employment_office_sectors.html")
 
 
@@ -136,7 +137,7 @@ def generate_industrial_employment_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/economic-indicators/austin_employment_industrial.html')
+    write_chart_html(fig, 'charts/economic-indicators/austin_employment_industrial.html')
     print("    [OK] Saved: charts/austin_employment_industrial.html")
 
 
@@ -160,7 +161,7 @@ def generate_retail_employment_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/economic-indicators/austin_employment_retail.html')
+    write_chart_html(fig, 'charts/economic-indicators/austin_employment_retail.html')
     print("    [OK] Saved: charts/austin_employment_retail.html")
 
 
@@ -204,7 +205,7 @@ def generate_tech_comparison_chart():
 
         # Save chart
         os.makedirs("charts", exist_ok=True)
-        fig.write_html('charts/economic-indicators/austin_vs_national_tech_employment.html')
+        write_chart_html(fig, 'charts/economic-indicators/austin_vs_national_tech_employment.html')
         print("    [OK] Saved: charts/austin_vs_national_tech_employment.html")
     else:
         print("    Warning: No overlapping data for tech employment comparison")
@@ -254,7 +255,7 @@ def generate_wage_comparison_chart():
 
         # Save chart
         os.makedirs("charts", exist_ok=True)
-        fig.write_html('charts/economic-indicators/austin_vs_dallas_vs_national_wage_growth.html')
+        write_chart_html(fig, 'charts/economic-indicators/austin_vs_dallas_vs_national_wage_growth.html')
         print("    [OK] Saved: charts/austin_vs_dallas_vs_national_wage_growth.html")
     else:
         print("    Warning: No overlapping data for wage comparison")
@@ -292,7 +293,7 @@ def generate_interest_rates_chart():
 
     # Save chart
     os.makedirs("charts", exist_ok=True)
-    fig.write_html('charts/economic-indicators/interest_rates_treasury_mortgage.html')
+    write_chart_html(fig, 'charts/economic-indicators/interest_rates_treasury_mortgage.html')
     print("    [OK] Saved: charts/interest_rates_treasury_mortgage.html")
 
 
@@ -355,7 +356,7 @@ def generate_inflation_chart():
 
         # Save chart
         os.makedirs("charts", exist_ok=True)
-        fig.write_html('charts/economic-indicators/inflation_cpi_ppi_office.html')
+        write_chart_html(fig, 'charts/economic-indicators/inflation_cpi_ppi_office.html')
         print("    [OK] Saved: charts/inflation_cpi_ppi_office.html")
     else:
         print("    Warning: No overlapping data for inflation/ppi comparison")

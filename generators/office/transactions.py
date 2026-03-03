@@ -15,6 +15,7 @@ import numpy as np
 import re
 import plotly.graph_objects as go
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+from aquila.charts import write_chart_html
 
 # Constants
 SQFT_PER_ACRE = 43560
@@ -373,7 +374,7 @@ def main():
         hovermode='x unified'
     )
 
-    fig_sf.write_html(OUTPUT_FILE_SF)
+    write_chart_html(fig_sf, OUTPUT_FILE_SF)
     print(f"Chart saved to: {OUTPUT_FILE_SF}")
 
     # ========== CHART 2: Transaction Count by Quarter and Platform ==========
@@ -444,7 +445,7 @@ def main():
         hovermode='x unified'
     )
 
-    fig_count.write_html(OUTPUT_FILE_COUNT)
+    write_chart_html(fig_count, OUTPUT_FILE_COUNT)
     print(f"Chart saved to: {OUTPUT_FILE_COUNT}")
 
     return quarterly_sf, quarterly_count

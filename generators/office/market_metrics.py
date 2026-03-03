@@ -27,6 +27,7 @@ from aquila_graphing_tools import (
     AQUILA_FONT,
     commit_and_push_all,
 )
+from aquila.charts import write_chart_html
 
 # Load environment
 load_dotenv('aquila_graph.env')
@@ -259,30 +260,33 @@ def main():
 
             # Vacancy rate — all share same scale
             path = os.path.join(OUTPUT_DIR, f'office_vacancy_rate_{slug}.html')
-            build_vacancy_chart(
+            fig = build_vacancy_chart(
                 df, display_name, line_color,
                 y_range=VACANCY_RANGE, dtick=VACANCY_DTICK,
-            ).write_html(path)
+            )
+            write_chart_html(fig, path)
             charts_saved.append(path)
             print(f"  Saved: {path}")
 
             # Rental rate (stacked bar: base + opex) — Domain uses own scale
             path = os.path.join(OUTPUT_DIR, f'office_rental_rate_{slug}.html')
-            build_rental_chart(
+            fig = build_rental_chart(
                 df, display_name,
                 y_range=None if is_domain else RENT_RANGE_SHARED,
                 dtick=None if is_domain else RENT_DTICK_SHARED,
-            ).write_html(path)
+            )
+            write_chart_html(fig, path)
             charts_saved.append(path)
             print(f"  Saved: {path}")
 
             # Operating expenses — Domain uses own scale
             path = os.path.join(OUTPUT_DIR, f'office_opex_{slug}.html')
-            build_opex_chart(
+            fig = build_opex_chart(
                 df, display_name, line_color,
                 y_range=None if is_domain else OPEX_RANGE_SHARED,
                 dtick=None if is_domain else OPEX_DTICK_SHARED,
-            ).write_html(path)
+            )
+            write_chart_html(fig, path)
             charts_saved.append(path)
             print(f"  Saved: {path}")
 

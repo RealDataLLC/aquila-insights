@@ -23,6 +23,7 @@ from plotly.subplots import make_subplots
 from datetime import datetime
 from dotenv import load_dotenv
 from aquila_graphing_tools import initialize_supabase_connection, AQUILA_COLORS, AQUILA_FONT
+from aquila.charts import write_chart_html
 
 def main():
     # Load environment variables
@@ -339,7 +340,7 @@ def main():
         margin=dict(t=100, b=50, l=50, r=50),
         height=550  # Increased height
     )
-    fig1.write_html("charts/office/requirements_sf_total.html")
+    write_chart_html(fig1, "charts/office/requirements_sf_total.html")
     print("    [OK] Saved charts/office/requirements_sf_total.html")
 
     # 5c. Chart 2: Average SF with Count (dual-axis)
@@ -401,7 +402,7 @@ def main():
         legend=dict(orientation="h", y=-0.2),
         margin=dict(t=100, b=50, l=50, r=50)
     )
-    fig2.write_html("charts/office/requirements_sf_avg.html")
+    write_chart_html(fig2, "charts/office/requirements_sf_avg.html")
     print("    [OK] Saved charts/office/requirements_sf_avg.html")
 
     # 5d. Chart 3: Demand by Industry (donut chart)
@@ -470,7 +471,7 @@ def main():
         height=650,
         margin=dict(t=100, b=80, l=50, r=50)
     )
-    fig3.write_html("charts/office/requirements_sf_avg_by_industry.html")
+    write_chart_html(fig3, "charts/office/requirements_sf_avg_by_industry.html")
     print("    [OK] Saved charts/office/requirements_sf_avg_by_industry.html")
 
     # 5e. Chart 4: Requirements by Size Range
@@ -533,7 +534,7 @@ def main():
         height=500,
         margin=dict(t=80, b=80, l=120, r=50)
     )
-    fig4.write_html("charts/office/requirements_by_size_range.html")
+    write_chart_html(fig4, "charts/office/requirements_by_size_range.html")
     print("    [OK] Saved charts/office/requirements_by_size_range.html")
 
     # ============================================================================
@@ -684,7 +685,7 @@ def main():
             margin=dict(t=100, b=100, l=80, r=50)
         )
 
-        fig5.write_html("charts/office/requirements_vs_absorption_office.html")
+        write_chart_html(fig5, "charts/office/requirements_vs_absorption_office.html")
         print("    [OK] Saved charts/office/requirements_vs_absorption_office.html")
 
     # ============================================================================
@@ -807,7 +808,7 @@ def main():
         barmode='overlay'
     )
 
-    fig6.write_html('charts/office/requirements_yoy_rolling_12m.html')
+    write_chart_html(fig6, 'charts/office/requirements_yoy_rolling_12m.html')
     print('  [OK] Saved charts/office/requirements_yoy_rolling_12m.html')
 
     # ============================================================================
@@ -1140,7 +1141,7 @@ def main():
         hovermode='x unified',
     )
 
-    fig7.write_html('charts/office/requirements_demand_by_tenant_size.html')
+    write_chart_html(fig7, 'charts/office/requirements_demand_by_tenant_size.html')
     print('  [OK] Saved charts/office/requirements_demand_by_tenant_size.html')
 
     # ============================================================================
