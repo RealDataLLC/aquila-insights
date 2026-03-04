@@ -10,24 +10,28 @@
         <div class="kpi-type-label">INDUSTRIAL</div>
         <div class="kpi-grid-row">
             <div class="kpi-card">
-                <div class="kpi-arrow {{ 'up' if industrial_kpi.net_absorption >= 0 else 'down' }}">{{ '&#9650;' if industrial_kpi.net_absorption >= 0 else '&#9660;' }}</div>
+                {% set _ind_abs_dir = 'up' if industrial_kpi.net_absorption >= 0 else 'down' %}
+                <div class="kpi-arrow {{ _ind_abs_dir }}">{% if _ind_abs_dir == 'up' %}{% if arrow_up_uri %}<img src="{{ arrow_up_uri }}" class="kpi-arrow-img" alt="up">{% else %}&#9650;{% endif %}{% else %}{% if arrow_down_uri %}<img src="{{ arrow_down_uri }}" class="kpi-arrow-img" alt="down">{% else %}&#9660;{% endif %}{% endif %}</div>
                 <div class="kpi-big-value">{{ "{:,.0f}".format(industrial_kpi.net_absorption|abs) }} SF</div>
                 <div class="kpi-card-label">Net Absorption</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-arrow {{ 'down' if industrial_kpi.avg_rent_change is defined and industrial_kpi.avg_rent_change < 0 else 'up' }}">{{ '&#9660;' if industrial_kpi.avg_rent_change is defined and industrial_kpi.avg_rent_change < 0 else '&#9650;' }}</div>
+                {% set _ind_rent_dir = 'down' if industrial_kpi.avg_rent_change is defined and industrial_kpi.avg_rent_change < 0 else 'up' %}
+                <div class="kpi-arrow {{ _ind_rent_dir }}">{% if _ind_rent_dir == 'up' %}{% if arrow_up_uri %}<img src="{{ arrow_up_uri }}" class="kpi-arrow-img" alt="up">{% else %}&#9650;{% endif %}{% else %}{% if arrow_down_uri %}<img src="{{ arrow_down_uri }}" class="kpi-arrow-img" alt="down">{% else %}&#9660;{% endif %}{% endif %}</div>
                 <div class="kpi-big-value">${{ "{:,.2f}".format(industrial_kpi.avg_rent) }}</div>
                 <div class="kpi-card-label">Avg. Base Rent</div>
             </div>
         </div>
         <div class="kpi-grid-row">
             <div class="kpi-card">
-                <div class="kpi-arrow {{ 'down' if industrial_kpi.vacancy_rate > 0.15 else 'up' }}">{{ '&#9660;' if industrial_kpi.vacancy_rate > 0.15 else '&#9650;' }}</div>
+                {% set _ind_vac_dir = 'down' if industrial_kpi.vacancy_rate > 0.15 else 'up' %}
+                <div class="kpi-arrow {{ _ind_vac_dir }}">{% if _ind_vac_dir == 'up' %}{% if arrow_up_uri %}<img src="{{ arrow_up_uri }}" class="kpi-arrow-img" alt="up">{% else %}&#9650;{% endif %}{% else %}{% if arrow_down_uri %}<img src="{{ arrow_down_uri }}" class="kpi-arrow-img" alt="down">{% else %}&#9660;{% endif %}{% endif %}</div>
                 <div class="kpi-big-value">{{ "{:.1%}".format(industrial_kpi.vacancy_rate) }}</div>
                 <div class="kpi-card-label">Direct &amp; Sublease Vacancy Rate</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-arrow {{ 'up' if industrial_kpi.nra_change >= 0 else 'down' }}">{{ '&#9650;' if industrial_kpi.nra_change >= 0 else '&#9660;' }}</div>
+                {% set _ind_nra_dir = 'up' if industrial_kpi.nra_change >= 0 else 'down' %}
+                <div class="kpi-arrow {{ _ind_nra_dir }}">{% if _ind_nra_dir == 'up' %}{% if arrow_up_uri %}<img src="{{ arrow_up_uri }}" class="kpi-arrow-img" alt="up">{% else %}&#9650;{% endif %}{% else %}{% if arrow_down_uri %}<img src="{{ arrow_down_uri }}" class="kpi-arrow-img" alt="down">{% else %}&#9660;{% endif %}{% endif %}</div>
                 <div class="kpi-big-value">{{ "{:,.0f}".format(industrial_kpi.nra_change|abs) }} SF</div>
                 <div class="kpi-card-label">Market Size Change from Prior Quarter</div>
             </div>
@@ -39,24 +43,28 @@
         <div class="kpi-type-label">FLEX</div>
         <div class="kpi-grid-row">
             <div class="kpi-card">
-                <div class="kpi-arrow {{ 'up' if flex_kpi.net_absorption >= 0 else 'down' }}">{{ '&#9650;' if flex_kpi.net_absorption >= 0 else '&#9660;' }}</div>
+                {% set _flex_abs_dir = 'up' if flex_kpi.net_absorption >= 0 else 'down' %}
+                <div class="kpi-arrow {{ _flex_abs_dir }}">{% if _flex_abs_dir == 'up' %}{% if arrow_up_uri %}<img src="{{ arrow_up_uri }}" class="kpi-arrow-img" alt="up">{% else %}&#9650;{% endif %}{% else %}{% if arrow_down_uri %}<img src="{{ arrow_down_uri }}" class="kpi-arrow-img" alt="down">{% else %}&#9660;{% endif %}{% endif %}</div>
                 <div class="kpi-big-value">{{ "{:,.0f}".format(flex_kpi.net_absorption|abs) }} SF</div>
                 <div class="kpi-card-label">Net Absorption</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-arrow {{ 'down' if flex_kpi.avg_rent_change is defined and flex_kpi.avg_rent_change < 0 else 'up' }}">{{ '&#9660;' if flex_kpi.avg_rent_change is defined and flex_kpi.avg_rent_change < 0 else '&#9650;' }}</div>
+                {% set _flex_rent_dir = 'down' if flex_kpi.avg_rent_change is defined and flex_kpi.avg_rent_change < 0 else 'up' %}
+                <div class="kpi-arrow {{ _flex_rent_dir }}">{% if _flex_rent_dir == 'up' %}{% if arrow_up_uri %}<img src="{{ arrow_up_uri }}" class="kpi-arrow-img" alt="up">{% else %}&#9650;{% endif %}{% else %}{% if arrow_down_uri %}<img src="{{ arrow_down_uri }}" class="kpi-arrow-img" alt="down">{% else %}&#9660;{% endif %}{% endif %}</div>
                 <div class="kpi-big-value">${{ "{:,.2f}".format(flex_kpi.avg_rent) }}</div>
                 <div class="kpi-card-label">Avg. Base Rent</div>
             </div>
         </div>
         <div class="kpi-grid-row">
             <div class="kpi-card">
-                <div class="kpi-arrow {{ 'up' if flex_kpi.vacancy_rate <= 0.15 else 'down' }}">{{ '&#9650;' if flex_kpi.vacancy_rate <= 0.15 else '&#9660;' }}</div>
+                {% set _flex_vac_dir = 'up' if flex_kpi.vacancy_rate <= 0.15 else 'down' %}
+                <div class="kpi-arrow {{ _flex_vac_dir }}">{% if _flex_vac_dir == 'up' %}{% if arrow_up_uri %}<img src="{{ arrow_up_uri }}" class="kpi-arrow-img" alt="up">{% else %}&#9650;{% endif %}{% else %}{% if arrow_down_uri %}<img src="{{ arrow_down_uri }}" class="kpi-arrow-img" alt="down">{% else %}&#9660;{% endif %}{% endif %}</div>
                 <div class="kpi-big-value">{{ "{:.1%}".format(flex_kpi.vacancy_rate) }}</div>
                 <div class="kpi-card-label">Direct &amp; Sublease Vacancy Rate</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-arrow {{ 'up' if flex_kpi.nra_change >= 0 else 'down' }}">{{ '&#9650;' if flex_kpi.nra_change >= 0 else '&#9660;' }}</div>
+                {% set _flex_nra_dir = 'up' if flex_kpi.nra_change >= 0 else 'down' %}
+                <div class="kpi-arrow {{ _flex_nra_dir }}">{% if _flex_nra_dir == 'up' %}{% if arrow_up_uri %}<img src="{{ arrow_up_uri }}" class="kpi-arrow-img" alt="up">{% else %}&#9650;{% endif %}{% else %}{% if arrow_down_uri %}<img src="{{ arrow_down_uri }}" class="kpi-arrow-img" alt="down">{% else %}&#9660;{% endif %}{% endif %}</div>
                 <div class="kpi-big-value">{{ "{:,.0f}".format(flex_kpi.nra_change|abs) }} SF</div>
                 <div class="kpi-card-label">Market Size Change from Prior Quarter</div>
             </div>

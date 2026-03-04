@@ -16,7 +16,7 @@ from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 
 # Import shared chart primitives from office chart builder
 from reports.chart_builder import (
-    NAVY, GLASS_BLUE, COPPER, BRASS, GREENSPACE, CONCRETE,
+    NAVY, GLASS_BLUE, GLASS_ALT, COPPER, BRASS, GREENSPACE, CONCRETE,
     LAYOUT_DEFAULTS, _apply_axes,
     build_vacancy_sf_chart, build_absorption_chart,
 )
@@ -55,14 +55,15 @@ def build_industrial_rental_chart(df):
             x=df['quarter'], y=df['total_vacancy_rate'],
             name='Total Vacancy Rate',
             mode='lines+markers',
-            line=dict(color=COPPER, width=2),
-            marker=dict(size=5, color=COPPER),
+            line=dict(color=GLASS_ALT, width=2),
+            marker=dict(size=5, color=GLASS_ALT),
         ),
         secondary_y=True,
     )
 
     fig.update_layout(**LAYOUT_DEFAULTS)
     _apply_axes(fig, y1_title='Rent ($/SF/YR)', y2_title='Total Vacancy Rate', y2_tickformat='.0%')
+    fig.update_yaxes(range=[0, None], secondary_y=True)
 
     return fig
 

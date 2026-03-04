@@ -109,6 +109,12 @@ tbody tr:nth-child(even) {
     font-weight: 400;
 }
 
+/* Second column (property name) left-aligned when col 1 is a row-number index */
+.avail-table thead th:nth-child(2),
+.avail-table tbody td:nth-child(2) {
+    text-align: left;
+}
+
 /* ── Major Leases Table ────────────────────────────────────── */
 .leases-table {
     margin-top: 16px;
@@ -140,6 +146,12 @@ tbody tr:nth-child(even) {
 
 .sublease-table tbody td {
     font-size: 7.5pt;
+}
+
+/* Second column (building name) left-aligned when col 1 is a row-number index */
+.sublease-table thead th:nth-child(2),
+.sublease-table tbody td:nth-child(2) {
+    text-align: left;
 }
 
 /* ── Availability Matrix Tables ────────────────────────────── */

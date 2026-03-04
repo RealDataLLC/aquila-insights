@@ -12,12 +12,13 @@ from plotly.subplots import make_subplots
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 
 # ── Brand Color Aliases ──────────────────────────────────────
-NAVY = AQUILA_COLORS[0]       # #172344
-GLASS_BLUE = AQUILA_COLORS[1] # #C2DAF1
-COPPER = AQUILA_COLORS[2]     # #AB6D3A
-BRASS = AQUILA_COLORS[3]      # #DEB76D
-GREENSPACE = AQUILA_COLORS[4] # #556B30
-CONCRETE = AQUILA_COLORS[5]   # #AAA9A8
+NAVY       = AQUILA_COLORS[0]  # #172344
+GLASS_BLUE = AQUILA_COLORS[1]  # #C2DAF1
+GLASS_ALT  = AQUILA_COLORS[2]  # #88ABC8  (vacancy rate lines)
+CONCRETE   = AQUILA_COLORS[3]  # #AAA9A8
+COPPER     = AQUILA_COLORS[4]  # #AB6D3A
+BRASS      = AQUILA_COLORS[5]  # #DEB76D
+GREENSPACE = AQUILA_COLORS[6]  # #556B30
 
 # ── Shared Layout Config ─────────────────────────────────────
 LAYOUT_DEFAULTS = dict(
@@ -59,7 +60,7 @@ def _apply_axes(fig, y1_title=None, y2_title=None, y2_tickformat=None):
         fig.update_yaxes(
             title_text=y2_title,
             title_font=dict(size=12),
-            tickfont=dict(size=12, color=COPPER),
+            tickfont=dict(size=12, color='black'),
             showgrid=False,
             secondary_y=True,
         )
@@ -98,14 +99,15 @@ def build_vacancy_sf_chart(df):
             x=df['quarter'], y=df['total_vacancy_rate'],
             name='Total Vacancy Rate',
             mode='lines+markers',
-            line=dict(color=COPPER, width=2),
-            marker=dict(size=5, color=COPPER),
+            line=dict(color=CONCRETE, width=2),
+            marker=dict(size=5, color=CONCRETE),
         ),
         secondary_y=True,
     )
 
     fig.update_layout(**LAYOUT_DEFAULTS, barmode='stack')
     _apply_axes(fig, y1_title='Vacant SF', y2_title='Total Vacancy Rate', y2_tickformat='.0%')
+    fig.update_yaxes(range=[0, df['total_vacancy_rate'].max()+.05], secondary_y=True)
 
     return fig
 
@@ -133,14 +135,18 @@ def build_absorption_chart(df):
             x=df['quarter'], y=df['occupancy_rate'],
             name='Occupancy Rate',
             mode='lines+markers',
-            line=dict(color=BRASS, width=2),
-            marker=dict(size=5, color=BRASS),
+            line=dict(color=CONCRETE, width=2),
+            marker=dict(size=5, color=CONCRETE),
         ),
         secondary_y=True,
     )
 
     fig.update_layout(**LAYOUT_DEFAULTS)
     _apply_axes(fig, y1_title='Total Net Absorption', y2_title='Total Occupancy Rate', y2_tickformat='.0%')
+    fig.update_yaxes(
+        range=[df['occupancy_rate'].min()-.05, 1],
+        secondary_y=True
+    )
 
     return fig
 
@@ -166,7 +172,7 @@ def build_rental_chart(df):
         go.Bar(
             x=df['quarter'], y=df['average_opex'],
             name='Opex',
-            marker_color=CONCRETE,
+            marker_color=GLASS_BLUE,
         ),
         secondary_y=False,
     )
@@ -176,14 +182,15 @@ def build_rental_chart(df):
             x=df['quarter'], y=df['total_vacancy_rate'],
             name='Total Vacancy Rate',
             mode='lines+markers',
-            line=dict(color=COPPER, width=2),
-            marker=dict(size=5, color=COPPER),
+            line=dict(color=CONCRETE, width=2),
+            marker=dict(size=5, color=CONCRETE),
         ),
         secondary_y=True,
     )
 
     fig.update_layout(**LAYOUT_DEFAULTS, barmode='stack')
     _apply_axes(fig, y1_title='Rent ($/SF/YR)', y2_title='Total Vacancy Rate', y2_tickformat='.0%')
+    fig.update_yaxes(range=[0, df['total_vacancy_rate'].max()+.05], secondary_y=True)
 
     return fig
 
@@ -212,7 +219,7 @@ def build_long_term_vacancy_chart(df, submarket_name):
         go.Scatter(
             x=df['quarter'], y=df['total_vacancy_rate'],
             name='Total Vacancy Rate', mode='lines',
-            line=dict(color=COPPER, width=2),
+            line=dict(color=GLASS_ALT, width=2),
         ),
         secondary_y=True,
     )
@@ -224,6 +231,7 @@ def build_long_term_vacancy_chart(df, submarket_name):
     )
     fig.update_layout(**layout, barmode='stack')
     _apply_axes(fig, y2_tickformat='.0%')
+    fig.update_yaxes(range=[0, None], secondary_y=True)
     fig.update_xaxes(tickfont=dict(size=9), dtick=2)
 
     return fig
@@ -297,6 +305,7 @@ def build_long_term_absorption(df_cw, df_cbd=None, df_nw=None, df_sw=None):
     )
     fig.update_layout(**layout, barmode='relative')
     _apply_axes(fig, y2_tickformat='.0%')
+    fig.update_yaxes(range=[0, 1.0], secondary_y=True)
     fig.update_xaxes(tickfont=dict(size=9), dtick=2)
 
     return fig
@@ -371,7 +380,7 @@ def build_cbd_suburban_vacancy_chart(df_cbd, df_suburban):
     fig.add_trace(go.Scatter(
         x=combined['quarter'], y=combined['combined_rate'],
         name='Total Vacancy Rate', mode='lines',
-        line=dict(color=COPPER, width=2),
+        line=dict(color=GLASS_ALT, width=2),
     ), secondary_y=True)
 
     layout = {**LAYOUT_DEFAULTS}
@@ -380,7 +389,8 @@ def build_cbd_suburban_vacancy_chart(df_cbd, df_suburban):
         orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=9)
     )
     fig.update_layout(**layout, barmode='stack')
-    _apply_axes(fig, y2_tickformat='.2f')
+    _apply_axes(fig, y2_tickformat='.0%')
+    fig.update_yaxes(range=[0, None], secondary_y=True)
     fig.update_xaxes(tickfont=dict(size=9), dtick=4, tickangle=-45)
     return fig
 

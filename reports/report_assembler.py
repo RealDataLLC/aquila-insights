@@ -8,8 +8,24 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import base64
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
+from weasyprint import HTML
+
+
+def _load_arrow_uris(static_dir):
+    """Load arrow PNG files as base64 data URIs for embedding in templates."""
+    uris = {}
+    for name in ('arrow_up', 'arrow_down'):
+        path = os.path.join(static_dir, 'arrows', f'{name}.png')
+        if os.path.exists(path):
+            with open(path, 'rb') as f:
+                b64 = base64.b64encode(f.read()).decode()
+            uris[name] = f'data:image/png;base64,{b64}'
+        else:
+            uris[name] = None  # fallback to Unicode in template
+    return uris
 
 
 def _build_jinja_env(templates_dir):
@@ -32,7 +48,7 @@ def _render_title_page(env, config):
     )
 
 
-def _render_kpi_header(env, config, data, submarket, anchor_id=None):
+def _render_kpi_header(env, config, data, submarket, anchor_id=None, arrow_uris=None):
     """Render a KPI header page for a submarket."""
     from reports.data_loader import get_kpi_data
     kpi = get_kpi_data(data, submarket)
@@ -49,11 +65,14 @@ def _render_kpi_header(env, config, data, submarket, anchor_id=None):
     k.vacancy_rate = kpi.get('vacancy_rate', 0) or 0
     k.under_construction = kpi.get('under_construction', 0) or 0
 
+    arrow_uris = arrow_uris or {}
     return tmpl.render(
         quarter_label=config.REPORT_LABEL,
         submarket_name=submarket.upper(),
         kpi=k,
         anchor_id=anchor_id,
+        arrow_up_uri=arrow_uris.get('arrow_up'),
+        arrow_down_uri=arrow_uris.get('arrow_down'),
     )
 
 
@@ -239,27 +258,20 @@ def _render_building_list(env, config, data, submarket, rows_per_page=35):
     class Totals:
         pass
     t = Totals()
-    t.nra = sum(r.nra for r in all_rows)
-    t.direct_vacant = sum(r.direct_vacant for r in all_rows)
-    t.sublease_vacant = sum(r.sublease_vacant for r in all_rows)
+    t.nra = sum(r.nra for r in rows)
+    t.direct_vacant = sum(r.direct_vacant for r in rows)
+    t.sublease_vacant = sum(r.sublease_vacant for r in rows)
 
-    total_pages = max(1, (len(all_rows) + rows_per_page - 1) // rows_per_page)
+    # Suppress the TOTAL row when the building list is long enough to overflow
+    # to a second page — WeasyPrint can't report overflow at render time, so
+    # we use a row-count threshold as a heuristic.
+    show_totals = t if len(rows) <= 35 else None
 
-    pages = []
-    for i in range(0, len(all_rows), rows_per_page):
-        chunk = all_rows[i:i + rows_per_page]
-        page_idx = i // rows_per_page + 1
-        # Page label for multi-page sections
-        page_label = f"(Page {page_idx} of {total_pages})" if total_pages > 1 else ""
-        # Totals row only on the last page (and only if single page or last chunk)
-        show_totals = t if page_idx == total_pages else None
-        pages.append(tmpl.render(
-            submarket_name=submarket,
-            rows=chunk,
-            totals=show_totals,
-            page_label=page_label,
-        ))
-    return pages
+    return tmpl.render(
+        submarket_name=submarket,
+        rows=rows,
+        totals=show_totals,
+    )
 
 
 def _render_toc(env, config, page_map, city_photo_path=None):
@@ -390,9 +402,6 @@ def _render_pipeline(env, config, data):
     if not pipeline:
         return None, None
 
-    uc_tmpl = env.get_template('page_pipeline_uc.html')
-    prop_tmpl = env.get_template('page_pipeline_proposed.html')
-
     # ── Under Construction ────────────────────────────────────────
     # Parse the 'Under Construction' sheet: rows are either group headers
     # (year like 2025/2026, quarter like 1Q/4Q) or data rows.
@@ -472,17 +481,20 @@ def _render_pipeline(env, config, data):
     if not uc_groups and not proposed_rows:
         return None, None
 
-    uc_html = uc_tmpl.render(
+    tmpl_uc = env.get_template('page_pipeline_uc.html')
+    tmpl_proposed = env.get_template('page_pipeline_proposed.html')
+
+    uc_html = tmpl_uc.render(
         quarter_label=config.REPORT_LABEL,
         uc_groups=uc_groups,
     ) if uc_groups else None
 
-    prop_html = prop_tmpl.render(
+    proposed_html = tmpl_proposed.render(
         quarter_label=config.REPORT_LABEL,
         proposed_rows=proposed_rows,
     ) if proposed_rows else None
 
-    return uc_html, prop_html
+    return uc_html, proposed_html
 
 
 def _render_long_term_submarkets(env, config, charts, anchor_id=None):
@@ -599,6 +611,9 @@ def build_page_sequence(env, config, data, charts):
     The TOC is built after all other pages are rendered so we can record
     accurate page numbers (position in the page list + 3 for title/TOC/QC offset).
     """
+    # ── Load arrow PNG assets ──────────────────────────────────────
+    arrow_uris = _load_arrow_uris(config.STATIC_DIR)
+
     # ── Helper to track anchor → page number ─────────────────────
     # Page numbering: title=1, TOC=2, then content starts at 3.
     # We offset content pages by 3 (title + TOC + 1 for 1-based).
@@ -629,7 +644,7 @@ def build_page_sequence(env, config, data, charts):
 
     # ── 2. Citywide ──────────────────────────────────────────────
     kpi_page = _render_kpi_header(env, config, data, 'Citywide',
-                                   anchor_id='citywide-kpi')
+                                   anchor_id='citywide-kpi', arrow_uris=arrow_uris)
     _add(kpi_page)
     if kpi_page:
         print("  Rendered: Citywide KPI header")
@@ -656,14 +671,14 @@ def build_page_sequence(env, config, data, charts):
         print("  Rendered: Major Sales")
 
     # ── 4b. Development Pipeline ─────────────────────────────────
-    # Split into two separate pages for correct TOC pagination
-    pipeline_uc, pipeline_prop = _render_pipeline(env, config, data)
-    _add(pipeline_uc, anchor='development-pipeline')
-    if pipeline_uc:
-        print("  Rendered: Development Pipeline - Under Construction")
-    _add(pipeline_prop)
-    if pipeline_prop:
-        print("  Rendered: Development Pipeline - Planned/Proposed")
+    # Split into two separate _add() calls so each page gets its own
+    # accurate page number in the TOC counter.
+    # The UC template has id="development-pipeline" for the TOC anchor.
+    uc_page, proposed_page = _render_pipeline(env, config, data)
+    _add(uc_page, anchor='development-pipeline')
+    _add(proposed_page)
+    if uc_page or proposed_page:
+        print("  Rendered: Development Pipeline (2 pages)")
 
     # ── 5. Submarket sections (KPI → comp set → large availability) ──
     # Anchor mapping for the four major submarkets
@@ -676,7 +691,7 @@ def build_page_sequence(env, config, data, charts):
     for submarket in config.SUBMARKETS_WITH_DETAIL:
         kpi_anchor, _perf_anchor = _submarket_anchors.get(submarket, (None, None))
         kpi_page = _render_kpi_header(env, config, data, submarket,
-                                       anchor_id=kpi_anchor)
+                                       anchor_id=kpi_anchor, arrow_uris=arrow_uris)
         _add(kpi_page, anchor=kpi_anchor)
         if kpi_page:
             print(f"  Rendered: {submarket} KPI header")
@@ -812,10 +827,18 @@ def generate_report(data, charts, config, html_only=False):
 
     # Convert to PDF
     print("  Converting to PDF...")
-    from weasyprint import HTML
-    html_obj = HTML(string=html_content, base_url=config.STATIC_DIR)
-    html_obj.write_pdf(config.OUTPUT_PDF)
-    print(f"  PDF saved: {config.OUTPUT_PDF}")
+    try:
+        html_obj = HTML(string=html_content, base_url=config.STATIC_DIR)
+        html_obj.write_pdf(config.OUTPUT_PDF)
+        print(f"  PDF saved: {config.OUTPUT_PDF}")
+    except ImportError as e:
+        print("  ERROR: WeasyPrint is not installed. Skipping PDF generation.")
+        print(f"  Details: {e}")
+        return html_path
+    except Exception as e:
+        print("  ERROR: An error occurred during PDF generation.")
+        print(f"  Details: {e}")
+        return html_path
 
     print("=" * 60)
     print("REPORT GENERATION COMPLETE")

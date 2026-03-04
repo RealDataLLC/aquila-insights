@@ -136,19 +136,19 @@ body {
     padding-top: 10px;
     display: flex;
     flex-direction: column;
+    height:100%;
 }
 
 .toc-heading {
     font-size: 26pt;
     font-weight: 300;
-    font-style: italic;
-    font-family: 'Futura LT', 'Futura Light', 'Futura', 'Arial', sans-serif;
     color: var(--navy);
     letter-spacing: 3px;
     text-transform: uppercase;
     margin-bottom: 10px;
     line-height: 1;
 }
+
 
 .toc-rule {
     border: none;
@@ -163,8 +163,8 @@ body {
 }
 
 .toc-section-group {
-    margin-top: 20px;
-    margin-bottom: 8px;
+    margin-top: 30px;
+    margin-bottom: 12px;
 }
 
 .toc-section-group:first-child {
@@ -188,7 +188,7 @@ body {
 }
 
 .toc-entry {
-    margin-bottom: 10px;
+    margin-bottom: 18px;
 }
 
 .toc-link {
@@ -222,11 +222,20 @@ body {
     white-space: nowrap;
 }
 
+.toc-footer {
+    margin-top: auto;
+    max-width: 85%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
 .toc-footer-note {
-    margin-top: 22px;
     font-size: 7.5pt;
     color: var(--text-dark);
     line-height: 1.6;
+    margin-bottom: 10px;
 }
 
 .toc-url {
@@ -238,10 +247,10 @@ body {
     font-size: 6pt;
     color: var(--text-light);
     line-height: 1.5;
-    margin-top: auto;         /* push to very bottom of flex column */
-    padding-top: 12px;
+    padding-top: 10px;
     border-top: 1px solid var(--border-gray);
-    max-width: 85%;
+    
+    
 }
 
 /* ── Section Headers ───────────────────────────────────────── */
@@ -260,7 +269,7 @@ body {
 
 .section-header h2 {
     font-size: 22pt;
-    font-weight: 400;
+    font-weight: 300;
     color: var(--navy);
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -480,7 +489,7 @@ body {
 
 .section-divider {
     border: none;
-    border-top: 2px solid var(--navy);
+    border-top: 2px solid var(--glass-blue);
     margin: 8px 0 0 0;
 }
 
@@ -500,7 +509,7 @@ body {
 .sales-table-grid {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 40px 12px;   /* 40px horizontal gap between columns */
+    border-spacing: 16px 12px;
     margin-top: 8px;
     margin-bottom: 0;
     margin-left: -20px;          /* offset half the gap so columns center on page */
@@ -514,15 +523,18 @@ body {
 .sales-row td.sale-cell {
     width: 50%;
     vertical-align: top;
-    padding: 0 0 12px 0;
-    border: none;                /* no borders at all between cells */
+    padding: 0 0px 12px 0;
+    border-bottom: none;
     background-color: transparent;
     text-align: left;
 }
 
-.sales-row td.sale-cell:last-child {
-    padding-right: 0;
-    padding-left: 0;
+.sales-row td.sale-cell:first-child .sale-name {
+    padding-right: 16px;   /* pulls left line back from the middle */
+}
+
+.sales-row td.sale-cell:last-child .sale-name {
+    padding-left: 16px;    /* pulls right line back from the middle */
 }
 
 .sale-cell {
@@ -630,7 +642,7 @@ body {
     color: var(--text-dark);
     margin: 10px 0 14px 0;
     line-height: 1.5;
-    max-width: 45%;
+    max-width: 100%;
 }
 
 .pipeline-body {
@@ -661,8 +673,8 @@ body {
 }
 
 .pipeline-quarter-header {
-    background-color: white;
-    color: var(--navy);
+    background-color: var(--white);
+    color: navy;
     font-size: 7pt;
     font-weight: 700;
     letter-spacing: 2px;
@@ -739,7 +751,7 @@ body {
 
 .lt-heading {
     font-size: 36pt;
-    font-weight: 400;
+    font-weight: 300;
     letter-spacing: 2px;
     text-transform: uppercase;
     color: var(--navy);
@@ -812,4 +824,20 @@ body {
     text-transform: uppercase;
     color: var(--navy);
     margin-bottom: 4px;
+}
+
+/* ── Arrow PNG images (KPI boxes) ─────────────────────────── */
+.kpi-arrow-img {
+    width: 22px;
+    height: 22px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+/* ── "Page X of Y" subheader (pipeline, etc.) ─────────────── */
+.page-of-label {
+    font-size: 7pt;
+    color: var(--text-light);
+    letter-spacing: 1px;
+    margin-top: 2px;
 }

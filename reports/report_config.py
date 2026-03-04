@@ -55,7 +55,7 @@ OUTPUT_PDF = os.path.join(
 # ── Template & Static Paths ──────────────────────────────────
 TEMPLATES_DIR = os.path.join(REPORTS_DIR, "templates")
 STATIC_DIR = os.path.join(REPORTS_DIR, "static")
-LOGO_PATH = os.path.join(REPO_ROOT, "Aquila_Logo2.png")
+LOGO_PATH = os.path.join(REPO_ROOT, "data", "Aquila_Logo2.png")
 
 # ── Submarket / Section Ordering ─────────────────────────────
 # Competitive set pages (table_type = "competitive set")

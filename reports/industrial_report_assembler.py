@@ -8,8 +8,23 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import base64
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
+
+
+def _load_arrow_uris(static_dir):
+    """Load arrow PNG files as base64 data URIs for embedding in templates."""
+    uris = {}
+    for name in ('arrow_up', 'arrow_down'):
+        path = os.path.join(static_dir, 'arrows', f'{name}.png')
+        if os.path.exists(path):
+            with open(path, 'rb') as f:
+                b64 = base64.b64encode(f.read()).decode()
+            uris[name] = f'data:image/png;base64,{b64}'
+        else:
+            uris[name] = None  # fallback to Unicode in template
+    return uris
 
 
 def _build_jinja_env(templates_dir):
@@ -32,7 +47,7 @@ def _render_title_page(env, config):
     )
 
 
-def _render_industrial_kpi(env, config, data):
+def _render_industrial_kpi(env, config, data, arrow_uris=None):
     """
     Render the By the Numbers page with Industrial + Flex KPIs side-by-side
     and pipeline totals. Each section has 4 KPIs:
@@ -87,6 +102,7 @@ def _render_industrial_kpi(env, config, data):
                     pipeline_uc_sf += vals.sum()
                 break
 
+    arrow_uris = arrow_uris or {}
     tmpl = env.get_template('page_industrial_kpi.html')
     return tmpl.render(
         quarter_label=config.REPORT_LABEL,
@@ -95,6 +111,8 @@ def _render_industrial_kpi(env, config, data):
         pipeline_uc_sf=pipeline_uc_sf,
         pipeline_proposed_sf=pipeline_proposed_sf,
         anchor_id='by-the-numbers',
+        arrow_up_uri=arrow_uris.get('arrow_up'),
+        arrow_down_uri=arrow_uris.get('arrow_down'),
     )
 
 
@@ -672,6 +690,9 @@ def build_page_sequence(env, config, data, charts):
     page_map = {}
     pdf_page_counter = [0]
 
+    # ── Load arrow PNG assets ──────────────────────────────────────
+    arrow_uris = _load_arrow_uris(config.STATIC_DIR)
+
     def _add(html, anchor=None, pdf_pages=1):
         if html is None:
             return
@@ -682,7 +703,7 @@ def build_page_sequence(env, config, data, charts):
         pdf_page_counter[0] += pdf_pages
 
     # By the Numbers
-    kpi_page = _render_industrial_kpi(env, config, data)
+    kpi_page = _render_industrial_kpi(env, config, data, arrow_uris=arrow_uris)
     _add(kpi_page, anchor='by-the-numbers')
     if kpi_page:
         print("  Rendered: By the Numbers")
