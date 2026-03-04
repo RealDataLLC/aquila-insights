@@ -34,9 +34,10 @@ import time
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 from aquila.charts import add_aquila_logo
 
-# Base directory for output (absolute path avoids OneDrive sync issues)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.join(BASE_DIR, 'charts', 'development')
+# Base directory for output (absolute path relative to repo root)
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(os.path.dirname(_SCRIPT_DIR))
+OUTPUT_DIR = os.path.join(REPO_ROOT, 'charts', 'development')
 
 
 def save_chart(fig, filename):
