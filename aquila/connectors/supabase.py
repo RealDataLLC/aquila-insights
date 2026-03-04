@@ -41,17 +41,12 @@ def get_supabase_client(use_service_role=True):
 
     if use_service_role:
         key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
-
     else:
-        key = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-        #
+        key = os.getenv("SUPABASE_PUBLIC_KEY") or os.getenv("SUPABASE_KEY")
 
     if not url or not key:
         raise ValueError(
             "SUPABASE_URL and SUPABASE_KEY must be set in aquila_graph.env"
         )
-
-    #print(f"Using Supabase Key: {key}")
 
     return create_client(url, key)

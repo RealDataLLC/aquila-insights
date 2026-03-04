@@ -258,20 +258,26 @@ def _render_building_list(env, config, data, submarket, rows_per_page=35):
     class Totals:
         pass
     t = Totals()
-    t.nra = sum(r.nra for r in rows)
-    t.direct_vacant = sum(r.direct_vacant for r in rows)
-    t.sublease_vacant = sum(r.sublease_vacant for r in rows)
+    t.nra = sum(r.nra for r in all_rows)
+    t.direct_vacant = sum(r.direct_vacant for r in all_rows)
+    t.sublease_vacant = sum(r.sublease_vacant for r in all_rows)
 
-    # Suppress the TOTAL row when the building list is long enough to overflow
-    # to a second page — WeasyPrint can't report overflow at render time, so
-    # we use a row-count threshold as a heuristic.
-    show_totals = t if len(rows) <= 35 else None
-
-    return tmpl.render(
-        submarket_name=submarket,
-        rows=rows,
-        totals=show_totals,
-    )
+    # Chunk into pages; show totals only on the last page
+    total_pages = (len(all_rows) + rows_per_page - 1) // rows_per_page
+    pages = []
+    for i in range(0, len(all_rows), rows_per_page):
+        chunk = all_rows[i:i + rows_per_page]
+        page_idx = i // rows_per_page + 1
+        page_label = f"(Page {page_idx} of {total_pages})" if total_pages > 1 else ""
+        is_last_page = (page_idx == total_pages)
+        show_totals = t if is_last_page else None
+        pages.append(tmpl.render(
+            submarket_name=submarket,
+            rows=chunk,
+            page_label=page_label,
+            totals=show_totals,
+        ))
+    return pages
 
 
 def _render_toc(env, config, page_map, city_photo_path=None):
