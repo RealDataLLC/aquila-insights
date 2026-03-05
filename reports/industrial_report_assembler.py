@@ -391,15 +391,16 @@ def _render_industrial_pipeline(env, config, data):
     )
 
 
-def _render_large_availability(env, config, data, generation):
+def _render_large_availability(env, config, data, generation, rows_per_page=35):
     """
-    Render a large availability page for a generation (first_gen or second_gen).
+    Render large availability page(s) for a generation (first_gen or second_gen).
     Uses columns: property_name, Property Address, Total Available Space (SF), submarket_name.
+    Returns a list of HTML strings (one per page). Returns [] when no data.
     """
     large_avail = data.get('large_avail', {})
     df = large_avail.get(generation, pd.DataFrame())
     if df.empty:
-        return None
+        return []
 
     generation_labels = {
         'first_gen': 'First-Generation',
@@ -408,7 +409,7 @@ def _render_large_availability(env, config, data, generation):
 
     tmpl = env.get_template('page_industrial_large_avail.html')
 
-    rows = []
+    all_rows = []
     total_sf = 0
     for _, row in df.iterrows():
         class Row:
@@ -428,7 +429,7 @@ def _render_large_availability(env, config, data, generation):
                              row.get('Submarket Name',
                              row.get('Submarket',
                              row.get('submarket', ''))))
-        rows.append(r)
+        all_rows.append(r)
         total_sf += r.available_sf
 
     anchor_map = {
@@ -436,14 +437,27 @@ def _render_large_availability(env, config, data, generation):
         'second_gen': 'large-avail-second-gen',
     }
 
-    return tmpl.render(
-        quarter_label=config.REPORT_LABEL,
-        generation_label=generation_labels.get(generation, generation),
-        rows=rows,
-        total_sf=total_sf if total_sf > 0 else None,
-        blurb=f"Large availabilities over 100,000 square feet for {generation_labels.get(generation, '').lower()} industrial properties in the Austin area.",
-        anchor_id=anchor_map.get(generation),
-    )
+    gen_label = generation_labels.get(generation, generation)
+    blurb_text = (f"Large availabilities over 100,000 square feet for "
+                  f"{gen_label.lower()} industrial properties in the Austin area.")
+
+    total_pages = max(1, (len(all_rows) + rows_per_page - 1) // rows_per_page)
+    pages = []
+    for i in range(0, len(all_rows), rows_per_page):
+        chunk = all_rows[i:i + rows_per_page]
+        page_idx = i // rows_per_page + 1
+        page_label = f"(Page {page_idx} of {total_pages})" if total_pages > 1 else ""
+        is_last = (page_idx == total_pages)
+        pages.append(tmpl.render(
+            quarter_label=config.REPORT_LABEL,
+            generation_label=gen_label,
+            rows=chunk,
+            page_label=page_label,
+            total_sf=total_sf if is_last and total_sf > 0 else None,
+            blurb=blurb_text if page_idx == 1 else "",
+            anchor_id=anchor_map.get(generation) if page_idx == 1 else None,
+        ))
+    return pages
 
 
 def _render_regional_comparison(env, config, data, charts, property_type, metric,
@@ -528,16 +542,18 @@ def _render_regional_comparison(env, config, data, charts, property_type, metric
     )
 
 
-def _render_building_list(env, config, data, sheet_name):
-    """Render a building list page (reuses office template)."""
+def _render_building_list(env, config, data, sheet_name, rows_per_page=35):
+    """Render building list page(s) for a sheet (reuses office template).
+    Returns a list of HTML strings (one per page) with pagination labels.
+    """
     bl_data = data.get('building_list', {})
     if sheet_name not in bl_data or bl_data[sheet_name].empty:
-        return None
+        return []
 
     df = bl_data[sheet_name].copy()
     tmpl = env.get_template('page_building_list.html')
 
-    rows = []
+    all_rows = []
     for _, row in df.iterrows():
         class Row:
             pass
@@ -552,22 +568,34 @@ def _render_building_list(env, config, data, sheet_name):
         r.sublease_vacant = pd.to_numeric(
             str(row.get('Sublease Vacant SF', 0)).replace(',', ''),
             errors='coerce') or 0
-        rows.append(r)
+        all_rows.append(r)
 
+    # Compute totals across ALL rows
     class Totals:
         pass
     t = Totals()
-    t.nra = sum(r.nra for r in rows)
-    t.direct_vacant = sum(r.direct_vacant for r in rows)
-    t.sublease_vacant = sum(r.sublease_vacant for r in rows)
+    t.nra = sum(r.nra for r in all_rows)
+    t.direct_vacant = sum(r.direct_vacant for r in all_rows)
+    t.sublease_vacant = sum(r.sublease_vacant for r in all_rows)
 
     display_name = sheet_name.replace('_', ' ')
 
-    return tmpl.render(
-        submarket_name=display_name,
-        rows=rows,
-        totals=t,
-    )
+    # Chunk into pages; show totals only on the last page
+    total_pages = (len(all_rows) + rows_per_page - 1) // rows_per_page
+    pages = []
+    for i in range(0, len(all_rows), rows_per_page):
+        chunk = all_rows[i:i + rows_per_page]
+        page_idx = i // rows_per_page + 1
+        page_label = f"(Page {page_idx} of {total_pages})" if total_pages > 1 else ""
+        is_last_page = (page_idx == total_pages)
+        show_totals = t if is_last_page else None
+        pages.append(tmpl.render(
+            submarket_name=display_name,
+            rows=chunk,
+            page_label=page_label,
+            totals=show_totals,
+        ))
+    return pages
 
 
 def _render_quarterly_changes(env, config, data):
@@ -734,12 +762,14 @@ def build_page_sequence(env, config, data, charts):
 
     # Large Availabilities
     for gen in ['first_gen', 'second_gen']:
-        avail_page = _render_large_availability(env, config, data, gen)
+        avail_pages = _render_large_availability(env, config, data, gen)
         anchor = f"large-avail-{gen.replace('_', '-')}"
-        _add(avail_page, anchor=anchor)
-        if avail_page:
+        for ap in avail_pages:
+            _add(ap, anchor=anchor)
+            anchor = None  # Only first page gets the anchor
+        if avail_pages:
             label = 'First Generation' if gen == 'first_gen' else 'Second Generation'
-            print(f"  Rendered: Large Availabilities -- {label}")
+            print(f"  Rendered: Large Availabilities -- {label} ({len(avail_pages)} page(s))")
 
     # Regional Overall
     for ptype in config.PROPERTY_TYPES:
@@ -784,10 +814,12 @@ def build_page_sequence(env, config, data, charts):
     first_bl = True
     for sheet_name in bl_data.keys():
         anchor = 'building-lists' if first_bl else None
-        bl_page = _render_building_list(env, config, data, sheet_name)
-        _add(bl_page, anchor=anchor)
-        if bl_page:
-            print(f"  Rendered: {sheet_name} building list")
+        bl_pages = _render_building_list(env, config, data, sheet_name)
+        for bp in bl_pages:
+            _add(bp, anchor=anchor)
+            anchor = None  # Only first page gets the anchor
+        if bl_pages:
+            print(f"  Rendered: {sheet_name} building list ({len(bl_pages)} page(s))")
             first_bl = False
 
     # Build TOC

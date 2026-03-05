@@ -534,7 +534,7 @@ body {
 }
 
 .sales-row td.sale-cell:last-child .sale-name {
-    padding-left: 16px;    /* pulls right line back from the middle */
+    padding-left: 0px;    /* pulls right line back from the middle */
 }
 
 .sale-cell {
@@ -544,12 +544,11 @@ body {
 .sale-name {
     font-size: 11pt;
     font-weight: 700;
-    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--navy);
     margin-bottom: 0;
     padding-bottom: 5px;
-    border-bottom: 1.5px solid var(--navy);
+    border-bottom: 1.5px solid var(--glass-blue);
     margin-top: 4px;
 }
 

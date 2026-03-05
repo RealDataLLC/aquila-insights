@@ -2,7 +2,7 @@
     <div class="section-header">
         <div class="quarter-tag">{{ quarter_label }}</div>
         <h2>Large Availabilities</h2>
-        <div class="sub-label">{{ generation_label }}</div>
+        <div class="sub-label">{{ generation_label }}{% if page_label %} {{ page_label }}{% endif %}</div>
     </div>
 
     <p class="pipeline-blurb">{{ blurb }}</p>

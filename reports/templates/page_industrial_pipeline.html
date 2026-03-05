@@ -9,10 +9,14 @@
 
     <p class="pipeline-blurb">Industrial projects over 25,000 square feet, encompassing those that delivered this quarter, are under construction, are planned, or have been proposed.</p>
 
+    {% set ns = namespace(prev_year='') %}
     {% for group in uc_groups %}
     <div class="pipeline-year-block">
+        {% if group.year != ns.prev_year %}
         <div class="pipeline-year-header">{{ group.year }}</div>
-        <div class="pipeline-quarter-header">{{ group.quarter }} {{ group.year }}</div>
+        {% set ns.prev_year = group.year %}
+        {% endif %}
+        <div class="pipeline-quarter-header">{{ group.quarter }}</div>
         <table class="pipeline-table dev-table">
             <thead>
                 <tr>
