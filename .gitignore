@@ -1,5 +1,6 @@
 aquila_graph.env
 *.json
+!vercel.json
 __pycache__/
 nul
 
