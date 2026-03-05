@@ -278,12 +278,28 @@ python reports/cleanup_quarterly_data.py                            # Apply chan
 
 ---
 
-## Dashboards (Local)
+## Dashboards
 
 **File:** `dashboards/office_requirements_dashboard.py` (Dash app at http://127.0.0.1:8050/)
 **Data:** Same Google Sheets as static charts. Run: `python dashboards/office_requirements_dashboard.py`
 
 **Key architecture:** Data is never filtered by date -- date range only slices display. Rolling averages computed on full dataset first, then split into current/prior periods. Prior year = same range shifted back 12 months.
+
+### Vercel Deployment
+
+**Vercel project ID:** `prj_sxnYelKsLmiBR5NPf5HiCydJhCLx` | **Root directory:** `dashboards/`
+
+**Entry point:** `dashboards/api/index.py` (WSGI) — routes all requests to the Dash/Flask server via `dashboards/vercel.json`.
+
+**Required environment variables** (set in Vercel project settings — never commit `aquila_graph.env`):
+`GOOGLE_SERVICE_ACCOUNT_TYPE`, `GOOGLE_PROJECT_ID`, `GOOGLE_PRIVATE_KEY_ID`, `GOOGLE_PRIVATE_KEY`, `GOOGLE_CLIENT_EMAIL`, `GOOGLE_CLIENT_ID`, `GOOGLE_AUTH_URI`, `GOOGLE_TOKEN_URI`, `GOOGLE_AUTH_PROVIDER_X509_CERT_URL`, `GOOGLE_CLIENT_X509_CERT_URL`, `GOOGLE_UNIVERSE_DOMAIN`
+
+**Key files added for Vercel:**
+- `dashboards/vercel.json` — catch-all route to `api/index.py`
+- `dashboards/api/index.py` — adds `dashboards/` to `sys.path`, exports `server as app`
+- `dashboards/aquila_graphing_tools.py` — brand constants stub (parent-dir version takes precedence locally; this is used on Vercel where the parent dir isn't deployed)
+
+**Note:** Each Vercel cold start reloads data from Google Sheets (~5–15s). Vercel Pro (60s timeout) is recommended over Hobby (10s).
 
 ---
 
@@ -452,8 +468,8 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 ---
 
-**Last Updated:** 2026-03-04
-**Document Version:** 6.0.0
+**Last Updated:** 2026-03-05
+**Document Version:** 6.1.0
 
 ---
 
@@ -461,6 +477,7 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.1.0** | 2026-03-05 | Vercel deployment for office requirements dashboard — `api/index.py` WSGI entry, `vercel.json`, brand constants stub, `server = app.server`, added numpy to requirements |
 | **6.0.0** | 2026-03-04 | CLAUDE.md consolidated (1498→418 lines); added custom slash commands (`.claude/commands/`) |
 | **5.3.0** | 2026-03-02 | Report pagination — building lists and large availabilities chunked at 35 rows/page with "Page X of Y" labels; TOC disclaimer anchored to bottom; new separate UC/Proposed pipeline templates |
 | **5.2.0** | 2026-03-02 | Report style fixes — TOC heading Futura Light/Navy, pipeline split into two independently page-counted sections, industrial rental chart vacancy line corrected to Glass Blue Alt |
