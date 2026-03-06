@@ -17,6 +17,7 @@ Note: Data is NOT filtered by date - the date range only controls what's display
 on the charts. This ensures prior year data is always available for comparison.
 """
 
+import base64
 import pandas as pd
 import numpy as np
 import sys
@@ -27,10 +28,18 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import dash
-from dash import dcc, html, Input, Output, State, dash_table
+from dash import dcc, html, Input, Output, State, dash_table, callback_context
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dotenv import load_dotenv
+from flask import session
+
+try:
+    from supabase import create_client as _supabase_create_client
+    _SUPABASE_PKG = True
+except ImportError:
+    _SUPABASE_PKG = False
+    print("WARNING: supabase package not installed. Auth will be disabled.")
 
 try:
     import gspread
@@ -46,6 +55,32 @@ from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 # Load environment variables from parent directory
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'aquila_graph.env')
 load_dotenv(env_path)
+
+# ============================================================================
+# LOGO
+# ============================================================================
+
+def _load_logo_b64():
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'Aquila_Logo2.png')
+    if os.path.exists(logo_path):
+        with open(logo_path, 'rb') as f:
+            return 'data:image/png;base64,' + base64.b64encode(f.read()).decode()
+    return None
+
+LOGO_B64 = _load_logo_b64()
+
+# ============================================================================
+# SUPABASE AUTH CLIENT
+# ============================================================================
+
+_SUPABASE_URL = os.getenv('SUPABASE_URL')
+_SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY')
+_supabase_auth = None
+if _SUPABASE_PKG and _SUPABASE_URL and _SUPABASE_ANON_KEY:
+    _supabase_auth = _supabase_create_client(_SUPABASE_URL, _SUPABASE_ANON_KEY)
+    print("Supabase auth client initialized")
+else:
+    print("WARNING: Supabase auth not configured (SUPABASE_URL/SUPABASE_ANON_KEY missing)")
 
 # ============================================================================
 # DATA LOADING FUNCTIONS
@@ -462,21 +497,102 @@ print(f"Found {len(all_industries)} unique industries")
 # DASH APP LAYOUT
 # ============================================================================
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-app.title = "Austin Office Requirements Dashboard"
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+app.title = "Aquila Insights Dashboard"
+app.server.secret_key = os.getenv('FLASK_SECRET_KEY', 'aquila-dashboard-2026-change-me')
+
+
+@app.server.route('/logout')
+def _logout():
+    from flask import redirect
+    session.clear()
+    return redirect('/')
 
 # Calculate default dates for DatePickerRange
 max_date = df_global['date'].max()
-max_complete_month = max_date 
+max_complete_month = max_date
 default_start = max_complete_month - pd.DateOffset(months=12)
 
-app.layout = dbc.Container([
+# ============================================================================
+# AUTH LAYOUT
+# ============================================================================
+
+_logo_el = html.Img(src=LOGO_B64, style={'height': '48px', 'display': 'block', 'margin': '0 auto 16px auto'}) if LOGO_B64 else html.H3("Aquila", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT})
+
+login_form_div = html.Div([
+    _logo_el,
+    html.H4("Dashboard Login", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '24px'}),
+    html.Label("Email", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
+    dbc.Input(id='login-email', type='email', placeholder='you@aquilacommercial.com', className='mb-3'),
+    html.Label("Password", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
+    dbc.Input(id='login-password', type='password', placeholder='Password', className='mb-3'),
+    html.Div(id='login-error', style={'color': '#BF4040', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}),
+    dbc.Button("Sign In", id='login-btn', n_clicks=0,
+               style={'width': '100%', 'backgroundColor': AQUILA_COLORS[0], 'border': 'none', 'fontFamily': AQUILA_FONT}),
+    html.Div([
+        html.Span("New user? ", style={'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'color': '#555'}),
+        html.Button("Create an account", id='show-signup-btn', n_clicks=0,
+                    style={'background': 'none', 'border': 'none', 'padding': 0, 'color': AQUILA_COLORS[0],
+                           'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'cursor': 'pointer', 'textDecoration': 'underline'})
+    ], style={'textAlign': 'center', 'marginTop': '16px'})
+], id='login-form-div')
+
+signup_form_div = html.Div([
+    _logo_el,
+    html.H4("Create Account", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '24px'}),
+    html.Label("Email (@aquilacommercial.com only)", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
+    dbc.Input(id='signup-email', type='email', placeholder='you@aquilacommercial.com', className='mb-3'),
+    html.Label("Password", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
+    dbc.Input(id='signup-password', type='password', placeholder='Password (min 6 chars)', className='mb-3'),
+    html.Label("Confirm Password", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
+    dbc.Input(id='signup-confirm', type='password', placeholder='Confirm Password', className='mb-3'),
+    html.Div(id='signup-error', style={'color': '#BF4040', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '4px'}),
+    html.Div(id='signup-success', style={'color': '#556B30', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}),
+    dbc.Button("Create Account", id='signup-btn', n_clicks=0,
+               style={'width': '100%', 'backgroundColor': AQUILA_COLORS[0], 'border': 'none', 'fontFamily': AQUILA_FONT}),
+    html.Div([
+        html.Span("Already have an account? ", style={'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'color': '#555'}),
+        html.Button("Sign in", id='show-login-btn', n_clicks=0,
+                    style={'background': 'none', 'border': 'none', 'padding': 0, 'color': AQUILA_COLORS[0],
+                           'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'cursor': 'pointer', 'textDecoration': 'underline'})
+    ], style={'textAlign': 'center', 'marginTop': '16px'})
+], id='signup-form-div', style={'display': 'none'})
+
+auth_layout = dbc.Container([
     dbc.Row([
         dbc.Col([
-            html.H2("Austin Office Requirements", style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
-            html.P("Interactive dashboard with year-over-year comparison", style={'color': '#666', 'fontFamily': AQUILA_FONT})
+            dbc.Card(
+                dbc.CardBody([login_form_div, signup_form_div]),
+                style={'maxWidth': '420px', 'margin': 'auto', 'marginTop': '80px',
+                       'boxShadow': '0 4px 20px rgba(0,0,0,0.12)', 'border': 'none'}
+            )
         ], width=12)
-    ]),
+    ])
+], fluid=True, style={'minHeight': '100vh', 'backgroundColor': '#f5f7fa'})
+
+# ============================================================================
+# MAIN LAYOUT (existing dashboard, now with logo header)
+# ============================================================================
+
+main_layout = dbc.Container([
+    dbc.Row([
+        dbc.Col(
+            html.Img(src=LOGO_B64, style={'height': '50px'}) if LOGO_B64 else html.Span(),
+            width='auto', style={'display': 'flex', 'alignItems': 'center', 'paddingRight': '16px'}
+        ),
+        dbc.Col([
+            html.H2("Austin Office Requirements", style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'margin': 0}),
+            html.P("Interactive dashboard with year-over-year comparison", style={'color': '#666', 'fontFamily': AQUILA_FONT, 'margin': 0})
+        ], style={'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+        dbc.Col(
+            html.A("Sign Out", href='/logout',
+                   style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'fontSize': '13px',
+                          'border': f'1px solid {AQUILA_COLORS[0]}', 'padding': '5px 14px',
+                          'borderRadius': '4px', 'textDecoration': 'none'}),
+            width='auto', style={'display': 'flex', 'alignItems': 'center', 'marginLeft': 'auto'}
+        )
+    ], style={'marginTop': '20px', 'marginBottom': '4px', 'paddingBottom': '12px',
+              'borderBottom': f'2px solid {AQUILA_COLORS[0]}'}, align='center'),
 
     dbc.Row([
         # Left sidebar - Filters
@@ -623,9 +739,87 @@ app.layout = dbc.Container([
     ], style={'marginTop': '20px'})
 ], fluid=True)
 
+# Root layout: Location shell + dynamic page-content
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    dcc.Location(id='url-redirect', refresh=True),
+    html.Div(id='page-content')
+])
+
 
 # ============================================================================
-# CALLBACKS
+# CALLBACKS - AUTH
+# ============================================================================
+
+@app.callback(Output('page-content', 'children'), Input('url', 'pathname'))
+def display_page(pathname):
+    return main_layout if session.get('authenticated') else auth_layout
+
+
+@app.callback(
+    [Output('login-form-div', 'style'), Output('signup-form-div', 'style')],
+    [Input('show-signup-btn', 'n_clicks'), Input('show-login-btn', 'n_clicks')],
+    prevent_initial_call=True
+)
+def toggle_auth_view(show_signup_clicks, show_login_clicks):
+    trigger = callback_context.triggered[0]['prop_id'].split('.')[0]
+    if trigger == 'show-signup-btn':
+        return {'display': 'none'}, {'display': 'block'}
+    return {'display': 'block'}, {'display': 'none'}
+
+
+@app.callback(
+    [Output('login-error', 'children'), Output('url-redirect', 'pathname')],
+    Input('login-btn', 'n_clicks'),
+    [State('login-email', 'value'), State('login-password', 'value')],
+    prevent_initial_call=True
+)
+def handle_login(n_clicks, email, password):
+    if not email:
+        return "Please enter your email.", dash.no_update
+    if not email.strip().lower().endswith('@aquilacommercial.com'):
+        return "Access restricted to @aquilacommercial.com addresses.", dash.no_update
+    if not password:
+        return "Please enter your password.", dash.no_update
+    if not _supabase_auth:
+        return "Auth service unavailable. Check SUPABASE_URL and SUPABASE_ANON_KEY.", dash.no_update
+    try:
+        _supabase_auth.auth.sign_in_with_password({"email": email.strip(), "password": password})
+        session['authenticated'] = True
+        session['user_email'] = email.strip()
+        return "", "/"
+    except Exception:
+        return "Invalid credentials. Check your email/password or confirm your account.", dash.no_update
+
+
+@app.callback(
+    [Output('signup-error', 'children'), Output('signup-success', 'children')],
+    Input('signup-btn', 'n_clicks'),
+    [State('signup-email', 'value'), State('signup-password', 'value'), State('signup-confirm', 'value')],
+    prevent_initial_call=True
+)
+def handle_signup(n_clicks, email, password, confirm):
+    if not email:
+        return "Please enter your email.", ""
+    if not email.strip().lower().endswith('@aquilacommercial.com'):
+        return "Only @aquilacommercial.com email addresses may register.", ""
+    if not password:
+        return "Please enter a password.", ""
+    if password != confirm:
+        return "Passwords do not match.", ""
+    if len(password) < 6:
+        return "Password must be at least 6 characters.", ""
+    if not _supabase_auth:
+        return "Auth service unavailable.", ""
+    try:
+        _supabase_auth.auth.sign_up({"email": email.strip(), "password": password})
+        return "", "Account created! Check your email to confirm, then sign in."
+    except Exception as e:
+        return f"Sign-up failed: {str(e)}", ""
+
+
+# ============================================================================
+# CALLBACKS - DASHBOARD
 # ============================================================================
 
 @app.callback(
