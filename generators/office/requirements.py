@@ -812,13 +812,12 @@ def main():
     print('  [OK] Saved charts/office/requirements_yoy_rolling_12m.html')
 
     # ============================================================================
-    # CHART 7: Office Demand by Tenant Size (Annual Grouped Bar + Total Line)
+    # CHART 7: Office Demand by Tenant Size (Rolling 12-Month Windows)
     # ============================================================================
-    print("\n7. Generating Office Demand by Tenant Size chart (Annual)...")
+    print("\n7. Generating Office Demand by Tenant Size chart (Rolling 12M windows)...")
 
     # Filter to records with valid dates
     df_demand = df_combined[df_combined['date'].notna()].copy()
-    df_demand['year'] = df_demand['date'].dt.year
 
     # Size bins (5 categories)
     demand_bins = [0, 10000, 25000, 50000, 100000, float('inf')]
@@ -831,24 +830,52 @@ def main():
         right=False
     )
 
-    # Latest record date — used in subtitle
-    max_date = df_demand['date'].max()
+    # Build rolling 12-month windows ending at the last full calendar month.
+    # e.g. if today is March 6 2026, last full month = Feb 2026,
+    # so the current window is Mar 2025–Feb 2026.
+    today = pd.Timestamp.today()
+    last_full_month_end = pd.Timestamp(today.year, today.month, 1) - pd.Timedelta(days=1)
 
-    # Aggregate all years (including current partial year) — no projection
+    windows = []
+    window_end = last_full_month_end
+    data_min_date = df_demand['date'].min().replace(day=1)
+
+    while window_end >= data_min_date:
+        window_start = (window_end - pd.DateOffset(months=11)).replace(day=1)
+        windows.append({
+            'label': f"{window_start.strftime('%b %Y')}\u2013{window_end.strftime('%b %Y')}",
+            'start': window_start,
+            'end':   window_end,
+        })
+        window_end = window_start - pd.Timedelta(days=1)
+
+    windows = list(reversed(windows))   # chronological order (oldest first)
+    window_labels_list = [w['label'] for w in windows]
+
+    # Assign each record to a window using pd.cut on date
+    bin_edges = [w['start'] for w in windows] + [windows[-1]['end'] + pd.Timedelta(days=1)]
+    df_demand['window_label'] = pd.cut(
+        df_demand['date'],
+        bins=bin_edges,
+        labels=window_labels_list,
+        right=False,
+    )
+    df_windowed = df_demand[df_demand['window_label'].notna()].copy()
+    df_windowed['window_label'] = df_windowed['window_label'].astype(str)
+
+    # Aggregate by window + size category, and window totals
+    window_by_size = (
+        df_windowed
+        .groupby(['window_label', 'size_category'], observed=True)['sf_avg']
+        .sum().reset_index(name='segment_demand')
+    )
+    window_total = (
+        df_windowed
+        .groupby('window_label', observed=True)['sf_avg']
+        .sum().reset_index(name='total_demand')
+    )
+
     category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
-
-    annual_by_size = df_demand.groupby(['year', 'size_category'], observed=False).agg(
-        segment_demand=('sf_avg', 'sum'),
-        count=('sf_avg', 'count')
-    ).reset_index()
-
-    annual_total = df_demand.groupby('year').agg(
-        total_demand=('sf_avg', 'sum')
-    ).reset_index()
-
-    years = sorted(annual_by_size['year'].unique())
-
-    # Colors for each size category
     category_colors = {
         'Mega Requirements': AQUILA_COLORS[0],   # Navy
         '50k-100k SF':       AQUILA_COLORS[1],   # Glass Blue
@@ -859,17 +886,17 @@ def main():
 
     fig7 = go.Figure()
 
-    min_year = years[0]
-    max_year = years[-1]
-
     for category in category_order:
-        cat_data = annual_by_size[annual_by_size['size_category'] == category].copy()
-        cat_data = cat_data.set_index('year').reindex(years).reset_index()
+        cat_data = (
+            window_by_size[window_by_size['size_category'] == category]
+            .set_index('window_label')
+            .reindex(window_labels_list)
+            .reset_index()
+        )
         cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
-        cat_data['year_label'] = cat_data['year'].astype(str)
 
         fig7.add_trace(go.Bar(
-            x=cat_data['year_label'],
+            x=cat_data['window_label'],
             y=cat_data['segment_demand'],
             name=category,
             marker_color=category_colors[category],
@@ -877,18 +904,22 @@ def main():
             showlegend=True,
             hovertemplate=(
                 f'<b>{category}</b><br>'
-                'Year: %{x}<br>'
+                'Period: %{x}<br>'
                 'Demand: %{y:,.0f} SF<extra></extra>'
             ),
         ))
 
-    # Total demand line — single solid trace across all years
-    total_data = annual_total.set_index('year').reindex(years).reset_index()
+    # Total demand line — single solid trace across all windows
+    total_data = (
+        window_total
+        .set_index('window_label')
+        .reindex(window_labels_list)
+        .reset_index()
+    )
     total_data['total_demand'] = total_data['total_demand'].fillna(0)
-    total_data['year_label'] = total_data['year'].astype(str)
 
     fig7.add_trace(go.Scatter(
-        x=total_data['year_label'],
+        x=total_data['window_label'],
         y=total_data['total_demand'],
         mode='lines+markers',
         name='Total Demand',
@@ -898,7 +929,7 @@ def main():
         showlegend=True,
         hovertemplate=(
             '<b>Total Demand</b><br>'
-            'Year: %{x}<br>'
+            'Period: %{x}<br>'
             'Total: %{y:,.0f} SF<extra></extra>'
         ),
     ))
@@ -906,8 +937,8 @@ def main():
     fig7.update_layout(
         title={
             'text': (
-                f'Office Demand by Tenant Size (Annual: {min_year}\u2013{max_year})'
-                f'<br><sup>Data through {max_date.strftime("%B %Y")}</sup>'
+                'Office Demand by Tenant Size (Rolling 12-Month Windows)'
+                f'<br><sup>Current period: {windows[-1]["label"]}</sup>'
             ),
             'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
             'x': 0.5,
@@ -926,8 +957,8 @@ def main():
             showline=True,
             linecolor='lightgrey',
             linewidth=1,
-            tickfont=dict(size=12),
-            tickangle=0,
+            tickfont=dict(size=11),
+            tickangle=-45,
         ),
         yaxis=dict(
             title=dict(text='Segment Demand (SF)', font=dict(size=14)),
@@ -953,7 +984,7 @@ def main():
         legend=dict(
             orientation='h',
             yanchor='top',
-            y=-0.15,
+            y=-0.25,
             xanchor='center',
             x=0.5,
             font=dict(size=12),
@@ -961,7 +992,7 @@ def main():
         ),
         height=680,
         width=1400,
-        margin=dict(t=110, b=120, l=80, r=80),
+        margin=dict(t=110, b=160, l=80, r=80),
         hovermode='x unified',
     )
 
