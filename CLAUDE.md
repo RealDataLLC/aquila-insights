@@ -194,7 +194,9 @@ from aquila.git import commit_and_push_all
 
 **Office Requirements** (`requirements.py`): Combines historical (Tab 2: "Through 2024") + current (Tab 0: "2025 +") Google Sheets data. Market mapping: Flexible/Citywide counts toward all markets. Size bins: Sub 10k, 10k-25k, 25k-50k, 50k-100k, Mega (100k+).
 
-**2026 Annualized Projection** (demand-by-tenant-size charts, main + 5 submarkets): Charts aggregate by year. Current year bar is projected full-year demand via `projected = ytd_current * (full_prior / ytd_prior_same_period)`. Visual: 45% opacity + diagonal hatch for projected bar; dashed connector + open-circle marker. Subtitle shows pace factor.
+**Demand by Tenant Size – Annual** (`requirements.py` Chart 7): Aggregates all years including the current partial year as actual YTD (no projection). Subtitle reads "Data through [Month Year]" derived from `df_demand['date'].max()`. Single solid total demand line and flat solid bars for all years.
+
+**Demand by Tenant Size – Rolling 12M** (`demand_by_market.py`): 5 submarket charts use rolling 12-month trailing windows — each x-axis tick = cumulative SF from the 12 calendar months ending that month (`min_periods=12`). Sparse months are zero-filled via `MultiIndex.from_product` reindex before rolling so windows always span 12 calendar months. Shows last 36 months. Total Demand line uses `AQUILA_COLORS[3]` (Concrete) to avoid clash with Mega Requirements bars (Navy).
 
 **Office Market Metrics** (`market_metrics.py`): 12 charts (4 submarkets x 3 types). CBD/NW/SW use `table_type="competitive set"`, Domain uses `table_type="micromarket"`. Charts: vacancy rate (line), rental rate (stacked bar: Base Rent + Opex), opex (line).
 
@@ -284,6 +286,8 @@ python reports/cleanup_quarterly_data.py                            # Apply chan
 **Data:** Same Google Sheets as static charts. Run: `python dashboards/office_requirements_dashboard.py`
 
 **Key architecture:** Data is never filtered by date -- date range only slices display. Rolling averages computed on full dataset first, then split into current/prior periods. Prior year = same range shifted back 12 months.
+
+**Logo:** Fixed top-left logo bar (`position: fixed; top: 0; left: 0; zIndex: 1000`) is always visible in both the login form and main dashboard. `page-content` div has `paddingTop: 58px` to prevent content hiding under the bar.
 
 ### Vercel Deployment
 
@@ -401,8 +405,7 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 | **FRED API Error** | Verify API key at https://fred.stlouisfed.org/ |
 | **Empty DataFrame** | Check query/API response; print `df.shape` and `df.head()` |
 | **Date Parsing** | Use `pd.to_datetime(..., errors='coerce')` and check for NaTs |
-| **Projection factor wrong** | Check `date` column has prior year records; fallback is `365/day_of_year` |
-| **Submarket projection is 0** | Market may have no 2026 YTD data; chart still renders historical bars |
+| **Rolling window spans >12 months** | Sparse markets omit months with no data — use `MultiIndex.from_product` + `reindex(fill_value=0)` before `.rolling(12)` |
 
 ### Charts (Plotly)
 
@@ -468,8 +471,8 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 ---
 
-**Last Updated:** 2026-03-05
-**Document Version:** 6.1.0
+**Last Updated:** 2026-03-06
+**Document Version:** 6.2.0
 
 ---
 
@@ -477,6 +480,7 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.2.0** | 2026-03-06 | Removed annualized projection from demand charts — `demand_by_market.py` now uses rolling 12M trailing windows with zero-filled sparse months; `requirements.py` Chart 7 shows actual YTD with "Data through [Month Year]" subtitle; dashboard fixed top-left logo bar |
 | **6.1.0** | 2026-03-05 | Vercel deployment for office requirements dashboard — `api/index.py` WSGI entry, `vercel.json`, brand constants stub, `server = app.server`, added numpy to requirements |
 | **6.0.0** | 2026-03-04 | CLAUDE.md consolidated (1498→418 lines); added custom slash commands (`.claude/commands/`) |
 | **5.3.0** | 2026-03-02 | Report pagination — building lists and large availabilities chunked at 35 rows/page with "Page X of Y" labels; TOC disclaimer anchored to bottom; new separate UC/Proposed pipeline templates |
