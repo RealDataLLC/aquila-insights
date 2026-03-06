@@ -381,11 +381,10 @@ def main():
         print(f"    {market}: {count} records, {total_sf:,.0f} SF")
 
     # ============================================================================
-    # STEP 6: Generate market-specific charts (ANNUAL, not quarterly)
+    # STEP 6: Compute rolling 12-month totals and generate charts
     # ============================================================================
-    print("\nStep 6: Generating market-specific charts (annual with 2026 projection)...")
+    print("\nStep 6: Computing rolling 12-month totals and generating charts...")
 
-    # Create output directory
     os.makedirs('charts/office', exist_ok=True)
 
     # Size bins (5 categories)
@@ -398,9 +397,6 @@ def main():
         labels=demand_labels,
         right=False
     )
-
-    # Add year column (annual x-axis)
-    df_expanded['year'] = df_expanded['date'].dt.year
 
     # Colors for each size category
     category_colors = {
@@ -422,221 +418,127 @@ def main():
         'C': 'Central'
     }
 
-    # Compute 2026 projection parameters (once, across all data)
-    from datetime import datetime as _dt
-    _today = _dt.now()
-    _current_year = _today.year
-    _day_of_year = _today.timetuple().tm_yday
-    _comparison_date_2025 = _dt(2025, 1, 1) + pd.Timedelta(days=_day_of_year - 1)
+    # Monthly sum per (submarket, size_category)
+    monthly = (
+        df_expanded
+        .groupby(['submarket', 'size_category', pd.Grouper(key='date', freq='ME')], observed=False)['sf_avg']
+        .sum()
+        .reset_index()
+        .sort_values(['submarket', 'size_category', 'date'])
+    )
 
-    # Whole-dataset 2025 vs 2026 YTD for the pace factor
-    _df_2025_all = df_expanded[df_expanded['year'] == 2025]
-    _df_2026_all = df_expanded[df_expanded['year'] == _current_year]
-    _total_2025_all = _df_2025_all['sf_avg'].sum()
-    _ytd_2025_all = _df_2025_all[_df_2025_all['date'] <= _comparison_date_2025]['sf_avg'].sum()
-    _global_factor = (_total_2025_all / _ytd_2025_all) if _ytd_2025_all > 0 else (365.0 / _day_of_year)
-    print(f"  Global annualization factor: {_global_factor:.2f}x (as of {_today:%b %d, %Y})")
+    # Zero-fill missing months so rolling(12) counts calendar months, not data rows.
+    # Sparse groups (e.g. E/C submarket, Mega size) can have months with no records;
+    # without reindexing, a 12-row window silently spans >12 calendar months.
+    full_dates = pd.date_range(monthly['date'].min(), monthly['date'].max(), freq='ME')
+    full_idx = pd.MultiIndex.from_product(
+        [['CBD', 'SW', 'NW', 'E', 'C'], list(category_order), full_dates],
+        names=['submarket', 'size_category', 'date'],
+    )
+    monthly = (
+        monthly
+        .set_index(['submarket', 'size_category', 'date'])['sf_avg']
+        .reindex(full_idx, fill_value=0)
+        .reset_index()
+    )
 
-    # Generate a chart for each market, aggregating ANNUAL
+    # Rolling 12M sum per (submarket, size_category) — only complete windows
+    monthly['sf_12m'] = (
+        monthly
+        .groupby(['submarket', 'size_category'], observed=False)['sf_avg']
+        .transform(lambda x: x.rolling(12, min_periods=12).sum())
+    )
+    monthly = monthly.dropna(subset=['sf_12m'])
+
+    print(f"  Rolling 12M data: {len(monthly)} rows, "
+          f"date range: {monthly['date'].min().strftime('%b %Y')} to {monthly['date'].max().strftime('%b %Y')}")
+
     for market_code in ['CBD', 'SW', 'NW', 'E', 'C']:
         print(f"\n  Generating chart for {market_names[market_code]}...")
 
-        # Filter to this market
-        df_market = df_expanded[df_expanded['submarket'] == market_code].copy()
+        df_mkt = monthly[monthly['submarket'] == market_code].copy()
 
-        if len(df_market) == 0:
+        if df_mkt.empty:
             print(f"    [WARN] No data for {market_code}, skipping")
             continue
 
-        # Drop NA years
-        df_market = df_market[df_market['year'].notna()].copy()
-        df_market['year'] = df_market['year'].astype(int)
+        # Pivot: date on index, size categories as columns
+        pivot = df_mkt.pivot_table(
+            index='date',
+            columns='size_category',
+            values='sf_12m',
+            fill_value=0,
+            observed=False,
+        )
 
-        # Split into historical (completed years) and current year
-        df_hist = df_market[df_market['year'] < _current_year].copy()
-        df_curr = df_market[df_market['year'] == _current_year].copy()
+        # Ensure all size categories are present and in correct order
+        for cat in category_order:
+            if cat not in pivot.columns:
+                pivot[cat] = 0.0
+        pivot = pivot[list(category_order)]
 
-        # Aggregate historical by year and size category
-        annual_by_size = df_hist.groupby(['year', 'size_category'], observed=False).agg(
-            segment_demand=('sf_avg', 'sum'),
-            count=('sf_avg', 'count')
-        ).reset_index()
-        annual_by_size['is_projected'] = False
+        # Show last 36 months
+        pivot = pivot.iloc[-36:]
 
-        annual_total = df_hist.groupby('year').agg(
-            total_demand=('sf_avg', 'sum')
-        ).reset_index()
-        annual_total['is_projected'] = False
+        # Rolling 12M total across all size categories
+        pivot['total'] = pivot[list(category_order)].sum(axis=1)
 
-        # Compute market-level YTD 2026 and project full year using global factor
-        ytd_market_2026 = df_curr['sf_avg'].sum()
-        projected_market_total = ytd_market_2026 * _global_factor
+        x_labels = [d.strftime('%b %Y') for d in pivot.index]
+        min_label = x_labels[0] if x_labels else ''
+        max_label = x_labels[-1] if x_labels else ''
 
-        # Distribute projected total by this market's 2025 annual size mix
-        market_2025_by_size = df_hist[df_hist['year'] == 2025].groupby('size_category', observed=False)['sf_avg'].sum()
-        market_2025_total = market_2025_by_size.sum()
+        print(f"    X-axis: {min_label} to {max_label} ({len(x_labels)} months)")
+        print(f"    Latest 12M total: {pivot['total'].iloc[-1]:,.0f} SF")
 
-        # Fall back to YTD 2026 mix if no 2025 data
-        if market_2025_total == 0:
-            market_ytd_by_size = df_curr.groupby('size_category', observed=False)['sf_avg'].sum()
-            market_ytd_total = market_ytd_by_size.sum()
-            for size_cat in demand_labels:
-                val = market_ytd_by_size.get(size_cat, 0)
-                pct = val / market_ytd_total if market_ytd_total > 0 else 1.0 / len(demand_labels)
-                proj_row = pd.DataFrame([{
-                    'year': _current_year, 'size_category': size_cat,
-                    'segment_demand': projected_market_total * pct, 'count': 0, 'is_projected': True
-                }])
-                annual_by_size = pd.concat([annual_by_size, proj_row], ignore_index=True)
-        else:
-            for size_cat in demand_labels:
-                size_val = market_2025_by_size.get(size_cat, 0)
-                pct = size_val / market_2025_total
-                proj_row = pd.DataFrame([{
-                    'year': _current_year, 'size_category': size_cat,
-                    'segment_demand': projected_market_total * pct, 'count': 0, 'is_projected': True
-                }])
-                annual_by_size = pd.concat([annual_by_size, proj_row], ignore_index=True)
-
-        proj_total_row = pd.DataFrame([{
-            'year': _current_year, 'total_demand': projected_market_total, 'is_projected': True
-        }])
-        annual_total = pd.concat([annual_total, proj_total_row], ignore_index=True)
-
-        years = sorted(annual_by_size['year'].unique())
-
-        if len(years) == 0:
-            print(f"    [SKIP] No annual data for {market_code}, skipping")
-            continue
-
-        print(f"    YTD {_current_year}: {ytd_market_2026:,.0f} SF -> Projected: {projected_market_total:,.0f} SF")
-
-        min_year = min(years)
-        max_year = max(years)
-
-        # Create figure
         fig = go.Figure()
 
-        # One trace per category across ALL years — use per-bar rgba colors and
-        # pattern lists so the projected (2026) bar gets a hatch while historical
-        # bars stay solid. This keeps exactly 5 bar traces total so bargroupgap=0
-        # truly eliminates all gaps within each year group.
+        # Stacked bars: one trace per size category
         for category in category_order:
-            cat_data = annual_by_size[annual_by_size['size_category'] == category].copy()
-            cat_data = cat_data.set_index('year').reindex(years).reset_index()
-            cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
-            cat_data['is_projected'] = cat_data['is_projected'].fillna(False).astype(bool)
-            cat_data['year_label'] = cat_data['year'].astype(str)
-
-            base_color = category_colors[category]
-            r = int(base_color[1:3], 16)
-            g = int(base_color[3:5], 16)
-            b = int(base_color[5:7], 16)
-            bar_colors = [
-                f'rgba({r},{g},{b},0.45)' if p else f'rgba({r},{g},{b},1.0)'
-                for p in cat_data['is_projected']
-            ]
-            patterns = ['/' if p else '' for p in cat_data['is_projected']]
-            hover_suffixes = ['<b>(Projected)</b>' if p else '<b>(Actual)</b>' for p in cat_data['is_projected']]
-
             fig.add_trace(go.Bar(
-                x=cat_data['year_label'],
-                y=cat_data['segment_demand'],
+                x=x_labels,
+                y=pivot[category].values,
                 name=category,
-                marker=dict(
-                    color=bar_colors,
-                    pattern=dict(shape=patterns, fgcolor=base_color, size=8),
-                ),
+                marker_color=category_colors[category],
                 legendgroup=category,
                 showlegend=True,
-                customdata=hover_suffixes,
                 hovertemplate=(
                     f'<b>{category}</b><br>'
-                    'Year: %{x}<br>'
-                    'Demand: %{y:,.0f} SF<br>'
-                    '%{customdata}<extra></extra>'
+                    '%{x}<br>'
+                    'Trailing 12M: %{y:,.0f} SF<extra></extra>'
                 ),
             ))
 
         # Total demand line on secondary y-axis
-        total_data = annual_total.set_index('year').reindex(years).reset_index()
-        total_data['total_demand'] = total_data['total_demand'].fillna(0)
-        total_data['is_projected'] = total_data['is_projected'].fillna(False).astype(bool)
-        total_data['year_label'] = total_data['year'].astype(str)
-
-        actual_total_line = total_data[~total_data['is_projected']]
-        proj_total_line = total_data[total_data['is_projected']]
-
-        if len(actual_total_line) > 0:
-            fig.add_trace(go.Scatter(
-                x=actual_total_line['year_label'],
-                y=actual_total_line['total_demand'],
-                mode='lines+markers',
-                name='Total Demand',
-                line=dict(color=AQUILA_COLORS[0], width=3),
-                marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle'),
-                yaxis='y2',
-                legendgroup='total',
-                showlegend=True,
-                hovertemplate=(
-                    '<b>Total Demand</b><br>'
-                    'Year: %{x}<br>'
-                    'Total: %{y:,.0f} SF<br>'
-                    '<b>(Actual)</b><extra></extra>'
-                ),
-            ))
-
-        if len(proj_total_line) > 0 and len(actual_total_line) > 0:
-            last_actual = actual_total_line.iloc[-1]
-            first_proj = proj_total_line.iloc[0]
-            fig.add_trace(go.Scatter(
-                x=[last_actual['year_label'], first_proj['year_label']],
-                y=[last_actual['total_demand'], first_proj['total_demand']],
-                mode='lines',
-                line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
-                yaxis='y2',
-                legendgroup='total',
-                showlegend=False,
-                hoverinfo='skip',
-            ))
-            fig.add_trace(go.Scatter(
-                x=proj_total_line['year_label'],
-                y=proj_total_line['total_demand'],
-                mode='markers',
-                name='Total Demand (Projected)',
-                marker=dict(size=12, color=AQUILA_COLORS[0], symbol='circle-open', line=dict(width=2.5)),
-                yaxis='y2',
-                legendgroup='total',
-                showlegend=True,
-                hovertemplate=(
-                    '<b>Total Demand</b><br>'
-                    'Year: %{x}<br>'
-                    'Total: %{y:,.0f} SF<br>'
-                    f'<b>Annualized as of {_today:%b %d, %Y}</b><extra></extra>'
-                ),
-            ))
-
-        caption = (
-            f'<i>Note: {_current_year} bar is annualized from YTD demand '
-            f'(as of {_today:%b %d, %Y}) '
-            f'using a {_global_factor:.1f}x pace factor vs. {_current_year - 1}</i>'
-        )
+        fig.add_trace(go.Scatter(
+            x=x_labels,
+            y=pivot['total'].values,
+            mode='lines+markers',
+            name='Total Demand (12M)',
+            line=dict(color=AQUILA_COLORS[3], width=3),
+            marker=dict(size=8, color=AQUILA_COLORS[3], symbol='circle'),
+            yaxis='y2',
+            showlegend=True,
+            hovertemplate=(
+                '<b>Total Demand</b><br>'
+                '%{x}<br>'
+                'Trailing 12M: %{y:,.0f} SF<extra></extra>'
+            ),
+        ))
 
         fig.update_layout(
-            title={
-                'text': (
-                    f'Office Demand by Tenant Size \u2013 {market_names[market_code]} '
-                    f'(Annual: {min_year}\u2013{max_year} with {_current_year} Annualized Projection)'
-                    f'<br><sup>{caption}</sup>'
+            title=dict(
+                text=(
+                    f'Office Demand by Tenant Size \u2013 {market_names[market_code]}'
+                    f'<br><sup>Rolling 12-month total ending each month '
+                    f'({min_label}\u2013{max_label})</sup>'
                 ),
-                'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
-                'x': 0.5,
-                'xanchor': 'center',
-                'y': 0.97,
-                'yanchor': 'top',
-            },
-            barmode='group',
-            bargroupgap=0,
+                font=dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
+                x=0.5,
+                xanchor='center',
+                y=0.97,
+                yanchor='top',
+            ),
+            barmode='stack',
             plot_bgcolor='white',
             paper_bgcolor='white',
             font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
@@ -646,8 +548,8 @@ def main():
                 showline=True,
                 linecolor='lightgrey',
                 linewidth=1,
-                tickfont=dict(size=12),
-                tickangle=0,
+                tickfont=dict(size=11),
+                tickangle=-45,
             ),
             yaxis=dict(
                 title=dict(text='Segment Demand (SF)', font=dict(size=14)),
@@ -673,7 +575,7 @@ def main():
             legend=dict(
                 orientation='h',
                 yanchor='top',
-                y=-0.2,
+                y=-0.25,
                 xanchor='center',
                 x=0.5,
                 font=dict(size=12),
@@ -681,11 +583,10 @@ def main():
             ),
             height=650,
             width=1400,
-            margin=dict(t=110, b=120, l=80, r=80),
+            margin=dict(t=110, b=140, l=80, r=80),
             hovermode='x unified',
         )
 
-        # Save chart
         filename = f'charts/office/requirements_demand_by_tenant_size_{market_code.lower()}.html'
         write_chart_html(fig, filename)
         print(f"    [OK] Saved {filename}")
@@ -705,7 +606,6 @@ def main():
     print("\n" + "="*80)
     print("[OK] Complete!")
     print("="*80)
-
 
 
 if __name__ == '__main__':
