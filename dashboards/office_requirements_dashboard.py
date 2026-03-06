@@ -486,8 +486,8 @@ def calculate_metrics(monthly_current, monthly_prior):
 
 def aggregate_annual_demand(df_raw, df_exploded, submarket, sizes):
     """
-    Aggregate requirements by year and size category for the annual demand chart.
-    Uses rolling 12-month average as pace factor for current year projection.
+    Aggregate requirements into rolling 12-month windows for the annual demand chart.
+    Each window ends at the last full calendar month (e.g. Feb 2026 when run in March).
 
     Parameters
     ----------
@@ -502,15 +502,15 @@ def aggregate_annual_demand(df_raw, df_exploded, submarket, sizes):
 
     Returns
     -------
-    annual_by_size : DataFrame
-        Columns: year, size_category, segment_demand, is_projected
-    annual_total : DataFrame
-        Columns: year, total_demand, is_projected
-    projection_info : dict
-        Keys: projected_total, avg_monthly, trailing_months, as_of_date
+    window_by_size : DataFrame
+        Columns: window_label, size_category, segment_demand
+    window_total : DataFrame
+        Columns: window_label, total_demand
+    window_labels_list : list[str]
+        Ordered window labels, e.g. ['Mar 2018\u2013Feb 2019', ..., 'Mar 2025\u2013Feb 2026']
     """
-    today = datetime.now()
-    current_year = today.year
+    today = pd.Timestamp.today()
+    last_full_month_end = pd.Timestamp(today.year, today.month, 1) - pd.Timedelta(days=1)
 
     # Pick working DataFrame based on submarket
     if submarket == 'Citywide':
@@ -523,69 +523,41 @@ def aggregate_annual_demand(df_raw, df_exploded, submarket, sizes):
         df = df[df['size_category'].isin(sizes)]
 
     if len(df) == 0:
-        return pd.DataFrame(), pd.DataFrame(), {'projected_total': 0, 'avg_monthly': 0, 'trailing_months': 0, 'as_of_date': today}
+        return pd.DataFrame(), pd.DataFrame(), []
 
-    df['year'] = df['date'].dt.year
+    # Build rolling 12-month windows going back to earliest data
+    windows = []
+    window_end = last_full_month_end
+    data_min_date = df['date'].min().replace(day=1)
 
-    # --- Historical: calendar year aggregation ---
-    df_hist = df[df['year'] < current_year].copy()
+    while window_end >= data_min_date:
+        window_start = (window_end - pd.DateOffset(months=11)).replace(day=1)
+        windows.append({
+            'label': f"{window_start.strftime('%b %Y')}\u2013{window_end.strftime('%b %Y')}",
+            'start': window_start,
+            'end':   window_end,
+        })
+        window_end = window_start - pd.Timedelta(days=1)
 
-    annual_by_size = df_hist.groupby(['year', 'size_category'], observed=False).agg(
-        segment_demand=('sf_avg', 'sum')
-    ).reset_index()
-    annual_by_size['is_projected'] = False
+    windows = list(reversed(windows))   # chronological order (oldest first)
+    window_labels_list = [w['label'] for w in windows]
 
-    annual_total = df_hist.groupby('year').agg(
-        total_demand=('sf_avg', 'sum')
-    ).reset_index()
-    annual_total['is_projected'] = False
+    # Assign each record to a window via pd.cut on date
+    bin_edges = [w['start'] for w in windows] + [windows[-1]['end'] + pd.Timedelta(days=1)]
+    df['window_label'] = pd.cut(df['date'], bins=bin_edges, labels=window_labels_list, right=False)
+    df_windowed = df[df['window_label'].notna()].copy()
+    df_windowed['window_label'] = df_windowed['window_label'].astype(str)
 
-    # --- Projection: rolling 12-month pace factor ---
-    trailing_start = today - pd.DateOffset(months=12)
-    df_trailing = df[df['date'] >= trailing_start].copy()
+    window_by_size = (
+        df_windowed.groupby(['window_label', 'size_category'], observed=True)['sf_avg']
+        .sum().reset_index(name='segment_demand')
+    )
+    window_total = (
+        df_windowed.groupby('window_label', observed=True)['sf_avg']
+        .sum().reset_index(name='total_demand')
+    )
 
-    trailing_total = df_trailing['sf_avg'].sum()
-    trailing_months = df_trailing['date'].dt.to_period('M').nunique()
-
-    if trailing_months > 0 and trailing_total > 0:
-        avg_monthly = trailing_total / trailing_months
-        projected_annual = avg_monthly * 12
-
-        # Distribute by trailing 12-month size mix
-        trailing_by_size = df_trailing.groupby('size_category', observed=False)['sf_avg'].sum()
-
-        size_labels = ['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements']
-        for size_cat in size_labels:
-            if sizes and 'All' not in sizes and size_cat not in sizes:
-                continue
-            size_val = trailing_by_size.get(size_cat, 0)
-            pct = size_val / trailing_total if trailing_total > 0 else 1.0 / len(size_labels)
-            proj_row = pd.DataFrame([{
-                'year': current_year,
-                'size_category': size_cat,
-                'segment_demand': projected_annual * pct,
-                'is_projected': True
-            }])
-            annual_by_size = pd.concat([annual_by_size, proj_row], ignore_index=True)
-
-        proj_total_row = pd.DataFrame([{
-            'year': current_year,
-            'total_demand': projected_annual,
-            'is_projected': True
-        }])
-        annual_total = pd.concat([annual_total, proj_total_row], ignore_index=True)
-    else:
-        avg_monthly = 0
-        projected_annual = 0
-
-    projection_info = {
-        'projected_total': projected_annual,
-        'avg_monthly': avg_monthly,
-        'trailing_months': trailing_months,
-        'as_of_date': today
-    }
-
-    return annual_by_size, annual_total, projection_info
+    return window_by_size, window_total, window_labels_list
 
 
 # ============================================================================
@@ -1289,16 +1261,16 @@ def export_csv(n_clicks, submarkets, industries, sizes, start_date, end_date):
      Input('demand-size-filter', 'value')]
 )
 def update_demand_chart(submarket, sizes):
-    """Build the annual demand by tenant size chart with rolling 12-month projection."""
+    """Build the annual demand by tenant size chart using rolling 12-month windows."""
 
     if not sizes:
         sizes = ['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements']
 
-    annual_by_size, annual_total, proj_info = aggregate_annual_demand(
+    window_by_size, window_total, window_labels_list = aggregate_annual_demand(
         df_global_raw, df_global, submarket, sizes
     )
 
-    if annual_by_size.empty:
+    if window_by_size.empty:
         fig = go.Figure()
         fig.update_layout(
             title='No data available for selected filters',
@@ -1306,8 +1278,6 @@ def update_demand_chart(submarket, sizes):
             plot_bgcolor='white', paper_bgcolor='white'
         )
         return fig
-
-    current_year = datetime.now().year
 
     # Color and order config
     category_colors = {
@@ -1319,136 +1289,67 @@ def update_demand_chart(submarket, sizes):
     }
     category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
 
-    # Ensure is_projected column
-    if 'is_projected' not in annual_by_size.columns:
-        annual_by_size['is_projected'] = False
-    annual_by_size['is_projected'] = annual_by_size['is_projected'].fillna(False).astype(bool)
-
-    if 'is_projected' not in annual_total.columns:
-        annual_total['is_projected'] = False
-    annual_total['is_projected'] = annual_total['is_projected'].fillna(False).astype(bool)
-
-    years = sorted(annual_by_size['year'].unique())
-
     fig = go.Figure()
 
-    # ── Stacked bars per size category ──
+    # ── Grouped bars per size category ──
     for category in category_order:
         if category not in sizes:
             continue
 
-        cat_data = annual_by_size[annual_by_size['size_category'] == category].copy()
-        cat_data = cat_data.set_index('year').reindex(years).reset_index()
+        cat_data = (
+            window_by_size[window_by_size['size_category'] == category]
+            .set_index('window_label').reindex(window_labels_list).reset_index()
+        )
         cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
-        cat_data['is_projected'] = cat_data['is_projected'].fillna(False).astype(bool)
-        cat_data['year_label'] = cat_data['year'].astype(int).astype(str)
-
-        base_color = category_colors[category]
-        r, g, b = int(base_color[1:3], 16), int(base_color[3:5], 16), int(base_color[5:7], 16)
-        bar_colors = [
-            f'rgba({r},{g},{b},0.45)' if p else f'rgba({r},{g},{b},1.0)'
-            for p in cat_data['is_projected']
-        ]
-        patterns = ['/' if p else '' for p in cat_data['is_projected']]
-        hover_suffixes = ['<b>(Projected)</b>' if p else '<b>(Actual)</b>' for p in cat_data['is_projected']]
 
         fig.add_trace(go.Bar(
-            x=cat_data['year_label'],
+            x=cat_data['window_label'],
             y=cat_data['segment_demand'],
             name=category,
-            marker=dict(
-                color=bar_colors,
-                pattern=dict(shape=patterns, fgcolor=base_color, size=8),
-            ),
+            marker_color=category_colors[category],
             legendgroup=category,
             showlegend=True,
-            customdata=hover_suffixes,
             hovertemplate=(
                 f'<b>{category}</b><br>'
-                'Year: %{x}<br>'
-                'Demand: %{y:,.0f} SF<br>'
-                '%{customdata}<extra></extra>'
+                'Period: %{x}<br>'
+                'Demand: %{y:,.0f} SF<extra></extra>'
             ),
         ))
 
     # ── Total demand line on secondary y-axis ──
-    total_data = annual_total.set_index('year').reindex(years).reset_index()
+    total_data = (
+        window_total.set_index('window_label').reindex(window_labels_list).reset_index()
+    )
     total_data['total_demand'] = total_data['total_demand'].fillna(0)
-    total_data['is_projected'] = total_data['is_projected'].fillna(False).astype(bool)
-    total_data['year_label'] = total_data['year'].astype(int).astype(str)
 
-    actual_total = total_data[~total_data['is_projected']]
-    proj_total = total_data[total_data['is_projected']]
-
-    if len(actual_total) > 0:
-        fig.add_trace(go.Scatter(
-            x=actual_total['year_label'],
-            y=actual_total['total_demand'],
-            mode='lines+markers',
-            name='Total Demand',
-            line=dict(color=AQUILA_COLORS[0], width=3),
-            marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle'),
-            yaxis='y2',
-            legendgroup='total',
-            showlegend=True,
-            hovertemplate=(
-                '<b>Total Demand</b><br>'
-                'Year: %{x}<br>'
-                'Total: %{y:,.0f} SF<br>'
-                '<b>(Actual)</b><extra></extra>'
-            ),
-        ))
-
-    if len(proj_total) > 0 and len(actual_total) > 0:
-        last_actual = actual_total.iloc[-1]
-        first_proj = proj_total.iloc[0]
-        # Dashed connector
-        fig.add_trace(go.Scatter(
-            x=[last_actual['year_label'], first_proj['year_label']],
-            y=[last_actual['total_demand'], first_proj['total_demand']],
-            mode='lines',
-            line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
-            yaxis='y2',
-            legendgroup='total',
-            showlegend=False,
-            hoverinfo='skip',
-        ))
-        # Projected marker
-        fig.add_trace(go.Scatter(
-            x=proj_total['year_label'],
-            y=proj_total['total_demand'],
-            mode='markers',
-            name='Total Demand (Projected)',
-            marker=dict(size=12, color=AQUILA_COLORS[0], symbol='circle-open', line=dict(width=2.5)),
-            yaxis='y2',
-            legendgroup='total',
-            showlegend=True,
-            hovertemplate=(
-                '<b>Total Demand (Projected)</b><br>'
-                'Year: %{x}<br>'
-                'Total: %{y:,.0f} SF<br>'
-                f'<b>Trailing 12-month projection as of {proj_info["as_of_date"]:%b %d, %Y}</b><extra></extra>'
-            ),
-        ))
+    fig.add_trace(go.Scatter(
+        x=total_data['window_label'],
+        y=total_data['total_demand'],
+        mode='lines+markers',
+        name='Total Demand',
+        line=dict(color=AQUILA_COLORS[0], width=3),
+        marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle'),
+        yaxis='y2',
+        showlegend=True,
+        hovertemplate=(
+            '<b>Total Demand</b><br>'
+            'Period: %{x}<br>'
+            'Total: %{y:,.0f} SF<extra></extra>'
+        ),
+    ))
 
     # ── Layout ──
-    market_names = {'Citywide': 'Citywide', 'CBD': 'CBD', 'SW': 'Southwest', 'NW': 'Northwest', 'E': 'East', 'C': 'Central'}
+    market_names = {'Citywide': 'Citywide', 'CBD': 'CBD', 'SW': 'Southwest',
+                    'NW': 'Northwest', 'E': 'East', 'C': 'Central'}
     market_label = market_names.get(submarket, submarket)
-    min_year = min(years) if years else 2018
-    max_year = max(years) if years else current_year
-
-    caption = (
-        f'<i>Note: {current_year} bar projected from trailing 12-month avg monthly demand '
-        f'({proj_info["avg_monthly"]:,.0f} SF/mo x 12)</i>'
-    ) if proj_info['avg_monthly'] > 0 else ''
-
-    title_text = f'Office Demand by Tenant Size \u2013 {market_label} (Annual: {min_year}\u2013{max_year})'
-    if caption:
-        title_text += f'<br><sup>{caption}</sup>'
+    current_period = window_labels_list[-1] if window_labels_list else ''
 
     fig.update_layout(
         title={
-            'text': title_text,
+            'text': (
+                f'Office Demand by Tenant Size \u2013 {market_label} (Rolling 12-Month Windows)'
+                f'<br><sup>Current period: {current_period}</sup>'
+            ),
             'font': dict(family=AQUILA_FONT, size=22, color=AQUILA_COLORS[0]),
             'x': 0.5, 'xanchor': 'center', 'y': 0.97, 'yanchor': 'top',
         },
@@ -1460,7 +1361,7 @@ def update_demand_chart(submarket, sizes):
         xaxis=dict(
             title='', showgrid=False, showline=True,
             linecolor='lightgrey', linewidth=1,
-            tickfont=dict(size=12), tickangle=0,
+            tickfont=dict(size=11), tickangle=-45,
         ),
         yaxis=dict(
             title=dict(text='Segment Demand (SF)', font=dict(size=14)),
@@ -1476,12 +1377,12 @@ def update_demand_chart(submarket, sizes):
             tickformat=',', rangemode='tozero',
         ),
         legend=dict(
-            orientation='h', yanchor='top', y=-0.15,
+            orientation='h', yanchor='top', y=-0.25,
             xanchor='center', x=0.5,
             font=dict(size=12), traceorder='normal',
         ),
         height=650,
-        margin=dict(t=110, b=120, l=80, r=80),
+        margin=dict(t=110, b=160, l=80, r=80),
         hovermode='x unified',
     )
 
