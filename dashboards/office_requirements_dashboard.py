@@ -517,12 +517,9 @@ default_start = max_complete_month - pd.DateOffset(months=12)
 # AUTH LAYOUT
 # ============================================================================
 
-_logo_el = html.Img(src=LOGO_B64, style={'height': '48px', 'display': 'block', 'margin': '0 auto 16px auto'}) if LOGO_B64 else html.H3("Aquila", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT})
-
 _VERCEL_URL = 'https://aquila-insights.vercel.app'
 
 login_form_div = html.Div([
-    _logo_el,
     html.H4("Austin Office Requirements", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '4px'}),
     html.P("Sign in with your aquilacommercial.com email", style={'textAlign': 'center', 'color': '#888', 'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'marginBottom': '24px'}),
     html.Label("Email", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
@@ -553,10 +550,6 @@ auth_layout = dbc.Container([
 
 main_layout = dbc.Container([
     dbc.Row([
-        dbc.Col(
-            html.Img(src=LOGO_B64, style={'height': '50px'}) if LOGO_B64 else html.Span(),
-            width='auto', style={'display': 'flex', 'alignItems': 'center', 'paddingRight': '16px'}
-        ),
         dbc.Col([
             html.H2("Austin Office Requirements", style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'margin': 0}),
             html.P("Interactive dashboard with year-over-year comparison", style={'color': '#666', 'fontFamily': AQUILA_FONT, 'margin': 0})
@@ -716,10 +709,18 @@ main_layout = dbc.Container([
     ], style={'marginTop': '20px'})
 ], fluid=True)
 
-# Root layout: Location shell + dynamic page-content
+# Root layout: fixed top-left logo bar + Location shell + dynamic page-content
 app.layout = html.Div([
+    html.Div(
+        html.Img(src=LOGO_B64, style={'height': '40px', 'padding': '8px 16px'}) if LOGO_B64 else html.Span(),
+        style={
+            'position': 'fixed', 'top': 0, 'left': 0, 'zIndex': 1000,
+            'backgroundColor': 'white',
+            'boxShadow': '0 1px 4px rgba(0,0,0,0.08)',
+        }
+    ),
     dcc.Location(id='url', refresh=False),
-    html.Div(id='page-content')
+    html.Div(id='page-content', style={'paddingTop': '58px'})
 ])
 
 
