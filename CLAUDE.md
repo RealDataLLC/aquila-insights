@@ -287,6 +287,8 @@ python reports/cleanup_quarterly_data.py                            # Apply chan
 
 **Key architecture:** Data is never filtered by date -- date range only slices display. Rolling averages computed on full dataset first, then split into current/prior periods. Prior year = same range shifted back 12 months.
 
+**Annual demand chart:** Uses rolling 12-month windows (same logic as `requirements.py` Chart 7). `aggregate_annual_demand()` builds windows ending at the last full calendar month, assigns records via `pd.cut`, and returns `(window_by_size, window_total, window_labels_list)`. X-axis shows "Mar 2025–Feb 2026" range labels at −45°. Submarket and size dropdowns filter data before window computation.
+
 **Logo:** Fixed top-left logo bar (`position: fixed; top: 0; left: 0; zIndex: 1000`) is always visible in both the login form and main dashboard. `page-content` div has `paddingTop: 58px` to prevent content hiding under the bar.
 
 ### Vercel Deployment
@@ -472,7 +474,7 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 ---
 
 **Last Updated:** 2026-03-06
-**Document Version:** 6.2.0
+**Document Version:** 6.3.0
 
 ---
 
@@ -480,6 +482,7 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.3.0** | 2026-03-06 | Dashboard annual demand chart converted to rolling 12M windows — `aggregate_annual_demand()` now returns `(window_by_size, window_total, window_labels_list)`; solid bars, single total line, "Mar 2025–Feb 2026" range labels on x-axis; matches `requirements.py` Chart 7 behavior |
 | **6.2.0** | 2026-03-06 | Removed annualized projection from demand charts — `demand_by_market.py` now uses rolling 12M trailing windows with zero-filled sparse months; `requirements.py` Chart 7 shows actual YTD with "Data through [Month Year]" subtitle; dashboard fixed top-left logo bar |
 | **6.1.0** | 2026-03-05 | Vercel deployment for office requirements dashboard — `api/index.py` WSGI entry, `vercel.json`, brand constants stub, `server = app.server`, added numpy to requirements |
 | **6.0.0** | 2026-03-04 | CLAUDE.md consolidated (1498→418 lines); added custom slash commands (`.claude/commands/`) |
