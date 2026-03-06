@@ -17,6 +17,7 @@ Note: Data is NOT filtered by date - the date range only controls what's display
 on the charts. This ensures prior year data is always available for comparison.
 """
 
+import base64
 import pandas as pd
 import numpy as np
 import sys
@@ -27,10 +28,18 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import dash
-from dash import dcc, html, Input, Output, State, dash_table
+from dash import dcc, html, Input, Output, State, dash_table, callback_context
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dotenv import load_dotenv
+from flask import session
+
+try:
+    from supabase import create_client as _supabase_create_client
+    _SUPABASE_PKG = True
+except ImportError:
+    _SUPABASE_PKG = False
+    print("WARNING: supabase package not installed. Auth will be disabled.")
 
 try:
     import gspread
@@ -46,6 +55,32 @@ from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 # Load environment variables from parent directory
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'aquila_graph.env')
 load_dotenv(env_path)
+
+# ============================================================================
+# LOGO
+# ============================================================================
+
+def _load_logo_b64():
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'Aquila_Logo2.png')
+    if os.path.exists(logo_path):
+        with open(logo_path, 'rb') as f:
+            return 'data:image/png;base64,' + base64.b64encode(f.read()).decode()
+    return None
+
+LOGO_B64 = _load_logo_b64()
+
+# ============================================================================
+# SUPABASE AUTH CLIENT
+# ============================================================================
+
+_SUPABASE_URL = os.getenv('SUPABASE_URL')
+_SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY')
+_supabase_auth = None
+if _SUPABASE_PKG and _SUPABASE_URL and _SUPABASE_ANON_KEY:
+    _supabase_auth = _supabase_create_client(_SUPABASE_URL, _SUPABASE_ANON_KEY)
+    print("Supabase auth client initialized")
+else:
+    print("WARNING: Supabase auth not configured (SUPABASE_URL/SUPABASE_ANON_KEY missing)")
 
 # ============================================================================
 # DATA LOADING FUNCTIONS
@@ -462,21 +497,79 @@ print(f"Found {len(all_industries)} unique industries")
 # DASH APP LAYOUT
 # ============================================================================
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-app.title = "Austin Office Requirements Dashboard"
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+app.title = "Aquila Insights Dashboard"
+app.server.secret_key = os.getenv('FLASK_SECRET_KEY', 'aquila-dashboard-2026-change-me')
+
+
+@app.server.route('/logout')
+def _logout():
+    from flask import redirect
+    session.clear()
+    return redirect('/')
 
 # Calculate default dates for DatePickerRange
 max_date = df_global['date'].max()
-max_complete_month = max_date 
+max_complete_month = max_date
 default_start = max_complete_month - pd.DateOffset(months=12)
 
-app.layout = dbc.Container([
+# ============================================================================
+# AUTH LAYOUT
+# ============================================================================
+
+_logo_el = html.Img(src=LOGO_B64, style={'height': '48px', 'display': 'block', 'margin': '0 auto 16px auto'}) if LOGO_B64 else html.H3("Aquila", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT})
+
+_VERCEL_URL = 'https://aquila-insights.vercel.app'
+
+login_form_div = html.Div([
+    _logo_el,
+    html.H4("Austin Office Requirements", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '4px'}),
+    html.P("Sign in with your aquilacommercial.com email", style={'textAlign': 'center', 'color': '#888', 'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'marginBottom': '24px'}),
+    html.Label("Email", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
+    dbc.Input(id='login-email', type='email', placeholder='you@aquilacommercial.com', className='mb-3'),
+    html.Div(id='login-error', style={'color': '#BF4040', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}),
+    html.Div(id='login-success', style={'color': '#556B30', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}),
+    dbc.Button("Send Magic Link", id='login-btn', n_clicks=0,
+               style={'width': '100%', 'backgroundColor': AQUILA_COLORS[0], 'border': 'none', 'fontFamily': AQUILA_FONT}),
+    html.P("We'll email you a secure sign-in link — no password needed.",
+           style={'textAlign': 'center', 'color': '#aaa', 'fontFamily': AQUILA_FONT, 'fontSize': '12px', 'marginTop': '16px'})
+], id='login-form-div')
+
+auth_layout = dbc.Container([
     dbc.Row([
         dbc.Col([
-            html.H2("Austin Office Requirements", style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
-            html.P("Interactive dashboard with year-over-year comparison", style={'color': '#666', 'fontFamily': AQUILA_FONT})
+            dbc.Card(
+                dbc.CardBody([login_form_div]),
+                style={'maxWidth': '420px', 'margin': 'auto', 'marginTop': '80px',
+                       'boxShadow': '0 4px 20px rgba(0,0,0,0.12)', 'border': 'none'}
+            )
         ], width=12)
-    ]),
+    ])
+], fluid=True, style={'minHeight': '100vh', 'backgroundColor': '#f5f7fa'})
+
+# ============================================================================
+# MAIN LAYOUT (existing dashboard, now with logo header)
+# ============================================================================
+
+main_layout = dbc.Container([
+    dbc.Row([
+        dbc.Col(
+            html.Img(src=LOGO_B64, style={'height': '50px'}) if LOGO_B64 else html.Span(),
+            width='auto', style={'display': 'flex', 'alignItems': 'center', 'paddingRight': '16px'}
+        ),
+        dbc.Col([
+            html.H2("Austin Office Requirements", style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'margin': 0}),
+            html.P("Interactive dashboard with year-over-year comparison", style={'color': '#666', 'fontFamily': AQUILA_FONT, 'margin': 0})
+        ], style={'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+        dbc.Col(
+            html.A("Sign Out", href='/logout',
+                   style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'fontSize': '13px',
+                          'border': f'1px solid {AQUILA_COLORS[0]}', 'padding': '5px 14px',
+                          'borderRadius': '4px', 'textDecoration': 'none'}),
+            width='auto', style={'display': 'flex', 'alignItems': 'center', 'marginLeft': 'auto'}
+        )
+    ], style={'marginTop': '20px', 'marginBottom': '4px', 'paddingBottom': '12px',
+              'borderBottom': f'2px solid {AQUILA_COLORS[0]}'}, align='center'),
 
     dbc.Row([
         # Left sidebar - Filters
@@ -623,9 +716,96 @@ app.layout = dbc.Container([
     ], style={'marginTop': '20px'})
 ], fluid=True)
 
+# Root layout: Location shell + dynamic page-content
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content')
+])
+
 
 # ============================================================================
-# CALLBACKS
+# CALLBACKS - AUTH
+# ============================================================================
+
+@app.callback(Output('page-content', 'children'), Input('url', 'pathname'))
+def display_page(pathname):
+    return main_layout if session.get('authenticated') else auth_layout
+
+
+@app.callback(
+    [Output('login-error', 'children'), Output('login-success', 'children')],
+    Input('login-btn', 'n_clicks'),
+    State('login-email', 'value'),
+    prevent_initial_call=True
+)
+def handle_login(n_clicks, email):
+    if not email:
+        return "Please enter your email.", ""
+    if not email.strip().lower().endswith('@aquilacommercial.com'):
+        return "Access restricted to @aquilacommercial.com addresses.", ""
+    if not _supabase_auth:
+        return "Auth service unavailable. Check SUPABASE_URL and SUPABASE_ANON_KEY.", ""
+    try:
+        _supabase_auth.auth.sign_in_with_otp({
+            "email": email.strip(),
+            "options": {"email_redirect_to": f"{_VERCEL_URL}/auth/callback"}
+        })
+        return "", "Magic link sent! Check your inbox."
+    except Exception as e:
+        return f"Error sending link: {str(e)}", ""
+
+
+# Flask routes to handle the magic link callback
+@app.server.route('/auth/callback')
+def auth_callback():
+    """Supabase redirects here after magic link click with tokens in URL fragment.
+    Returns a minimal page with JS that extracts the token and calls /auth/set-session."""
+    return '''<!DOCTYPE html>
+<html><head><title>Signing in...</title>
+<style>body{font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f7fa}
+.msg{text-align:center;color:#172344}</style></head>
+<body><div class="msg"><p>Signing in...</p></div>
+<script>
+var hash = window.location.hash.substring(1);
+var params = new URLSearchParams(hash);
+var token = params.get('access_token');
+var refresh = params.get('refresh_token');
+if (token) {
+  fetch('/auth/set-session', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({access_token: token, refresh_token: refresh})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    window.location.href = d.ok ? '/' : '/?auth_error=' + encodeURIComponent(d.error || 'unknown');
+  }).catch(function(){ window.location.href = '/?auth_error=network'; });
+} else {
+  window.location.href = '/?auth_error=no_token';
+}
+</script></body></html>'''
+
+
+@app.server.route('/auth/set-session', methods=['POST'])
+def auth_set_session():
+    """Verifies the Supabase access token, checks email domain, sets Flask session."""
+    from flask import request, jsonify
+    data = request.get_json() or {}
+    access_token = data.get('access_token')
+    if not access_token or not _supabase_auth:
+        return jsonify({'ok': False, 'error': 'missing_token'})
+    try:
+        user_response = _supabase_auth.auth.get_user(access_token)
+        email = user_response.user.email
+        if not email or not email.lower().endswith('@aquilacommercial.com'):
+            return jsonify({'ok': False, 'error': 'unauthorized_domain'})
+        session['authenticated'] = True
+        session['user_email'] = email
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+
+# ============================================================================
+# CALLBACKS - DASHBOARD
 # ============================================================================
 
 @app.callback(
