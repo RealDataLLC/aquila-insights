@@ -519,50 +519,27 @@ default_start = max_complete_month - pd.DateOffset(months=12)
 
 _logo_el = html.Img(src=LOGO_B64, style={'height': '48px', 'display': 'block', 'margin': '0 auto 16px auto'}) if LOGO_B64 else html.H3("Aquila", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT})
 
+_VERCEL_URL = 'https://aquila-insights.vercel.app'
+
 login_form_div = html.Div([
     _logo_el,
-    html.H4("Dashboard Login", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '24px'}),
+    html.H4("Austin Office Requirements", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '4px'}),
+    html.P("Sign in with your aquilacommercial.com email", style={'textAlign': 'center', 'color': '#888', 'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'marginBottom': '24px'}),
     html.Label("Email", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
     dbc.Input(id='login-email', type='email', placeholder='you@aquilacommercial.com', className='mb-3'),
-    html.Label("Password", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
-    dbc.Input(id='login-password', type='password', placeholder='Password', className='mb-3'),
     html.Div(id='login-error', style={'color': '#BF4040', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}),
-    dbc.Button("Sign In", id='login-btn', n_clicks=0,
+    html.Div(id='login-success', style={'color': '#556B30', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}),
+    dbc.Button("Send Magic Link", id='login-btn', n_clicks=0,
                style={'width': '100%', 'backgroundColor': AQUILA_COLORS[0], 'border': 'none', 'fontFamily': AQUILA_FONT}),
-    html.Div([
-        html.Span("New user? ", style={'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'color': '#555'}),
-        html.Button("Create an account", id='show-signup-btn', n_clicks=0,
-                    style={'background': 'none', 'border': 'none', 'padding': 0, 'color': AQUILA_COLORS[0],
-                           'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'cursor': 'pointer', 'textDecoration': 'underline'})
-    ], style={'textAlign': 'center', 'marginTop': '16px'})
+    html.P("We'll email you a secure sign-in link — no password needed.",
+           style={'textAlign': 'center', 'color': '#aaa', 'fontFamily': AQUILA_FONT, 'fontSize': '12px', 'marginTop': '16px'})
 ], id='login-form-div')
-
-signup_form_div = html.Div([
-    _logo_el,
-    html.H4("Create Account", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '24px'}),
-    html.Label("Email (@aquilacommercial.com only)", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
-    dbc.Input(id='signup-email', type='email', placeholder='you@aquilacommercial.com', className='mb-3'),
-    html.Label("Password", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
-    dbc.Input(id='signup-password', type='password', placeholder='Password (min 6 chars)', className='mb-3'),
-    html.Label("Confirm Password", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
-    dbc.Input(id='signup-confirm', type='password', placeholder='Confirm Password', className='mb-3'),
-    html.Div(id='signup-error', style={'color': '#BF4040', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '4px'}),
-    html.Div(id='signup-success', style={'color': '#556B30', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}),
-    dbc.Button("Create Account", id='signup-btn', n_clicks=0,
-               style={'width': '100%', 'backgroundColor': AQUILA_COLORS[0], 'border': 'none', 'fontFamily': AQUILA_FONT}),
-    html.Div([
-        html.Span("Already have an account? ", style={'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'color': '#555'}),
-        html.Button("Sign in", id='show-login-btn', n_clicks=0,
-                    style={'background': 'none', 'border': 'none', 'padding': 0, 'color': AQUILA_COLORS[0],
-                           'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'cursor': 'pointer', 'textDecoration': 'underline'})
-    ], style={'textAlign': 'center', 'marginTop': '16px'})
-], id='signup-form-div', style={'display': 'none'})
 
 auth_layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             dbc.Card(
-                dbc.CardBody([login_form_div, signup_form_div]),
+                dbc.CardBody([login_form_div]),
                 style={'maxWidth': '420px', 'margin': 'auto', 'marginTop': '80px',
                        'boxShadow': '0 4px 20px rgba(0,0,0,0.12)', 'border': 'none'}
             )
@@ -742,7 +719,6 @@ main_layout = dbc.Container([
 # Root layout: Location shell + dynamic page-content
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
-    dcc.Location(id='url-redirect', refresh=True),
     html.Div(id='page-content')
 ])
 
@@ -757,65 +733,75 @@ def display_page(pathname):
 
 
 @app.callback(
-    [Output('login-form-div', 'style'), Output('signup-form-div', 'style')],
-    [Input('show-signup-btn', 'n_clicks'), Input('show-login-btn', 'n_clicks')],
-    prevent_initial_call=True
-)
-def toggle_auth_view(show_signup_clicks, show_login_clicks):
-    trigger = callback_context.triggered[0]['prop_id'].split('.')[0]
-    if trigger == 'show-signup-btn':
-        return {'display': 'none'}, {'display': 'block'}
-    return {'display': 'block'}, {'display': 'none'}
-
-
-@app.callback(
-    [Output('login-error', 'children'), Output('url-redirect', 'pathname')],
+    [Output('login-error', 'children'), Output('login-success', 'children')],
     Input('login-btn', 'n_clicks'),
-    [State('login-email', 'value'), State('login-password', 'value')],
+    State('login-email', 'value'),
     prevent_initial_call=True
 )
-def handle_login(n_clicks, email, password):
-    if not email:
-        return "Please enter your email.", dash.no_update
-    if not email.strip().lower().endswith('@aquilacommercial.com'):
-        return "Access restricted to @aquilacommercial.com addresses.", dash.no_update
-    if not password:
-        return "Please enter your password.", dash.no_update
-    if not _supabase_auth:
-        return "Auth service unavailable. Check SUPABASE_URL and SUPABASE_ANON_KEY.", dash.no_update
-    try:
-        _supabase_auth.auth.sign_in_with_password({"email": email.strip(), "password": password})
-        session['authenticated'] = True
-        session['user_email'] = email.strip()
-        return "", "/"
-    except Exception:
-        return "Invalid credentials. Check your email/password or confirm your account.", dash.no_update
-
-
-@app.callback(
-    [Output('signup-error', 'children'), Output('signup-success', 'children')],
-    Input('signup-btn', 'n_clicks'),
-    [State('signup-email', 'value'), State('signup-password', 'value'), State('signup-confirm', 'value')],
-    prevent_initial_call=True
-)
-def handle_signup(n_clicks, email, password, confirm):
+def handle_login(n_clicks, email):
     if not email:
         return "Please enter your email.", ""
     if not email.strip().lower().endswith('@aquilacommercial.com'):
-        return "Only @aquilacommercial.com email addresses may register.", ""
-    if not password:
-        return "Please enter a password.", ""
-    if password != confirm:
-        return "Passwords do not match.", ""
-    if len(password) < 6:
-        return "Password must be at least 6 characters.", ""
+        return "Access restricted to @aquilacommercial.com addresses.", ""
     if not _supabase_auth:
-        return "Auth service unavailable.", ""
+        return "Auth service unavailable. Check SUPABASE_URL and SUPABASE_ANON_KEY.", ""
     try:
-        _supabase_auth.auth.sign_up({"email": email.strip(), "password": password})
-        return "", "Account created! Check your email to confirm, then sign in."
+        _supabase_auth.auth.sign_in_with_otp({
+            "email": email.strip(),
+            "options": {"email_redirect_to": f"{_VERCEL_URL}/auth/callback"}
+        })
+        return "", "Magic link sent! Check your inbox."
     except Exception as e:
-        return f"Sign-up failed: {str(e)}", ""
+        return f"Error sending link: {str(e)}", ""
+
+
+# Flask routes to handle the magic link callback
+@app.server.route('/auth/callback')
+def auth_callback():
+    """Supabase redirects here after magic link click with tokens in URL fragment.
+    Returns a minimal page with JS that extracts the token and calls /auth/set-session."""
+    return '''<!DOCTYPE html>
+<html><head><title>Signing in...</title>
+<style>body{font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f7fa}
+.msg{text-align:center;color:#172344}</style></head>
+<body><div class="msg"><p>Signing in...</p></div>
+<script>
+var hash = window.location.hash.substring(1);
+var params = new URLSearchParams(hash);
+var token = params.get('access_token');
+var refresh = params.get('refresh_token');
+if (token) {
+  fetch('/auth/set-session', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({access_token: token, refresh_token: refresh})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    window.location.href = d.ok ? '/' : '/?auth_error=' + encodeURIComponent(d.error || 'unknown');
+  }).catch(function(){ window.location.href = '/?auth_error=network'; });
+} else {
+  window.location.href = '/?auth_error=no_token';
+}
+</script></body></html>'''
+
+
+@app.server.route('/auth/set-session', methods=['POST'])
+def auth_set_session():
+    """Verifies the Supabase access token, checks email domain, sets Flask session."""
+    from flask import request, jsonify
+    data = request.get_json() or {}
+    access_token = data.get('access_token')
+    if not access_token or not _supabase_auth:
+        return jsonify({'ok': False, 'error': 'missing_token'})
+    try:
+        user_response = _supabase_auth.auth.get_user(access_token)
+        email = user_response.user.email
+        if not email or not email.lower().endswith('@aquilacommercial.com'):
+            return jsonify({'ok': False, 'error': 'unauthorized_domain'})
+        session['authenticated'] = True
+        session['user_email'] = email
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
 
 
 # ============================================================================
