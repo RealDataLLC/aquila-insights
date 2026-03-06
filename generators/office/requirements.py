@@ -812,88 +812,9 @@ def main():
     print('  [OK] Saved charts/office/requirements_yoy_rolling_12m.html')
 
     # ============================================================================
-    # PROJECTION FUNCTIONS FOR 2026
-    # ============================================================================
-    def calculate_2026_annual_projection(df_combined):
-        """
-        Calculate projected 2026 full-year demand annualized from YTD pace.
-
-        Method: Take YTD 2026 actual demand, compare to same period in 2025,
-        then scale by 2025 full-year total to project 2026 full year.
-
-        Returns:
-            dict with 'projected_total', 'ytd_actual', 'projection_factor',
-                      'projected_by_size', 'as_of_date'
-        """
-        from datetime import datetime
-
-        today = datetime.now()
-        current_year = today.year
-        day_of_year = today.timetuple().tm_yday
-
-        size_categories = ['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements']
-
-        # Filter by year
-        df_2025 = df_combined[df_combined['date'].dt.year == 2025].copy()
-        df_2026 = df_combined[df_combined['date'].dt.year == current_year].copy()
-
-        # Apply size bins
-        bins = [0, 10000, 25000, 50000, 100000, float('inf')]
-        for df in [df_2025, df_2026]:
-            df['size_category_temp'] = pd.cut(
-                df['sf_avg'], bins=bins, labels=size_categories, right=False
-            )
-
-        total_2025 = df_2025['sf_avg'].sum()
-        ytd_2026 = df_2026['sf_avg'].sum()
-
-        # Compare YTD 2026 to same calendar period in 2025
-        comparison_date_2025 = datetime(2025, 1, 1) + pd.Timedelta(days=day_of_year - 1)
-        df_2025_ytd = df_2025[df_2025['date'] <= comparison_date_2025]
-        ytd_2025 = df_2025_ytd['sf_avg'].sum()
-
-        # Projection factor: full-year 2025 / YTD-equivalent 2025
-        if ytd_2025 > 0:
-            projection_factor = total_2025 / ytd_2025
-        else:
-            projection_factor = 365.0 / day_of_year
-
-        projected_total_2026 = ytd_2026 * projection_factor
-
-        # Distribute projected total by 2025 annual size mix
-        annual_2025_by_size = df_2025.groupby('size_category_temp', observed=False)['sf_avg'].sum()
-        actual_2026_by_size = df_2026.groupby('size_category_temp', observed=False)['sf_avg'].sum()
-
-        projected_by_size = {}
-        for size_cat in size_categories:
-            size_val_2025 = annual_2025_by_size.get(size_cat, 0)
-            size_pct = size_val_2025 / total_2025 if total_2025 > 0 else 1.0 / len(size_categories)
-            projected_by_size[size_cat] = projected_total_2026 * size_pct
-
-        return {
-            'projected_total': projected_total_2026,
-            'ytd_actual': ytd_2026,
-            'projection_factor': projection_factor,
-            'projected_by_size': projected_by_size,
-            'actual_by_size': {cat: actual_2026_by_size.get(cat, 0) for cat in size_categories},
-            'as_of_date': today,
-            'comparison_date': comparison_date_2025,
-        }
-
-    # ============================================================================
     # CHART 7: Office Demand by Tenant Size (Annual Grouped Bar + Total Line)
     # ============================================================================
     print("\n7. Generating Office Demand by Tenant Size chart (Annual)...")
-
-    from datetime import datetime
-
-    # Calculate 2026 annual projection
-    projection_data = calculate_2026_annual_projection(df_combined)
-    print(f"  2026 Annual Projection calculated:")
-    print(f"    - Projection factor: {projection_data['projection_factor']:.2f}x")
-    print(f"    - Projected full-year 2026: {projection_data['projected_total']:,.0f} SF")
-    print(f"    - YTD 2026 actual: {projection_data['ytd_actual']:,.0f} SF")
-    print(f"    - As of: {projection_data['as_of_date']:%Y-%m-%d}")
 
     # Filter to records with valid dates
     df_demand = df_combined[df_combined['date'].notna()].copy()
@@ -910,47 +831,20 @@ def main():
         right=False
     )
 
-    # Aggregate: sum of sf_avg by year and size category (exclude current year — use projection instead)
-    current_year = datetime.now().year
-    df_historical = df_demand[df_demand['year'] < current_year].copy()
+    # Latest record date — used in subtitle
+    max_date = df_demand['date'].max()
 
-    annual_by_size = df_historical.groupby(['year', 'size_category'], observed=False).agg(
+    # Aggregate all years (including current partial year) — no projection
+    category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
+
+    annual_by_size = df_demand.groupby(['year', 'size_category'], observed=False).agg(
         segment_demand=('sf_avg', 'sum'),
         count=('sf_avg', 'count')
     ).reset_index()
 
-    annual_total = df_historical.groupby('year').agg(
+    annual_total = df_demand.groupby('year').agg(
         total_demand=('sf_avg', 'sum')
     ).reset_index()
-
-    # Add projected 2026 as a separate year row
-    category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
-
-    for size_cat in demand_labels:
-        proj_row = pd.DataFrame([{
-            'year': current_year,
-            'size_category': size_cat,
-            'segment_demand': projection_data['projected_by_size'][size_cat],
-            'count': 0,
-            'is_projected': True
-        }])
-        annual_by_size = pd.concat([annual_by_size, proj_row], ignore_index=True)
-
-    proj_total_row = pd.DataFrame([{
-        'year': current_year,
-        'total_demand': projection_data['projected_total'],
-        'is_projected': True
-    }])
-    annual_total = pd.concat([annual_total, proj_total_row], ignore_index=True)
-
-    # Mark historical as actual
-    if 'is_projected' not in annual_by_size.columns:
-        annual_by_size['is_projected'] = False
-    annual_by_size['is_projected'] = annual_by_size['is_projected'].fillna(False).astype(bool)
-
-    if 'is_projected' not in annual_total.columns:
-        annual_total['is_projected'] = False
-    annual_total['is_projected'] = annual_total['is_projected'].fillna(False).astype(bool)
 
     years = sorted(annual_by_size['year'].unique())
 
@@ -968,122 +862,52 @@ def main():
     min_year = years[0]
     max_year = years[-1]
 
-    # One trace per category across ALL years — use per-bar pattern lists so 2026
-    # gets a hatch while historical bars stay solid. This keeps exactly 5 bar
-    # traces total so bargroupgap=0 truly eliminates gaps within each year.
     for category in category_order:
         cat_data = annual_by_size[annual_by_size['size_category'] == category].copy()
         cat_data = cat_data.set_index('year').reindex(years).reset_index()
         cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
-        cat_data['is_projected'] = cat_data['is_projected'].fillna(False).astype(bool)
         cat_data['year_label'] = cat_data['year'].astype(str)
-
-        # Per-bar pattern: hatch for projected, empty string for actual
-        patterns = ['/' if p else '' for p in cat_data['is_projected']]
-        # Per-bar opacity via color alpha: 0.45 for projected, 1.0 for actual
-        # Plotly doesn't support per-bar opacity natively, so we encode it in
-        # marker.color as rgba strings
-        base_color = category_colors[category]
-        # Convert hex to rgba
-        r = int(base_color[1:3], 16)
-        g = int(base_color[3:5], 16)
-        b = int(base_color[5:7], 16)
-        bar_colors = [
-            f'rgba({r},{g},{b},0.45)' if p else f'rgba({r},{g},{b},1.0)'
-            for p in cat_data['is_projected']
-        ]
-        hover_suffixes = ['<b>(Projected)</b>' if p else '<b>(Actual)</b>' for p in cat_data['is_projected']]
 
         fig7.add_trace(go.Bar(
             x=cat_data['year_label'],
             y=cat_data['segment_demand'],
             name=category,
-            marker=dict(
-                color=bar_colors,
-                pattern=dict(shape=patterns, fgcolor=base_color, size=8),
-            ),
+            marker_color=category_colors[category],
             legendgroup=category,
             showlegend=True,
-            customdata=hover_suffixes,
             hovertemplate=(
                 f'<b>{category}</b><br>'
                 'Year: %{x}<br>'
-                'Demand: %{y:,.0f} SF<br>'
-                '%{customdata}<extra></extra>'
+                'Demand: %{y:,.0f} SF<extra></extra>'
             ),
         ))
 
-    # Total demand line — single continuous trace with dash starting at projected year
+    # Total demand line — single solid trace across all years
     total_data = annual_total.set_index('year').reindex(years).reset_index()
     total_data['total_demand'] = total_data['total_demand'].fillna(0)
-    total_data['is_projected'] = total_data['is_projected'].fillna(False).astype(bool)
     total_data['year_label'] = total_data['year'].astype(str)
 
-    actual_total = total_data[~total_data['is_projected']]
-    proj_total = total_data[total_data['is_projected']]
-
-    # Solid line for actuals
-    if len(actual_total) > 0:
-        fig7.add_trace(go.Scatter(
-            x=actual_total['year_label'],
-            y=actual_total['total_demand'],
-            mode='lines+markers',
-            name='Total Demand',
-            line=dict(color=AQUILA_COLORS[0], width=3),
-            marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle'),
-            yaxis='y2',
-            legendgroup='total',
-            showlegend=True,
-            hovertemplate=(
-                '<b>Total Demand</b><br>'
-                'Year: %{x}<br>'
-                'Total: %{y:,.0f} SF<br>'
-                '<b>(Actual)</b><extra></extra>'
-            ),
-        ))
-
-    # Dashed connector + projected point
-    if len(proj_total) > 0 and len(actual_total) > 0:
-        last_actual = actual_total.iloc[-1]
-        first_proj = proj_total.iloc[0]
-        fig7.add_trace(go.Scatter(
-            x=[last_actual['year_label'], first_proj['year_label']],
-            y=[last_actual['total_demand'], first_proj['total_demand']],
-            mode='lines',
-            line=dict(color=AQUILA_COLORS[0], width=3, dash='dash'),
-            yaxis='y2',
-            legendgroup='total',
-            showlegend=False,
-            hoverinfo='skip',
-        ))
-        fig7.add_trace(go.Scatter(
-            x=proj_total['year_label'],
-            y=proj_total['total_demand'],
-            mode='markers',
-            name='Total Demand (Projected)',
-            marker=dict(size=12, color=AQUILA_COLORS[0], symbol='circle-open', line=dict(width=2.5)),
-            yaxis='y2',
-            legendgroup='total',
-            showlegend=True,
-            hovertemplate=(
-                '<b>Total Demand</b><br>'
-                'Year: %{x}<br>'
-                'Total: %{y:,.0f} SF<br>'
-                f'<b>Annualized as of {projection_data["as_of_date"]:%b %d, %Y}</b><extra></extra>'
-            ),
-        ))
-
-    caption = (
-        f'<i>Note: {current_year} bar is annualized from YTD demand '
-        f'(as of {projection_data["as_of_date"]:%b %d, %Y}) '
-        f'using a {projection_data["projection_factor"]:.1f}x pace factor vs. {current_year - 1}</i>'
-    )
+    fig7.add_trace(go.Scatter(
+        x=total_data['year_label'],
+        y=total_data['total_demand'],
+        mode='lines+markers',
+        name='Total Demand',
+        line=dict(color=AQUILA_COLORS[0], width=3),
+        marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle'),
+        yaxis='y2',
+        showlegend=True,
+        hovertemplate=(
+            '<b>Total Demand</b><br>'
+            'Year: %{x}<br>'
+            'Total: %{y:,.0f} SF<extra></extra>'
+        ),
+    ))
 
     fig7.update_layout(
         title={
             'text': (
-                f'Office Demand by Tenant Size (Annual: {min_year}\u2013{max_year} with {current_year} Annualized Projection)'
-                f'<br><sup>{caption}</sup>'
+                f'Office Demand by Tenant Size (Annual: {min_year}\u2013{max_year})'
+                f'<br><sup>Data through {max_date.strftime("%B %Y")}</sup>'
             ),
             'font': dict(family=AQUILA_FONT, size=24, color=AQUILA_COLORS[0]),
             'x': 0.5,
