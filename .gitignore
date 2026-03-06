@@ -3,6 +3,9 @@ aquila_graph.env
 __pycache__/
 nul
 
+# Claude Code worktrees (local only, contain .git pointer files that Vercel mistakes for submodules)
+.claude/worktrees/
+
 # Report output (generated per quarter)
 reports/office/
 reports/industrial/
