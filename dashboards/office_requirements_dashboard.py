@@ -928,10 +928,14 @@ def auth_set_session():
      Input('industry-filter', 'value'),
      Input('size-filter', 'value'),
      Input('date-range', 'start_date'),
-     Input('date-range', 'end_date')]
+     Input('date-range', 'end_date'),
+     Input('dashboard-tabs', 'value')]
 )
-def update_charts(submarkets, industries, sizes, start_date, end_date):
+def update_charts(submarkets, industries, sizes, start_date, end_date, active_tab):
     """Update charts, metrics, and table based on filter selections"""
+
+    if active_tab != 'monthly':
+        return [dash.no_update] * 12
 
     # Handle "All" selection for submarkets
     if 'All' in submarkets:
@@ -1258,10 +1262,14 @@ def export_csv(n_clicks, submarkets, industries, sizes, start_date, end_date):
 @app.callback(
     Output('demand-chart', 'figure'),
     [Input('demand-submarket-filter', 'value'),
-     Input('demand-size-filter', 'value')]
+     Input('demand-size-filter', 'value'),
+     Input('dashboard-tabs', 'value')]
 )
-def update_demand_chart(submarket, sizes):
+def update_demand_chart(submarket, sizes, active_tab):
     """Build the annual demand by tenant size chart using rolling 12-month windows."""
+
+    if active_tab != 'demand':
+        return dash.no_update
 
     if not sizes:
         sizes = ['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements']
