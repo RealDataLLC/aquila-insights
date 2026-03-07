@@ -33,6 +33,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dotenv import load_dotenv
 from flask import session
+from flask_caching import Cache
 
 try:
     from supabase import create_client as _supabase_create_client
@@ -561,6 +562,25 @@ def aggregate_annual_demand(df_raw, df_exploded, submarket, sizes):
 
 
 # ============================================================================
+# DASH APP
+# ============================================================================
+
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+app.title = "Aquila Insights Dashboard"
+app.server.secret_key = os.getenv('FLASK_SECRET_KEY', 'aquila-dashboard-2026-change-me')
+
+# ============================================================================
+# CACHE
+# ============================================================================
+
+cache = Cache(app.server, config={
+    'CACHE_TYPE': 'SimpleCache',
+    'CACHE_DEFAULT_TIMEOUT': 300,  # 5 minutes
+})
+
+load_requirements_data = cache.memoize(timeout=300)(load_requirements_data)
+
+# ============================================================================
 # LOAD DATA ON STARTUP
 # ============================================================================
 print("Loading requirements data...")
@@ -575,10 +595,6 @@ print(f"Found {len(all_industries)} unique industries")
 # ============================================================================
 # DASH APP LAYOUT
 # ============================================================================
-
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
-app.title = "Aquila Insights Dashboard"
-app.server.secret_key = os.getenv('FLASK_SECRET_KEY', 'aquila-dashboard-2026-change-me')
 
 
 @app.server.route('/logout')
