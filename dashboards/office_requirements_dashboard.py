@@ -343,7 +343,7 @@ def load_requirements_data():
     # Apply market mapping
     df['applicable_markets'] = df['market'].apply(map_markets)
 
-    # Keep un-exploded copy for citywide aggregation (avoids double-counting)
+    # Keep un-exploded copy for Citywide demand aggregation (avoids double-counting)
     df_raw = df.copy()
 
     # Explode to one row per applicable market
@@ -355,7 +355,62 @@ def load_requirements_data():
     print(f"  Total SF (avg): {df['sf_avg'].sum():,.0f}")
 
     print("\nData loaded successfully")
-    return df, df_raw
+    return df_raw, df
+
+
+def aggregate_annual_demand(df_raw, df_exploded, submarket, sizes):
+    """
+    Aggregate demand into rolling 12-month windows by size category.
+
+    Uses df_raw (un-exploded) for Citywide to avoid double-counting requirements
+    that map to multiple submarkets. Uses df_exploded filtered by applicable_markets
+    for specific submarkets.
+    """
+    today = pd.Timestamp.today()
+    last_full_month_end = pd.Timestamp(today.year, today.month, 1) - pd.Timedelta(days=1)
+
+    if submarket == 'Citywide':
+        df = df_raw.copy()
+    else:
+        df = df_exploded[df_exploded['applicable_markets'] == submarket].copy()
+
+    if sizes and 'All' not in sizes:
+        df = df[df['size_category'].isin(sizes)]
+
+    if len(df) == 0:
+        return pd.DataFrame(), pd.DataFrame(), []
+
+    windows = []
+    window_end = last_full_month_end
+    data_min_date = df['date'].min().replace(day=1)
+
+    while window_end >= data_min_date:
+        window_start = (window_end - pd.DateOffset(months=11)).replace(day=1)
+        windows.append({
+            'label': f"{window_start.strftime('%b %Y')}\u2013{window_end.strftime('%b %Y')}",
+            'start': window_start,
+            'end':   window_end,
+        })
+        window_end = window_start - pd.Timedelta(days=1)
+
+    windows = list(reversed(windows))   # chronological order (oldest first)
+    windows = [w for w in windows if w['start'].year >= 2018]   # drop orphaned pre-2018 windows
+    window_labels_list = [w['label'] for w in windows]
+
+    bin_edges = [w['start'] for w in windows] + [windows[-1]['end'] + pd.Timedelta(days=1)]
+    df['window_label'] = pd.cut(df['date'], bins=bin_edges, labels=window_labels_list, right=False)
+    df_windowed = df[df['window_label'].notna()].copy()
+    df_windowed['window_label'] = df_windowed['window_label'].astype(str)
+
+    window_by_size = (
+        df_windowed.groupby(['window_label', 'size_category'], observed=True)['sf_avg']
+        .sum().reset_index(name='segment_demand')
+    )
+    window_total = (
+        df_windowed.groupby('window_label', observed=True)['sf_avg']
+        .sum().reset_index(name='total_demand')
+    )
+    return window_by_size, window_total, window_labels_list
 
 
 def aggregate_monthly(df, submarkets, industries, sizes, start_date, end_date):
@@ -484,87 +539,11 @@ def calculate_metrics(monthly_current, monthly_prior):
     }
 
 
-def aggregate_annual_demand(df_raw, df_exploded, submarket, sizes):
-    """
-    Aggregate requirements into rolling 12-month windows for the annual demand chart.
-    Each window ends at the last full calendar month (e.g. Feb 2026 when run in March).
-
-    Parameters
-    ----------
-    df_raw : DataFrame
-        Un-exploded requirements data (for Citywide to avoid double-counting)
-    df_exploded : DataFrame
-        Exploded requirements data (for submarket-specific filtering)
-    submarket : str
-        'Citywide' or a specific submarket code ('CBD', 'SW', 'NW', 'E', 'C')
-    sizes : list
-        Selected size categories to include
-
-    Returns
-    -------
-    window_by_size : DataFrame
-        Columns: window_label, size_category, segment_demand
-    window_total : DataFrame
-        Columns: window_label, total_demand
-    window_labels_list : list[str]
-        Ordered window labels, e.g. ['Mar 2018\u2013Feb 2019', ..., 'Mar 2025\u2013Feb 2026']
-    """
-    today = pd.Timestamp.today()
-    last_full_month_end = pd.Timestamp(today.year, today.month, 1) - pd.Timedelta(days=1)
-
-    # Pick working DataFrame based on submarket
-    if submarket == 'Citywide':
-        df = df_raw.copy()
-    else:
-        df = df_exploded[df_exploded['applicable_markets'] == submarket].copy()
-
-    # Filter to selected size categories
-    if sizes and 'All' not in sizes:
-        df = df[df['size_category'].isin(sizes)]
-
-    if len(df) == 0:
-        return pd.DataFrame(), pd.DataFrame(), []
-
-    # Build rolling 12-month windows going back to earliest data
-    windows = []
-    window_end = last_full_month_end
-    data_min_date = df['date'].min().replace(day=1)
-
-    while window_end >= data_min_date:
-        window_start = (window_end - pd.DateOffset(months=11)).replace(day=1)
-        windows.append({
-            'label': f"{window_start.strftime('%b %Y')}\u2013{window_end.strftime('%b %Y')}",
-            'start': window_start,
-            'end':   window_end,
-        })
-        window_end = window_start - pd.Timedelta(days=1)
-
-    windows = list(reversed(windows))   # chronological order (oldest first)
-    window_labels_list = [w['label'] for w in windows]
-
-    # Assign each record to a window via pd.cut on date
-    bin_edges = [w['start'] for w in windows] + [windows[-1]['end'] + pd.Timedelta(days=1)]
-    df['window_label'] = pd.cut(df['date'], bins=bin_edges, labels=window_labels_list, right=False)
-    df_windowed = df[df['window_label'].notna()].copy()
-    df_windowed['window_label'] = df_windowed['window_label'].astype(str)
-
-    window_by_size = (
-        df_windowed.groupby(['window_label', 'size_category'], observed=True)['sf_avg']
-        .sum().reset_index(name='segment_demand')
-    )
-    window_total = (
-        df_windowed.groupby('window_label', observed=True)['sf_avg']
-        .sum().reset_index(name='total_demand')
-    )
-
-    return window_by_size, window_total, window_labels_list
-
-
 # ============================================================================
 # LOAD DATA ON STARTUP
 # ============================================================================
 print("Loading requirements data...")
-df_global, df_global_raw = load_requirements_data()
+df_global_raw, df_global = load_requirements_data()
 
 # Get unique industries for filter
 all_industries = sorted(df_global['industry'].dropna().unique().tolist())
@@ -627,16 +606,7 @@ auth_layout = dbc.Container([
 # MAIN LAYOUT (existing dashboard, now with logo header)
 # ============================================================================
 
-_demand_size_options = [
-    {'label': 'Sub 10k SF', 'value': 'Sub 10k SF'},
-    {'label': '10k-25k SF', 'value': '10k-25k SF'},
-    {'label': '25k-50k SF', 'value': '25k-50k SF'},
-    {'label': '50k-100k SF', 'value': '50k-100k SF'},
-    {'label': 'Mega Requirements', 'value': 'Mega Requirements'},
-]
-
 main_layout = dbc.Container([
-    # Header row
     dbc.Row([
         dbc.Col([
             html.H2("Austin Office Requirements", style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'margin': 0}),
@@ -652,122 +622,156 @@ main_layout = dbc.Container([
     ], style={'marginTop': '20px', 'marginBottom': '4px', 'paddingBottom': '12px',
               'borderBottom': f'2px solid {AQUILA_COLORS[0]}'}, align='center'),
 
-    # Tabs
-    dcc.Tabs(id='dashboard-tabs', value='monthly', children=[
+    dbc.Row([
+        # Left sidebar - Filters
+        dbc.Col([
+            dbc.Card([
+                dbc.CardHeader("Filters", style={'backgroundColor': AQUILA_COLORS[0], 'color': 'white', 'fontFamily': AQUILA_FONT}),
+                dbc.CardBody([
+                    # Submarket filter
+                    html.Label("Submarket:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '10px'}),
+                    dcc.Dropdown(
+                        id='submarket-filter',
+                        options=[
+                            {'label': 'All', 'value': 'All'},
+                            {'label': 'CBD', 'value': 'CBD'},
+                            {'label': 'SW - Southwest', 'value': 'SW'},
+                            {'label': 'NW - Northwest', 'value': 'NW'},
+                            {'label': 'E - East', 'value': 'E'},
+                            {'label': 'C - Central', 'value': 'C'}
+                        ],
+                        value=['All'],
+                        multi=True,
+                        style={'fontFamily': AQUILA_FONT}
+                    ),
 
-        # ── Tab 1: Monthly Requirements (existing) ──
-        dcc.Tab(label='Monthly Requirements', value='monthly',
-                style={'fontFamily': AQUILA_FONT, 'padding': '8px 16px'},
-                selected_style={'fontFamily': AQUILA_FONT, 'padding': '8px 16px',
-                                'borderTop': f'3px solid {AQUILA_COLORS[0]}', 'fontWeight': 'bold'},
-                children=[
-            dbc.Row([
-                # Left sidebar - Filters
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardHeader("Filters", style={'backgroundColor': AQUILA_COLORS[0], 'color': 'white', 'fontFamily': AQUILA_FONT}),
-                        dbc.CardBody([
-                            html.Label("Submarket:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '10px'}),
-                            dcc.Dropdown(
-                                id='submarket-filter',
-                                options=[
-                                    {'label': 'All', 'value': 'All'},
-                                    {'label': 'CBD', 'value': 'CBD'},
-                                    {'label': 'SW - Southwest', 'value': 'SW'},
-                                    {'label': 'NW - Northwest', 'value': 'NW'},
-                                    {'label': 'E - East', 'value': 'E'},
-                                    {'label': 'C - Central', 'value': 'C'}
-                                ],
-                                value=['All'],
-                                multi=True,
-                                style={'fontFamily': AQUILA_FONT}
-                            ),
-                            html.Label("Industry:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
-                            dcc.Dropdown(
-                                id='industry-filter',
-                                options=industry_options,
-                                value=['All'],
-                                multi=True,
-                                style={'fontFamily': AQUILA_FONT}
-                            ),
-                            html.Label("Size Range:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
-                            dcc.Dropdown(
-                                id='size-filter',
-                                options=[{'label': 'All', 'value': 'All'}] + _demand_size_options,
-                                value=['All'],
-                                multi=True,
-                                style={'fontFamily': AQUILA_FONT}
-                            ),
-                            html.Label("Date Range:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
-                            dcc.DatePickerRange(
-                                id='date-range',
-                                min_date_allowed=pd.to_datetime('2018-01-01'),
-                                max_date_allowed=max_complete_month,
-                                start_date=default_start,
-                                end_date=max_complete_month,
-                                display_format='MMM YYYY',
-                                style={'fontFamily': AQUILA_FONT}
-                            ),
-                            html.Div([
-                                html.Button('Export to CSV', id='export-btn', className='btn btn-primary',
-                                            style={'width': '100%', 'marginTop': '30px', 'backgroundColor': AQUILA_COLORS[0], 'borderColor': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT}),
-                                dcc.Download(id='download-csv')
-                            ])
-                        ])
+                    # Industry filter
+                    html.Label("Industry:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
+                    dcc.Dropdown(
+                        id='industry-filter',
+                        options=industry_options,
+                        value=['All'],
+                        multi=True,
+                        style={'fontFamily': AQUILA_FONT}
+                    ),
+
+                    # Size filter
+                    html.Label("Size Range:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
+                    dcc.Dropdown(
+                        id='size-filter',
+                        options=[
+                            {'label': 'All', 'value': 'All'},
+                            {'label': 'Sub 10k SF', 'value': 'Sub 10k SF'},
+                            {'label': '10k-25k SF', 'value': '10k-25k SF'},
+                            {'label': '25k-50k SF', 'value': '25k-50k SF'},
+                            {'label': '50k-100k SF', 'value': '50k-100k SF'},
+                            {'label': 'Mega Requirements', 'value': 'Mega Requirements'}
+                        ],
+                        value=['All'],
+                        multi=True,
+                        style={'fontFamily': AQUILA_FONT}
+                    ),
+
+                    # Date Range Picker
+                    html.Label("Date Range:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
+                    dcc.DatePickerRange(
+                        id='date-range',
+                        min_date_allowed=pd.to_datetime('2018-01-01'),
+                        max_date_allowed=max_complete_month,
+                        start_date=default_start,
+                        end_date=max_complete_month,
+                        display_format='MMM YYYY',
+                        style={'fontFamily': AQUILA_FONT}
+                    ),
+
+                    # Export button
+                    html.Div([
+                        html.Button('Export to CSV', id='export-btn', className='btn btn-primary',
+                                    style={'width': '100%', 'marginTop': '30px', 'backgroundColor': AQUILA_COLORS[0], 'borderColor': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT}),
+                        dcc.Download(id='download-csv')
                     ])
-                ], width=3),
-                # Right area - Metric Cards + Charts
-                dbc.Col([
-                    dcc.Loading(
-                        id="loading-charts",
-                        type="default",
-                        children=[
-                            dbc.Row([
-                                dbc.Col([dbc.Card([dbc.CardBody([
+                ])
+            ])
+        ], width=3),
+
+        # Right area - Metric Cards + Charts
+        dbc.Col([
+            dcc.Loading(
+                id="loading-charts",
+                type="default",
+                children=[
+                    # Metric Cards Row
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Card([
+                                dbc.CardBody([
                                     html.H6("Total SF (Current)", className="card-subtitle", style={'fontFamily': AQUILA_FONT, 'color': AQUILA_COLORS[0]}),
                                     html.H3(id='metric-total-sf', style={'fontFamily': AQUILA_FONT, 'color': AQUILA_COLORS[0]}),
                                     html.P(id='metric-total-sf-change', style={'fontFamily': AQUILA_FONT, 'fontSize': '14px'})
-                                ])], style={'marginBottom': '20px'})], width=3),
-                                dbc.Col([dbc.Card([dbc.CardBody([
+                                ])
+                            ], style={'marginBottom': '20px'})
+                        ], width=3),
+                        dbc.Col([
+                            dbc.Card([
+                                dbc.CardBody([
                                     html.H6("Requirements Count", className="card-subtitle", style={'fontFamily': AQUILA_FONT, 'color': AQUILA_COLORS[0]}),
                                     html.H3(id='metric-count', style={'fontFamily': AQUILA_FONT, 'color': AQUILA_COLORS[0]}),
                                     html.P(id='metric-count-change', style={'fontFamily': AQUILA_FONT, 'fontSize': '14px'})
-                                ])], style={'marginBottom': '20px'})], width=3),
-                                dbc.Col([dbc.Card([dbc.CardBody([
+                                ])
+                            ], style={'marginBottom': '20px'})
+                        ], width=3),
+                        dbc.Col([
+                            dbc.Card([
+                                dbc.CardBody([
                                     html.H6("Avg SF per Req", className="card-subtitle", style={'fontFamily': AQUILA_FONT, 'color': AQUILA_COLORS[0]}),
                                     html.H3(id='metric-avg-sf', style={'fontFamily': AQUILA_FONT, 'color': AQUILA_COLORS[0]}),
                                     html.P(id='metric-avg-sf-change', style={'fontFamily': AQUILA_FONT, 'fontSize': '14px'})
-                                ])], style={'marginBottom': '20px'})], width=3),
-                                dbc.Col([dbc.Card([dbc.CardBody([
+                                ])
+                            ], style={'marginBottom': '20px'})
+                        ], width=3),
+                        dbc.Col([
+                            dbc.Card([
+                                dbc.CardBody([
                                     html.H6("YoY Growth", className="card-subtitle", style={'fontFamily': AQUILA_FONT, 'color': AQUILA_COLORS[0]}),
                                     html.H3(id='metric-yoy-growth', style={'fontFamily': AQUILA_FONT, 'color': AQUILA_COLORS[0]}),
                                     html.P(id='metric-yoy-icon', style={'fontFamily': AQUILA_FONT, 'fontSize': '20px'})
-                                ])], style={'marginBottom': '20px'})], width=3),
-                            ], style={'marginBottom': '20px'}),
-                            dcc.Graph(id='sf-range-chart', config={'displayModeBar': False}, style={'marginBottom': '30px'}),
-                            dcc.Graph(id='count-chart', config={'displayModeBar': False}, style={'marginBottom': '30px'}),
-                            dash_table.DataTable(
-                                id='data-table',
-                                page_size=20,
-                                sort_action='native',
-                                style_table={'overflowX': 'auto', 'marginTop': '30px'},
-                                style_cell={'fontFamily': AQUILA_FONT, 'textAlign': 'left', 'padding': '10px'},
-                                style_header={'backgroundColor': AQUILA_COLORS[0], 'color': 'white', 'fontWeight': 'bold'},
-                                style_data_conditional=[{'if': {'column_id': 'pct_change_sf'}, 'backgroundColor': 'rgba(0, 255, 0, 0.2)'}]
-                            )
+                                ])
+                            ], style={'marginBottom': '20px'})
+                        ], width=3)
+                    ], style={'marginBottom': '20px'}),
+
+                    # SF Range Chart
+                    dcc.Graph(id='sf-range-chart', config={'displayModeBar': False}, style={'marginBottom': '30px'}),
+
+                    # Count Chart
+                    dcc.Graph(id='count-chart', config={'displayModeBar': False}, style={'marginBottom': '30px'}),
+
+                    # Data Table
+                    dash_table.DataTable(
+                        id='data-table',
+                        page_size=20,
+                        sort_action='native',
+                        style_table={'overflowX': 'auto', 'marginTop': '30px'},
+                        style_cell={'fontFamily': AQUILA_FONT, 'textAlign': 'left', 'padding': '10px'},
+                        style_header={'backgroundColor': AQUILA_COLORS[0], 'color': 'white', 'fontWeight': 'bold'},
+                        style_data_conditional=[
+                            {
+                                'if': {'column_id': 'pct_change_sf'},
+                                'backgroundColor': 'rgba(0, 255, 0, 0.2)'
+                            }
                         ]
                     )
-                ], width=9)
-            ], style={'marginTop': '20px'})
-        ]),
+                ]
+            ),
 
-        # ── Tab 2: Annual Demand ──
-        dcc.Tab(label='Annual Demand', value='demand',
-                style={'fontFamily': AQUILA_FONT, 'padding': '8px 16px'},
-                selected_style={'fontFamily': AQUILA_FONT, 'padding': '8px 16px',
-                                'borderTop': f'3px solid {AQUILA_COLORS[0]}', 'fontWeight': 'bold'},
-                children=[
-            # Inline filters row
+            # ----------------------------------------------------------------
+            # Annual Demand by Tenant Size (Rolling 12-Month Windows)
+            # ----------------------------------------------------------------
+            html.Hr(style={'marginTop': '30px', 'marginBottom': '20px'}),
+            html.H5(
+                "Annual Demand by Tenant Size (Rolling 12-Month Windows)",
+                style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '12px'}
+            ),
             dbc.Row([
                 dbc.Col([
                     html.Label("Submarket:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT}),
@@ -776,39 +780,41 @@ main_layout = dbc.Container([
                         options=[
                             {'label': 'Citywide', 'value': 'Citywide'},
                             {'label': 'CBD', 'value': 'CBD'},
-                            {'label': 'Southwest', 'value': 'SW'},
-                            {'label': 'Northwest', 'value': 'NW'},
-                            {'label': 'East', 'value': 'E'},
-                            {'label': 'Central', 'value': 'C'}
+                            {'label': 'SW - Southwest', 'value': 'SW'},
+                            {'label': 'NW - Northwest', 'value': 'NW'},
+                            {'label': 'E - East', 'value': 'E'},
+                            {'label': 'C - Central', 'value': 'C'},
                         ],
                         value='Citywide',
                         multi=False,
-                        clearable=False,
                         style={'fontFamily': AQUILA_FONT}
                     ),
-                ], width=3),
+                ], width=4),
                 dbc.Col([
-                    html.Label("Size Categories:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT}),
+                    html.Label("Size:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT}),
                     dcc.Dropdown(
                         id='demand-size-filter',
-                        options=_demand_size_options,
-                        value=[o['value'] for o in _demand_size_options],
+                        options=[
+                            {'label': 'All', 'value': 'All'},
+                            {'label': 'Sub 10k SF', 'value': 'Sub 10k SF'},
+                            {'label': '10k-25k SF', 'value': '10k-25k SF'},
+                            {'label': '25k-50k SF', 'value': '25k-50k SF'},
+                            {'label': '50k-100k SF', 'value': '50k-100k SF'},
+                            {'label': 'Mega Requirements', 'value': 'Mega Requirements'},
+                        ],
+                        value=['All'],
                         multi=True,
                         style={'fontFamily': AQUILA_FONT}
                     ),
-                ], width=9),
-            ], style={'marginTop': '20px', 'marginBottom': '10px'}),
-            # Demand chart
+                ], width=8),
+            ], style={'marginBottom': '16px'}),
             dcc.Loading(
-                id="loading-demand",
-                type="default",
-                children=[
-                    dcc.Graph(id='demand-chart', config={'displayModeBar': True})
-                ]
-            )
-        ]),
-
-    ], style={'fontFamily': AQUILA_FONT}),
+                id='loading-demand-chart',
+                type='default',
+                children=[dcc.Graph(id='demand-chart', config={'displayModeBar': False})]
+            ),
+        ], width=9)
+    ], style={'marginTop': '20px'})
 ], fluid=True)
 
 # Root layout: fixed top-left logo bar + Location shell + dynamic page-content
@@ -1252,7 +1258,7 @@ def export_csv(n_clicks, submarkets, industries, sizes, start_date, end_date):
 
 
 # ============================================================================
-# CALLBACKS - ANNUAL DEMAND
+# CALLBACKS - ANNUAL DEMAND CHART
 # ============================================================================
 
 @app.callback(
@@ -1261,25 +1267,24 @@ def export_csv(n_clicks, submarkets, industries, sizes, start_date, end_date):
      Input('demand-size-filter', 'value')]
 )
 def update_demand_chart(submarket, sizes):
-    """Build the annual demand by tenant size chart using rolling 12-month windows."""
-
+    if not submarket:
+        submarket = 'Citywide'
     if not sizes:
-        sizes = ['Sub 10k SF', '10k-25k SF', '25k-50k SF', '50k-100k SF', 'Mega Requirements']
+        sizes = ['All']
 
     window_by_size, window_total, window_labels_list = aggregate_annual_demand(
         df_global_raw, df_global, submarket, sizes
     )
 
-    if window_by_size.empty:
+    if not window_labels_list:
         fig = go.Figure()
         fig.update_layout(
-            title='No data available for selected filters',
+            title='No data for selected filters',
             font=dict(family=AQUILA_FONT, color=AQUILA_COLORS[0]),
             plot_bgcolor='white', paper_bgcolor='white'
         )
         return fig
 
-    # Color and order config
     category_colors = {
         'Mega Requirements': AQUILA_COLORS[0],
         '50k-100k SF':       AQUILA_COLORS[1],
@@ -1291,24 +1296,19 @@ def update_demand_chart(submarket, sizes):
 
     fig = go.Figure()
 
-    # ── Grouped bars per size category ──
     for category in category_order:
-        if category not in sizes:
+        if sizes and 'All' not in sizes and category not in sizes:
             continue
-
         cat_data = (
             window_by_size[window_by_size['size_category'] == category]
             .set_index('window_label').reindex(window_labels_list).reset_index()
         )
         cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
-
         fig.add_trace(go.Bar(
             x=cat_data['window_label'],
             y=cat_data['segment_demand'],
             name=category,
             marker_color=category_colors[category],
-            legendgroup=category,
-            showlegend=True,
             hovertemplate=(
                 f'<b>{category}</b><br>'
                 'Period: %{x}<br>'
@@ -1316,21 +1316,18 @@ def update_demand_chart(submarket, sizes):
             ),
         ))
 
-    # ── Total demand line on secondary y-axis ──
     total_data = (
         window_total.set_index('window_label').reindex(window_labels_list).reset_index()
     )
     total_data['total_demand'] = total_data['total_demand'].fillna(0)
-
     fig.add_trace(go.Scatter(
         x=total_data['window_label'],
         y=total_data['total_demand'],
         mode='lines+markers',
         name='Total Demand',
-        line=dict(color=AQUILA_COLORS[0], width=3),
-        marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle'),
+        line=dict(color=AQUILA_COLORS[3], width=3),
+        marker=dict(size=10, color=AQUILA_COLORS[3], symbol='circle'),
         yaxis='y2',
-        showlegend=True,
         hovertemplate=(
             '<b>Total Demand</b><br>'
             'Period: %{x}<br>'
@@ -1338,9 +1335,10 @@ def update_demand_chart(submarket, sizes):
         ),
     ))
 
-    # ── Layout ──
-    market_names = {'Citywide': 'Citywide', 'CBD': 'CBD', 'SW': 'Southwest',
-                    'NW': 'Northwest', 'E': 'East', 'C': 'Central'}
+    market_names = {
+        'Citywide': 'Citywide', 'CBD': 'CBD', 'SW': 'Southwest',
+        'NW': 'Northwest', 'E': 'East', 'C': 'Central',
+    }
     market_label = market_names.get(submarket, submarket)
     current_period = window_labels_list[-1] if window_labels_list else ''
 
@@ -1359,33 +1357,27 @@ def update_demand_chart(submarket, sizes):
         paper_bgcolor='white',
         font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
         xaxis=dict(
-            title='', showgrid=False, showline=True,
-            linecolor='lightgrey', linewidth=1,
+            title='', showgrid=False, showline=True, linecolor='lightgrey',
             tickfont=dict(size=11), tickangle=-45,
         ),
         yaxis=dict(
             title=dict(text='Segment Demand (SF)', font=dict(size=14)),
-            showgrid=True, gridcolor='#e9e9ea',
-            showline=True, linecolor='lightgrey', linewidth=1,
+            showgrid=True, gridcolor='#e9e9ea', showline=True, linecolor='lightgrey',
             tickformat=',', rangemode='tozero',
         ),
         yaxis2=dict(
             title=dict(text='Total Demand (SF)', font=dict(size=14)),
-            overlaying='y', side='right',
-            showgrid=False, showline=True,
-            linecolor='lightgrey', linewidth=1,
-            tickformat=',', rangemode='tozero',
+            overlaying='y', side='right', showgrid=False, showline=True,
+            linecolor='lightgrey', tickformat=',', rangemode='tozero',
         ),
         legend=dict(
-            orientation='h', yanchor='top', y=-0.25,
-            xanchor='center', x=0.5,
+            orientation='h', yanchor='top', y=-0.25, xanchor='center', x=0.5,
             font=dict(size=12), traceorder='normal',
         ),
         height=650,
         margin=dict(t=110, b=160, l=80, r=80),
         hovermode='x unified',
     )
-
     return fig
 
 
