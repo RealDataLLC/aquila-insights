@@ -343,6 +343,9 @@ def load_requirements_data():
     # Apply market mapping
     df['applicable_markets'] = df['market'].apply(map_markets)
 
+    # Keep un-exploded copy for Citywide demand aggregation (avoids double-counting)
+    df_raw = df.copy()
+
     # Explode to one row per applicable market
     df = df.explode('applicable_markets')
     df = df.dropna(subset=['applicable_markets'])
@@ -352,7 +355,62 @@ def load_requirements_data():
     print(f"  Total SF (avg): {df['sf_avg'].sum():,.0f}")
 
     print("\nData loaded successfully")
-    return df
+    return df_raw, df
+
+
+def aggregate_annual_demand(df_raw, df_exploded, submarket, sizes):
+    """
+    Aggregate demand into rolling 12-month windows by size category.
+
+    Uses df_raw (un-exploded) for Citywide to avoid double-counting requirements
+    that map to multiple submarkets. Uses df_exploded filtered by applicable_markets
+    for specific submarkets.
+    """
+    today = pd.Timestamp.today()
+    last_full_month_end = pd.Timestamp(today.year, today.month, 1) - pd.Timedelta(days=1)
+
+    if submarket == 'Citywide':
+        df = df_raw.copy()
+    else:
+        df = df_exploded[df_exploded['applicable_markets'] == submarket].copy()
+
+    if sizes and 'All' not in sizes:
+        df = df[df['size_category'].isin(sizes)]
+
+    if len(df) == 0:
+        return pd.DataFrame(), pd.DataFrame(), []
+
+    windows = []
+    window_end = last_full_month_end
+    data_min_date = df['date'].min().replace(day=1)
+
+    while window_end >= data_min_date:
+        window_start = (window_end - pd.DateOffset(months=11)).replace(day=1)
+        windows.append({
+            'label': f"{window_start.strftime('%b %Y')}\u2013{window_end.strftime('%b %Y')}",
+            'start': window_start,
+            'end':   window_end,
+        })
+        window_end = window_start - pd.Timedelta(days=1)
+
+    windows = list(reversed(windows))   # chronological order (oldest first)
+    windows = [w for w in windows if w['start'].year >= 2018]   # drop orphaned pre-2018 windows
+    window_labels_list = [w['label'] for w in windows]
+
+    bin_edges = [w['start'] for w in windows] + [windows[-1]['end'] + pd.Timedelta(days=1)]
+    df['window_label'] = pd.cut(df['date'], bins=bin_edges, labels=window_labels_list, right=False)
+    df_windowed = df[df['window_label'].notna()].copy()
+    df_windowed['window_label'] = df_windowed['window_label'].astype(str)
+
+    window_by_size = (
+        df_windowed.groupby(['window_label', 'size_category'], observed=True)['sf_avg']
+        .sum().reset_index(name='segment_demand')
+    )
+    window_total = (
+        df_windowed.groupby('window_label', observed=True)['sf_avg']
+        .sum().reset_index(name='total_demand')
+    )
+    return window_by_size, window_total, window_labels_list
 
 
 def aggregate_monthly(df, submarkets, industries, sizes, start_date, end_date):
@@ -485,7 +543,7 @@ def calculate_metrics(monthly_current, monthly_prior):
 # LOAD DATA ON STARTUP
 # ============================================================================
 print("Loading requirements data...")
-df_global = load_requirements_data()
+df_global_raw, df_global = load_requirements_data()
 
 # Get unique industries for filter
 all_industries = sorted(df_global['industry'].dropna().unique().tolist())
@@ -704,7 +762,57 @@ main_layout = dbc.Container([
                         ]
                     )
                 ]
-            )
+            ),
+
+            # ----------------------------------------------------------------
+            # Annual Demand by Tenant Size (Rolling 12-Month Windows)
+            # ----------------------------------------------------------------
+            html.Hr(style={'marginTop': '30px', 'marginBottom': '20px'}),
+            html.H5(
+                "Annual Demand by Tenant Size (Rolling 12-Month Windows)",
+                style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '12px'}
+            ),
+            dbc.Row([
+                dbc.Col([
+                    html.Label("Submarket:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT}),
+                    dcc.Dropdown(
+                        id='demand-submarket-filter',
+                        options=[
+                            {'label': 'Citywide', 'value': 'Citywide'},
+                            {'label': 'CBD', 'value': 'CBD'},
+                            {'label': 'SW - Southwest', 'value': 'SW'},
+                            {'label': 'NW - Northwest', 'value': 'NW'},
+                            {'label': 'E - East', 'value': 'E'},
+                            {'label': 'C - Central', 'value': 'C'},
+                        ],
+                        value='Citywide',
+                        multi=False,
+                        style={'fontFamily': AQUILA_FONT}
+                    ),
+                ], width=4),
+                dbc.Col([
+                    html.Label("Size:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT}),
+                    dcc.Dropdown(
+                        id='demand-size-filter',
+                        options=[
+                            {'label': 'All', 'value': 'All'},
+                            {'label': 'Sub 10k SF', 'value': 'Sub 10k SF'},
+                            {'label': '10k-25k SF', 'value': '10k-25k SF'},
+                            {'label': '25k-50k SF', 'value': '25k-50k SF'},
+                            {'label': '50k-100k SF', 'value': '50k-100k SF'},
+                            {'label': 'Mega Requirements', 'value': 'Mega Requirements'},
+                        ],
+                        value=['All'],
+                        multi=True,
+                        style={'fontFamily': AQUILA_FONT}
+                    ),
+                ], width=8),
+            ], style={'marginBottom': '16px'}),
+            dcc.Loading(
+                id='loading-demand-chart',
+                type='default',
+                children=[dcc.Graph(id='demand-chart', config={'displayModeBar': False})]
+            ),
         ], width=9)
     ], style={'marginTop': '20px'})
 ], fluid=True)
@@ -1147,6 +1255,130 @@ def export_csv(n_clicks, submarkets, industries, sizes, start_date, end_date):
     })
 
     return dcc.send_data_frame(df_export.to_csv, f"austin_requirements_{datetime.now().strftime('%Y%m%d')}.csv", index=False)
+
+
+# ============================================================================
+# CALLBACKS - ANNUAL DEMAND CHART
+# ============================================================================
+
+@app.callback(
+    Output('demand-chart', 'figure'),
+    [Input('demand-submarket-filter', 'value'),
+     Input('demand-size-filter', 'value')]
+)
+def update_demand_chart(submarket, sizes):
+    if not submarket:
+        submarket = 'Citywide'
+    if not sizes:
+        sizes = ['All']
+
+    window_by_size, window_total, window_labels_list = aggregate_annual_demand(
+        df_global_raw, df_global, submarket, sizes
+    )
+
+    if not window_labels_list:
+        fig = go.Figure()
+        fig.update_layout(
+            title='No data for selected filters',
+            font=dict(family=AQUILA_FONT, color=AQUILA_COLORS[0]),
+            plot_bgcolor='white', paper_bgcolor='white'
+        )
+        return fig
+
+    category_colors = {
+        'Mega Requirements': AQUILA_COLORS[0],
+        '50k-100k SF':       AQUILA_COLORS[1],
+        '25k-50k SF':        AQUILA_COLORS[2],
+        '10k-25k SF':        AQUILA_COLORS[3],
+        'Sub 10k SF':        AQUILA_COLORS[4],
+    }
+    category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
+
+    fig = go.Figure()
+
+    for category in category_order:
+        if sizes and 'All' not in sizes and category not in sizes:
+            continue
+        cat_data = (
+            window_by_size[window_by_size['size_category'] == category]
+            .set_index('window_label').reindex(window_labels_list).reset_index()
+        )
+        cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
+        fig.add_trace(go.Bar(
+            x=cat_data['window_label'],
+            y=cat_data['segment_demand'],
+            name=category,
+            marker_color=category_colors[category],
+            hovertemplate=(
+                f'<b>{category}</b><br>'
+                'Period: %{x}<br>'
+                'Demand: %{y:,.0f} SF<extra></extra>'
+            ),
+        ))
+
+    total_data = (
+        window_total.set_index('window_label').reindex(window_labels_list).reset_index()
+    )
+    total_data['total_demand'] = total_data['total_demand'].fillna(0)
+    fig.add_trace(go.Scatter(
+        x=total_data['window_label'],
+        y=total_data['total_demand'],
+        mode='lines+markers',
+        name='Total Demand',
+        line=dict(color=AQUILA_COLORS[3], width=3),
+        marker=dict(size=10, color=AQUILA_COLORS[3], symbol='circle'),
+        yaxis='y2',
+        hovertemplate=(
+            '<b>Total Demand</b><br>'
+            'Period: %{x}<br>'
+            'Total: %{y:,.0f} SF<extra></extra>'
+        ),
+    ))
+
+    market_names = {
+        'Citywide': 'Citywide', 'CBD': 'CBD', 'SW': 'Southwest',
+        'NW': 'Northwest', 'E': 'East', 'C': 'Central',
+    }
+    market_label = market_names.get(submarket, submarket)
+    current_period = window_labels_list[-1] if window_labels_list else ''
+
+    fig.update_layout(
+        title={
+            'text': (
+                f'Office Demand by Tenant Size \u2013 {market_label} (Rolling 12-Month Windows)'
+                f'<br><sup>Current period: {current_period}</sup>'
+            ),
+            'font': dict(family=AQUILA_FONT, size=22, color=AQUILA_COLORS[0]),
+            'x': 0.5, 'xanchor': 'center', 'y': 0.97, 'yanchor': 'top',
+        },
+        barmode='group',
+        bargroupgap=0,
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family=AQUILA_FONT, size=12, color=AQUILA_COLORS[0]),
+        xaxis=dict(
+            title='', showgrid=False, showline=True, linecolor='lightgrey',
+            tickfont=dict(size=11), tickangle=-45,
+        ),
+        yaxis=dict(
+            title=dict(text='Segment Demand (SF)', font=dict(size=14)),
+            showgrid=True, gridcolor='#e9e9ea', showline=True, linecolor='lightgrey',
+            tickformat=',', rangemode='tozero',
+        ),
+        yaxis2=dict(
+            title=dict(text='Total Demand (SF)', font=dict(size=14)),
+            overlaying='y', side='right', showgrid=False, showline=True,
+            linecolor='lightgrey', tickformat=',', rangemode='tozero',
+        ),
+        legend=dict(
+            orientation='h', yanchor='top', y=-0.25, xanchor='center', x=0.5,
+            font=dict(size=12), traceorder='normal',
+        ),
+        height=650,
+        margin=dict(t=110, b=160, l=80, r=80),
+        hovermode='x unified',
+    )
+    return fig
 
 
 # ============================================================================
