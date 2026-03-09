@@ -413,89 +413,96 @@ def aggregate_annual_demand(df_raw, df_exploded, submarket, sizes):
     return window_by_size, window_total, window_labels_list
 
 
-def aggregate_monthly(df, submarkets, industries, sizes, start_date, end_date):
+def aggregate_quarterly(df, submarkets, industries, sizes, start_quarter, end_quarter):
     """
-    Aggregate data by month for current and prior year periods.
-    Returns data with month names for YoY comparison on same x-axis ticks.
+    Aggregate data by quarter for current and prior year (YoY) comparison.
+    Returns quarterly data aligned so prior year shares x-axis labels with current year.
 
-    IMPORTANT: Does NOT filter the data - filters are only applied to determine
-    which data to aggregate. All historical data is included in aggregations
-    to ensure prior year data is always available.
+    Industry filtering uses inclusive substring matching so e.g. selecting "Healthcare"
+    also matches records whose industry field contains "Healthcare, Education".
+    No double-counting: each record is only included once regardless of how many
+    selected industries it partially matches.
 
     Parameters
     ----------
     df : DataFrame
-        Full requirements dataset
+        Full requirements dataset (exploded by applicable_markets)
     submarkets : list
-        Selected submarkets (e.g., ['CBD', 'SW'])
+        Selected submarkets
     industries : list
         Selected industries or ['All']
     sizes : list
         Selected size categories or ['All']
-    start_date : datetime
-        Start date for current period (for graph range only)
-    end_date : datetime
-        End date for current period (for graph range only)
+    start_quarter : str
+        Start quarter string like "2024Q1"
+    end_quarter : str
+        End quarter string like "2025Q4"
 
     Returns
     -------
-    monthly_current : DataFrame
-        Current period monthly aggregations with month_name and rolling averages
-    monthly_prior : DataFrame
-        Prior year monthly aggregations with month_name and rolling averages
+    quarterly_current : DataFrame
+        Current period quarterly aggregations with quarter_label and sort_order
+    quarterly_prior : DataFrame
+        Prior year quarterly aggregations mapped to current quarter labels
     """
-    # Calculate prior year date range
-    date_range = (end_date - start_date).days
-    prior_end = start_date - pd.DateOffset(days=1)
-    prior_start = prior_end - pd.DateOffset(days=date_range)
-
-    # Filter by submarkets, industries, sizes ONLY (not by date yet)
+    # Filter by submarkets
     df_filtered = df[df['applicable_markets'].isin(submarkets)].copy()
 
-    # Filter by industries (if not "All")
+    # Filter by industries - inclusive substring matching (no double counting)
     if industries != ['All'] and len(industries) > 0:
-        df_filtered = df_filtered[df_filtered['industry'].isin(industries)]
+        mask = df_filtered['industry'].apply(
+            lambda x: any(ind.lower() in str(x).lower() for ind in industries)
+            if not pd.isna(x) else False
+        )
+        df_filtered = df_filtered[mask]
 
-    # Filter by size (if not "All")
+    # Filter by size
     if sizes != ['All'] and len(sizes) > 0:
         df_filtered = df_filtered[df_filtered['size_category'].isin(sizes)]
 
-    # Aggregate ALL data (no date filtering) to calculate rolling averages properly
-    monthly_all = df_filtered.groupby(pd.Grouper(key='date', freq='ME')).agg({
-        'sf_low': 'sum',
-        'sf_high': 'sum',
-        'sf_avg': ['sum', 'count']  # Sum for total SF, count for # requirements
-    }).reset_index()
+    # Add quarter period column
+    df_filtered['quarter_period'] = df_filtered['date'].dt.to_period('Q')
 
-    # Flatten multi-index columns
-    monthly_all.columns = ['date', 'sf_low', 'sf_high', 'sf_avg_total', 'count']
+    # Aggregate all data by quarter
+    quarterly_all = df_filtered.groupby('quarter_period').agg(
+        sf_low=('sf_low', 'sum'),
+        sf_high=('sf_high', 'sum'),
+        sf_avg=('sf_avg', 'sum'),
+        count=('sf_avg', 'count')
+    ).reset_index()
 
-    # Calculate sf_avg (average SF across all requirements in the month)
-    monthly_all['sf_avg'] = (monthly_all['sf_low'] + monthly_all['sf_high']) / 2
+    # Parse start/end quarters
+    start_q = pd.Period(start_quarter, 'Q')
+    end_q = pd.Period(end_quarter, 'Q')
 
-    # Calculate 3-month rolling average on average SF
-    monthly_all['sf_avg_3m_rolling'] = monthly_all['sf_avg'].rolling(window=3, min_periods=1).mean()
+    # Prior year = same quarters shifted back 4 periods (1 year)
+    prior_start_q = start_q - 4
+    prior_end_q = end_q - 4
 
-    # Split into current and prior periods (for display only)
-    monthly_current = monthly_all[
-        (monthly_all['date'] >= start_date) &
-        (monthly_all['date'] <= end_date)
+    def fmt_quarter(p):
+        return f"Q{p.quarter} {p.year}"
+
+    # Current period
+    quarterly_current = quarterly_all[
+        (quarterly_all['quarter_period'] >= start_q) &
+        (quarterly_all['quarter_period'] <= end_q)
     ].copy()
+    quarterly_current['quarter_label'] = quarterly_current['quarter_period'].apply(fmt_quarter)
+    quarterly_current['sort_order'] = quarterly_current['quarter_period'].apply(lambda p: p.ordinal)
 
-    monthly_prior = monthly_all[
-        (monthly_all['date'] >= prior_start) &
-        (monthly_all['date'] <= prior_end)
+    # Prior year period - map labels to current year labels for shared x-axis
+    quarterly_prior = quarterly_all[
+        (quarterly_all['quarter_period'] >= prior_start_q) &
+        (quarterly_all['quarter_period'] <= prior_end_q)
     ].copy()
+    quarterly_prior['quarter_label'] = quarterly_prior['quarter_period'].apply(
+        lambda p: fmt_quarter(p + 4)
+    )
+    quarterly_prior['sort_order'] = quarterly_prior['quarter_period'].apply(
+        lambda p: (p + 4).ordinal
+    )
 
-    # Add month name for x-axis (e.g., "Sep 2025")
-    monthly_current['month_name'] = monthly_current['date'].dt.strftime('%b %Y')
-    monthly_current['sort_order'] = monthly_current['date']
-
-    # Add month name matching current year (for alignment)
-    monthly_prior['month_name'] = (monthly_prior['date'] + pd.DateOffset(months=12)).dt.strftime('%b %Y')
-    monthly_prior['sort_order'] = monthly_prior['date'] + pd.DateOffset(months=12)
-
-    return monthly_current, monthly_prior
+    return quarterly_current, quarterly_prior
 
 
 def calculate_metrics(monthly_current, monthly_prior):
@@ -545,11 +552,30 @@ def calculate_metrics(monthly_current, monthly_prior):
 print("Loading requirements data...")
 df_global_raw, df_global = load_requirements_data()
 
-# Get unique industries for filter
-all_industries = sorted(df_global['industry'].dropna().unique().tolist())
-industry_options = [{'label': 'All', 'value': 'All'}] + [{'label': ind, 'value': ind} for ind in all_industries if ind != '']
+# Parse individual industries from comma-separated values (inclusive matching)
+_all_industry_raw = df_global['industry'].dropna().unique().tolist()
+_individual_industries = set()
+for _val in _all_industry_raw:
+    for _ind in str(_val).split(','):
+        _ind = _ind.strip()
+        if _ind and _ind.lower() != 'nan':
+            _individual_industries.add(_ind)
+all_industries = sorted(_individual_industries)
+industry_options = [{'label': 'All', 'value': 'All'}] + [
+    {'label': ind, 'value': ind} for ind in all_industries if ind
+]
 
-print(f"Found {len(all_industries)} unique industries")
+print(f"Found {len(all_industries)} unique individual industries")
+
+# Build quarter dropdown options from data
+_all_quarters_raw = sorted(df_global['date'].dt.to_period('Q').unique())
+_quarter_options = [
+    {'label': f"Q{p.quarter} {p.year}", 'value': str(p)}
+    for p in _all_quarters_raw
+]
+# Default: last 8 quarters
+_default_end_q = str(_all_quarters_raw[-1]) if _all_quarters_raw else '2025Q4'
+_default_start_q = str(_all_quarters_raw[-8]) if len(_all_quarters_raw) >= 8 else str(_all_quarters_raw[0])
 
 # ============================================================================
 # DASH APP LAYOUT
@@ -566,10 +592,7 @@ def _logout():
     session.clear()
     return redirect('/')
 
-# Calculate default dates for DatePickerRange
-max_date = df_global['date'].max()
-max_complete_month = max_date
-default_start = max_complete_month - pd.DateOffset(months=12)
+# (Quarter defaults computed above with industry options)
 
 # ============================================================================
 # AUTH LAYOUT
@@ -672,15 +695,21 @@ main_layout = dbc.Container([
                         style={'fontFamily': AQUILA_FONT}
                     ),
 
-                    # Date Range Picker
-                    html.Label("Date Range:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
-                    dcc.DatePickerRange(
-                        id='date-range',
-                        min_date_allowed=pd.to_datetime('2018-01-01'),
-                        max_date_allowed=max_complete_month,
-                        start_date=default_start,
-                        end_date=max_complete_month,
-                        display_format='MMM YYYY',
+                    # Quarter Range Selector
+                    html.Label("From Quarter:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '20px'}),
+                    dcc.Dropdown(
+                        id='start-quarter-filter',
+                        options=_quarter_options,
+                        value=_default_start_q,
+                        clearable=False,
+                        style={'fontFamily': AQUILA_FONT}
+                    ),
+                    html.Label("To Quarter:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '10px'}),
+                    dcc.Dropdown(
+                        id='end-quarter-filter',
+                        options=_quarter_options,
+                        value=_default_end_q,
+                        clearable=False,
                         style={'fontFamily': AQUILA_FONT}
                     ),
 
@@ -746,6 +775,9 @@ main_layout = dbc.Container([
                     # Count Chart
                     dcc.Graph(id='count-chart', config={'displayModeBar': False}, style={'marginBottom': '30px'}),
 
+                    # Industry Pie Chart
+                    dcc.Graph(id='industry-pie-chart', config={'displayModeBar': False}, style={'marginBottom': '30px'}),
+
                     # Data Table
                     dash_table.DataTable(
                         id='data-table',
@@ -756,8 +788,20 @@ main_layout = dbc.Container([
                         style_header={'backgroundColor': AQUILA_COLORS[0], 'color': 'white', 'fontWeight': 'bold'},
                         style_data_conditional=[
                             {
-                                'if': {'column_id': 'pct_change_sf'},
-                                'backgroundColor': 'rgba(0, 255, 0, 0.2)'
+                                'if': {
+                                    'filter_query': '{pct_change_numeric} > 0',
+                                    'column_id': 'pct_change_sf'
+                                },
+                                'color': '#556B30',
+                                'fontWeight': 'bold'
+                            },
+                            {
+                                'if': {
+                                    'filter_query': '{pct_change_numeric} < 0',
+                                    'column_id': 'pct_change_sf'
+                                },
+                                'color': '#BF4040',
+                                'fontWeight': 'bold'
                             }
                         ]
                     )
@@ -920,6 +964,7 @@ def auth_set_session():
 @app.callback(
     [Output('sf-range-chart', 'figure'),
      Output('count-chart', 'figure'),
+     Output('industry-pie-chart', 'figure'),
      Output('metric-total-sf', 'children'),
      Output('metric-total-sf-change', 'children'),
      Output('metric-count', 'children'),
@@ -933,10 +978,10 @@ def auth_set_session():
     [Input('submarket-filter', 'value'),
      Input('industry-filter', 'value'),
      Input('size-filter', 'value'),
-     Input('date-range', 'start_date'),
-     Input('date-range', 'end_date')]
+     Input('start-quarter-filter', 'value'),
+     Input('end-quarter-filter', 'value')]
 )
-def update_charts(submarkets, industries, sizes, start_date, end_date):
+def update_charts(submarkets, industries, sizes, start_quarter, end_quarter):
     """Update charts, metrics, and table based on filter selections"""
 
     # Handle "All" selection for submarkets
@@ -947,47 +992,47 @@ def update_charts(submarkets, industries, sizes, start_date, end_date):
     if 'All' in sizes:
         sizes = ['All']
 
-    # Convert date strings to datetime
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    # Default quarters if not set
+    if not start_quarter:
+        start_quarter = _default_start_q
+    if not end_quarter:
+        end_quarter = _default_end_q
 
-    # Aggregate data
-    monthly_current, monthly_prior = aggregate_monthly(df_global, submarkets, industries, sizes, start_date, end_date)
+    # Aggregate data by quarter
+    quarterly_current, quarterly_prior = aggregate_quarterly(
+        df_global, submarkets, industries, sizes, start_quarter, end_quarter
+    )
 
     # Calculate metrics
-    metrics = calculate_metrics(monthly_current, monthly_prior)
+    metrics = calculate_metrics(quarterly_current, quarterly_prior)
 
-    # Merge current and prior by month_name for YoY comparison
-    df_plot = monthly_current.merge(
-        monthly_prior,
-        on='month_name',
+    # Merge current and prior by quarter_label for YoY comparison
+    df_plot = quarterly_current.merge(
+        quarterly_prior,
+        on='quarter_label',
         how='outer',
         suffixes=('_current', '_prior')
     ).sort_values('sort_order_current')
 
-    # FIX: Remove orphaned rows that can't be properly sorted
-    # (These are months that exist in prior year but not current year)
+    # Remove orphaned rows (prior-only rows with no matching current quarter)
     df_plot = df_plot[df_plot['sort_order_current'].notna()]
 
     # Fill NaN with 0 for plotting
     df_plot = df_plot.fillna(0)
-
-    # Use month_name for x-axis
-    df_plot['x_label'] = df_plot['month_name']
+    df_plot['x_label'] = df_plot['quarter_label']
 
     # ========================================================================
-    # SF Range Chart
+    # SF Range Chart (quarterly, no rolling averages, legend at bottom)
     # ========================================================================
     sf_fig = go.Figure()
 
-    # Current period lines
     sf_fig.add_trace(go.Scatter(
         x=df_plot['x_label'],
         y=df_plot['sf_low_current'],
         mode='lines+markers',
         name='SF Low (Current)',
         line=dict(color=AQUILA_COLORS[0], width=3),
-        marker=dict(size=8, color=AQUILA_COLORS[0]),
+        marker=dict(size=9, color=AQUILA_COLORS[0]),
         hovertemplate='%{x}<br>SF Low (Current): %{y:,.0f}<extra></extra>'
     ))
 
@@ -997,18 +1042,17 @@ def update_charts(submarkets, industries, sizes, start_date, end_date):
         mode='lines+markers',
         name='SF High (Current)',
         line=dict(color=AQUILA_COLORS[1], width=3),
-        marker=dict(size=8, color=AQUILA_COLORS[1]),
+        marker=dict(size=9, color=AQUILA_COLORS[1]),
         hovertemplate='%{x}<br>SF High (Current): %{y:,.0f}<extra></extra>'
     ))
 
-    # Prior year lines (dashed)
     sf_fig.add_trace(go.Scatter(
         x=df_plot['x_label'],
         y=df_plot['sf_low_prior'],
         mode='lines+markers',
         name='SF Low (Prior Year)',
         line=dict(color=AQUILA_COLORS[0], width=2, dash='dash'),
-        marker=dict(size=6, color=AQUILA_COLORS[0], symbol='circle-open'),
+        marker=dict(size=7, color=AQUILA_COLORS[0], symbol='circle-open'),
         opacity=0.6,
         hovertemplate='%{x}<br>SF Low (Prior Year): %{y:,.0f}<extra></extra>'
     ))
@@ -1019,40 +1063,19 @@ def update_charts(submarkets, industries, sizes, start_date, end_date):
         mode='lines+markers',
         name='SF High (Prior Year)',
         line=dict(color=AQUILA_COLORS[1], width=2, dash='dash'),
-        marker=dict(size=6, color=AQUILA_COLORS[1], symbol='circle-open'),
+        marker=dict(size=7, color=AQUILA_COLORS[1], symbol='circle-open'),
         opacity=0.6,
         hovertemplate='%{x}<br>SF High (Prior Year): %{y:,.0f}<extra></extra>'
     ))
 
-    # 3-month rolling average - current period (dotted)
-    sf_fig.add_trace(go.Scatter(
-        x=df_plot['x_label'],
-        y=df_plot['sf_avg_3m_rolling_current'],
-        mode='lines',
-        name='SF Avg 3M Rolling (Current)',
-        line=dict(color=AQUILA_COLORS[2], width=2, dash='dot'),  # Copper color
-        opacity=0.7,
-        hovertemplate='%{x}<br>SF Avg 3M Rolling (Current): %{y:,.0f}<extra></extra>'
-    ))
-
-    # 3-month rolling average - prior period (dashdot)
-    sf_fig.add_trace(go.Scatter(
-        x=df_plot['x_label'],
-        y=df_plot['sf_avg_3m_rolling_prior'],
-        mode='lines',
-        name='SF Avg 3M Rolling (Prior Year)',
-        line=dict(color=AQUILA_COLORS[3], width=2, dash='dashdot'),  # Brass color
-        opacity=0.5,
-        hovertemplate='%{x}<br>SF Avg 3M Rolling (Prior Year): %{y:,.0f}<extra></extra>'
-    ))
-
     sf_fig.update_layout(
         title=dict(
-            text='SF Range (Low/High) with Year-over-Year Comparison & 3-Month Rolling Average',
-            font=dict(family=AQUILA_FONT, size=18, color=AQUILA_COLORS[0])
+            text='SF Range (Low/High) – Quarterly Year-over-Year Comparison',
+            font=dict(family=AQUILA_FONT, size=18, color=AQUILA_COLORS[0]),
+            x=0.5, xanchor='center'
         ),
         xaxis=dict(
-            title='Month',
+            title='Quarter',
             gridcolor='#E8E8E8',
             tickfont=dict(family=AQUILA_FONT, color=AQUILA_COLORS[0])
         ),
@@ -1067,48 +1090,47 @@ def update_charts(submarkets, industries, sizes, start_date, end_date):
         font=dict(family=AQUILA_FONT, color=AQUILA_COLORS[0]),
         legend=dict(
             orientation='h',
-            yanchor='bottom',
-            y=1.02,
-            xanchor='right',
-            x=1,
+            yanchor='top',
+            y=-0.18,
+            xanchor='center',
+            x=0.5,
             font=dict(family=AQUILA_FONT)
         ),
-        height=450,
-        margin=dict(l=60, r=20, t=80, b=40),
+        height=480,
+        margin=dict(l=60, r=20, t=80, b=100),
         hovermode='x unified'
     )
 
     # ========================================================================
-    # Count Chart
+    # Count Chart (quarterly)
     # ========================================================================
     count_fig = go.Figure()
 
-    # Current period bars
     count_fig.add_trace(go.Bar(
         x=df_plot['x_label'],
         y=df_plot['count_current'],
         name='Count (Current)',
-        marker_color=AQUILA_COLORS[2],  # Copper
+        marker_color=AQUILA_COLORS[2],
         hovertemplate='%{x}<br>Count (Current): %{y}<extra></extra>'
     ))
 
-    # Prior year bars
     count_fig.add_trace(go.Bar(
         x=df_plot['x_label'],
         y=df_plot['count_prior'],
         name='Count (Prior Year)',
-        marker_color=AQUILA_COLORS[3],  # Brass
+        marker_color=AQUILA_COLORS[3],
         opacity=0.7,
         hovertemplate='%{x}<br>Count (Prior Year): %{y}<extra></extra>'
     ))
 
     count_fig.update_layout(
         title=dict(
-            text='Number of Requirements with Year-over-Year Comparison',
-            font=dict(family=AQUILA_FONT, size=18, color=AQUILA_COLORS[0])
+            text='Number of Requirements – Quarterly Year-over-Year Comparison',
+            font=dict(family=AQUILA_FONT, size=18, color=AQUILA_COLORS[0]),
+            x=0.5, xanchor='center'
         ),
         xaxis=dict(
-            title='Month',
+            title='Quarter',
             gridcolor='#E8E8E8',
             tickfont=dict(family=AQUILA_FONT, color=AQUILA_COLORS[0])
         ),
@@ -1123,15 +1145,88 @@ def update_charts(submarkets, industries, sizes, start_date, end_date):
         barmode='group',
         legend=dict(
             orientation='h',
-            yanchor='bottom',
-            y=1.02,
-            xanchor='right',
-            x=1,
+            yanchor='top',
+            y=-0.18,
+            xanchor='center',
+            x=0.5,
             font=dict(family=AQUILA_FONT)
         ),
-        height=300,
-        margin=dict(l=60, r=20, t=80, b=40),
+        height=340,
+        margin=dict(l=60, r=20, t=80, b=90),
         hovermode='x unified'
+    )
+
+    # ========================================================================
+    # Industry Pie Chart (distribution of SF by industry, current period)
+    # ========================================================================
+    # Build from filtered data over current quarter range
+    start_q = pd.Period(start_quarter, 'Q')
+    end_q = pd.Period(end_quarter, 'Q')
+    df_pie = df_global[df_global['applicable_markets'].isin(submarkets)].copy()
+    if industries != ['All'] and len(industries) > 0:
+        pie_mask = df_pie['industry'].apply(
+            lambda x: any(ind.lower() in str(x).lower() for ind in industries)
+            if not pd.isna(x) else False
+        )
+        df_pie = df_pie[pie_mask]
+    if sizes != ['All'] and len(sizes) > 0:
+        df_pie = df_pie[df_pie['size_category'].isin(sizes)]
+    df_pie['quarter_period'] = df_pie['date'].dt.to_period('Q')
+    df_pie = df_pie[
+        (df_pie['quarter_period'] >= start_q) &
+        (df_pie['quarter_period'] <= end_q)
+    ]
+
+    # Normalize industry to first token (before any comma) for grouping
+    def _primary_industry(val):
+        if pd.isna(val) or str(val).strip().lower() in ('', 'nan'):
+            return 'Other'
+        return str(val).split(',')[0].strip()
+
+    df_pie['industry_group'] = df_pie['industry'].apply(_primary_industry)
+    industry_sf = df_pie.groupby('industry_group')['sf_avg'].sum().reset_index()
+    industry_sf = industry_sf.sort_values('sf_avg', ascending=False)
+
+    # Collapse small slices (<2% of total) into "Other"
+    total_sf_pie = industry_sf['sf_avg'].sum()
+    if total_sf_pie > 0:
+        industry_sf['pct'] = industry_sf['sf_avg'] / total_sf_pie
+        main_ind = industry_sf[industry_sf['pct'] >= 0.02].copy()
+        other_sf = industry_sf[industry_sf['pct'] < 0.02]['sf_avg'].sum()
+        if other_sf > 0:
+            other_row = pd.DataFrame([{'industry_group': 'Other', 'sf_avg': other_sf, 'pct': other_sf / total_sf_pie}])
+            main_ind = pd.concat([main_ind, other_row], ignore_index=True)
+    else:
+        main_ind = industry_sf.copy()
+
+    pie_fig = go.Figure(go.Pie(
+        labels=main_ind['industry_group'],
+        values=main_ind['sf_avg'],
+        hole=0.35,
+        marker=dict(colors=AQUILA_COLORS[:len(main_ind)]),
+        textfont=dict(family=AQUILA_FONT, size=12),
+        hovertemplate='<b>%{label}</b><br>SF: %{value:,.0f}<br>Share: %{percent}<extra></extra>',
+        sort=True
+    ))
+    pie_fig.update_layout(
+        title=dict(
+            text='Industry Distribution of Requirements (SF)',
+            font=dict(family=AQUILA_FONT, size=18, color=AQUILA_COLORS[0]),
+            x=0.5, xanchor='center'
+        ),
+        legend=dict(
+            orientation='v',
+            yanchor='middle',
+            y=0.5,
+            xanchor='left',
+            x=1.02,
+            font=dict(family=AQUILA_FONT, size=11)
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family=AQUILA_FONT, color=AQUILA_COLORS[0]),
+        height=420,
+        margin=dict(l=20, r=160, t=80, b=20)
     )
 
     # ========================================================================
@@ -1139,23 +1234,22 @@ def update_charts(submarkets, industries, sizes, start_date, end_date):
     # ========================================================================
     total_sf_text = f"{metrics['total_sf_current']:,.0f}"
     total_sf_change = f"vs {metrics['total_sf_prior']:,.0f} prior year ({metrics['sf_pct_change']:+.1f}%)"
-    total_sf_change_color = 'green' if metrics['sf_pct_change'] > 0 else 'red'
+    total_sf_change_color = '#556B30' if metrics['sf_pct_change'] > 0 else '#BF4040'
 
     count_text = f"{metrics['count_current']}"
     count_change = f"vs {metrics['count_prior']} prior year ({metrics['count_pct_change']:+.1f}%)"
-    count_change_color = 'green' if metrics['count_pct_change'] > 0 else 'red'
+    count_change_color = '#556B30' if metrics['count_pct_change'] > 0 else '#BF4040'
 
     avg_sf_text = f"{metrics['avg_sf_current']:,.0f}"
     avg_sf_change = f"vs {metrics['avg_sf_prior']:,.0f} prior year ({metrics['avg_sf_pct_change']:+.1f}%)"
-    avg_sf_change_color = 'green' if metrics['avg_sf_pct_change'] > 0 else 'red'
+    avg_sf_change_color = '#556B30' if metrics['avg_sf_pct_change'] > 0 else '#BF4040'
 
     yoy_growth_text = f"{metrics['sf_pct_change']:+.1f}%"
-    yoy_icon = "↑" if metrics['sf_pct_change'] > 0 else "↓"
+    yoy_icon = "\u2191" if metrics['sf_pct_change'] > 0 else "\u2193"
 
     # ========================================================================
-    # Data Table
+    # Data Table (quarterly, dynamic green/red YoY coloring)
     # ========================================================================
-    # Create table data from monthly aggregations
     table_data = []
     for _, row in df_plot.iterrows():
         if row['count_current'] > 0 or row['count_prior'] > 0:
@@ -1164,18 +1258,19 @@ def update_charts(submarkets, industries, sizes, start_date, end_date):
             pct_change = ((sf_current - sf_prior) / sf_prior * 100) if sf_prior > 0 else 0
 
             table_data.append({
-                'Month': row['month_name'],
+                'Quarter': row['quarter_label'],
                 'SF Low (Current)': f"{row['sf_low_current']:,.0f}",
                 'SF High (Current)': f"{row['sf_high_current']:,.0f}",
                 'Count (Current)': int(row['count_current']),
                 'SF Low (Prior)': f"{row['sf_low_prior']:,.0f}",
                 'SF High (Prior)': f"{row['sf_high_prior']:,.0f}",
                 'Count (Prior)': int(row['count_prior']),
-                'pct_change_sf': f"{pct_change:+.1f}%"
+                'pct_change_sf': f"{pct_change:+.1f}%",
+                'pct_change_numeric': round(pct_change, 2)
             })
 
     table_columns = [
-        {'name': 'Month', 'id': 'Month'},
+        {'name': 'Quarter', 'id': 'Quarter'},
         {'name': 'SF Low (Current)', 'id': 'SF Low (Current)'},
         {'name': 'SF High (Current)', 'id': 'SF High (Current)'},
         {'name': 'Count (Current)', 'id': 'Count (Current)'},
@@ -1185,7 +1280,7 @@ def update_charts(submarkets, industries, sizes, start_date, end_date):
         {'name': 'YoY Change %', 'id': 'pct_change_sf'}
     ]
 
-    return (sf_fig, count_fig,
+    return (sf_fig, count_fig, pie_fig,
             total_sf_text, html.Span(total_sf_change, style={'color': total_sf_change_color}),
             count_text, html.Span(count_change, style={'color': count_change_color}),
             avg_sf_text, html.Span(avg_sf_change, style={'color': avg_sf_change_color}),
@@ -1199,49 +1294,42 @@ def update_charts(submarkets, industries, sizes, start_date, end_date):
     [State('submarket-filter', 'value'),
      State('industry-filter', 'value'),
      State('size-filter', 'value'),
-     State('date-range', 'start_date'),
-     State('date-range', 'end_date')],
+     State('start-quarter-filter', 'value'),
+     State('end-quarter-filter', 'value')],
     prevent_initial_call=True
 )
-def export_csv(n_clicks, submarkets, industries, sizes, start_date, end_date):
-    """Export filtered data to CSV"""
+def export_csv(n_clicks, submarkets, industries, sizes, start_quarter, end_quarter):
+    """Export filtered quarterly data to CSV"""
 
     if n_clicks is None:
         return None
 
-    # Handle "All" selection
     if 'All' in submarkets:
         submarkets = ['CBD', 'SW', 'NW', 'E', 'C']
-
     if 'All' in sizes:
         sizes = ['All']
+    if not start_quarter:
+        start_quarter = _default_start_q
+    if not end_quarter:
+        end_quarter = _default_end_q
 
-    # Convert date strings to datetime
-    start_date = pd.to_datetime(start_date)
-    end_date = pd.to_datetime(end_date)
+    quarterly_current, quarterly_prior = aggregate_quarterly(
+        df_global, submarkets, industries, sizes, start_quarter, end_quarter
+    )
 
-    # Get aggregated data
-    monthly_current, monthly_prior = aggregate_monthly(df_global, submarkets, industries, sizes, start_date, end_date)
-
-    # Merge for export
-    df_export = monthly_current.merge(
-        monthly_prior,
-        on='month_name',
+    df_export = quarterly_current.merge(
+        quarterly_prior,
+        on='quarter_label',
         how='outer',
         suffixes=('_current', '_prior')
     ).sort_values('sort_order_current')
 
-    # Format date
-    df_export['month'] = df_export['date_current'].dt.strftime('%Y-%m')
-
-    # Select and rename columns
     df_export = df_export[[
-        'month',
+        'quarter_label',
         'sf_low_current', 'sf_high_current', 'sf_avg_current', 'count_current',
         'sf_low_prior', 'sf_high_prior', 'sf_avg_prior', 'count_prior',
-        'sf_avg_3m_rolling_current', 'sf_avg_3m_rolling_prior'
     ]].rename(columns={
-        'month': 'Month',
+        'quarter_label': 'Quarter',
         'sf_low_current': 'SF Low (Current)',
         'sf_high_current': 'SF High (Current)',
         'sf_avg_current': 'SF Avg (Current)',
@@ -1250,11 +1338,13 @@ def export_csv(n_clicks, submarkets, industries, sizes, start_date, end_date):
         'sf_high_prior': 'SF High (Prior Year)',
         'sf_avg_prior': 'SF Avg (Prior Year)',
         'count_prior': 'Count (Prior Year)',
-        'sf_avg_3m_rolling_current': 'SF Avg 3M Rolling (Current)',
-        'sf_avg_3m_rolling_prior': 'SF Avg 3M Rolling (Prior Year)'
     })
 
-    return dcc.send_data_frame(df_export.to_csv, f"austin_requirements_{datetime.now().strftime('%Y%m%d')}.csv", index=False)
+    return dcc.send_data_frame(
+        df_export.to_csv,
+        f"austin_requirements_quarterly_{datetime.now().strftime('%Y%m%d')}.csv",
+        index=False
+    )
 
 
 # ============================================================================
