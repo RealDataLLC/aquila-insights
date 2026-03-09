@@ -812,12 +812,13 @@ def main():
     print('  [OK] Saved charts/office/requirements_yoy_rolling_12m.html')
 
     # ============================================================================
-    # CHART 7: Office Demand by Tenant Size (Rolling 12-Month Windows)
+    # CHART 7: Office Demand by Tenant Size (Annual Grouped Bar + Total Line)
     # ============================================================================
-    print("\n7. Generating Office Demand by Tenant Size chart (Rolling 12M windows)...")
+    print("\n7. Generating Office Demand by Tenant Size chart (Annual)...")
 
     # Filter to records with valid dates
     df_demand = df_combined[df_combined['date'].notna()].copy()
+    df_demand['year'] = df_demand['date'].dt.year
 
     # Size bins (5 categories)
     demand_bins = [0, 10000, 25000, 50000, 100000, float('inf')]
@@ -830,12 +831,11 @@ def main():
         right=False
     )
 
-    # Build rolling 12-month windows ending at the last full calendar month.
-    # e.g. if today is March 6 2026, last full month = Feb 2026,
-    # so the current window is Mar 2025–Feb 2026.
+    # Build rolling 12-month windows going back to earliest data
+    category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
+
     today = pd.Timestamp.today()
     last_full_month_end = pd.Timestamp(today.year, today.month, 1) - pd.Timedelta(days=1)
-
     windows = []
     window_end = last_full_month_end
     data_min_date = df_demand['date'].min().replace(day=1)
@@ -850,32 +850,26 @@ def main():
         window_end = window_start - pd.Timedelta(days=1)
 
     windows = list(reversed(windows))   # chronological order (oldest first)
+    windows = [w for w in windows if w['start'].year >= 2018]   # drop orphaned pre-2018 windows
     window_labels_list = [w['label'] for w in windows]
 
-    # Assign each record to a window using pd.cut on date
     bin_edges = [w['start'] for w in windows] + [windows[-1]['end'] + pd.Timedelta(days=1)]
     df_demand['window_label'] = pd.cut(
-        df_demand['date'],
-        bins=bin_edges,
-        labels=window_labels_list,
-        right=False,
+        df_demand['date'], bins=bin_edges, labels=window_labels_list, right=False,
     )
     df_windowed = df_demand[df_demand['window_label'].notna()].copy()
     df_windowed['window_label'] = df_windowed['window_label'].astype(str)
 
-    # Aggregate by window + size category, and window totals
     window_by_size = (
-        df_windowed
-        .groupby(['window_label', 'size_category'], observed=True)['sf_avg']
+        df_windowed.groupby(['window_label', 'size_category'], observed=True)['sf_avg']
         .sum().reset_index(name='segment_demand')
     )
     window_total = (
-        df_windowed
-        .groupby('window_label', observed=True)['sf_avg']
+        df_windowed.groupby('window_label', observed=True)['sf_avg']
         .sum().reset_index(name='total_demand')
     )
 
-    category_order = ['Mega Requirements', '50k-100k SF', '25k-50k SF', '10k-25k SF', 'Sub 10k SF']
+    # Colors for each size category
     category_colors = {
         'Mega Requirements': AQUILA_COLORS[0],   # Navy
         '50k-100k SF':       AQUILA_COLORS[1],   # Glass Blue
@@ -889,12 +883,9 @@ def main():
     for category in category_order:
         cat_data = (
             window_by_size[window_by_size['size_category'] == category]
-            .set_index('window_label')
-            .reindex(window_labels_list)
-            .reset_index()
+            .set_index('window_label').reindex(window_labels_list).reset_index()
         )
         cat_data['segment_demand'] = cat_data['segment_demand'].fillna(0)
-
         fig7.add_trace(go.Bar(
             x=cat_data['window_label'],
             y=cat_data['segment_demand'],
@@ -911,10 +902,7 @@ def main():
 
     # Total demand line — single solid trace across all windows
     total_data = (
-        window_total
-        .set_index('window_label')
-        .reindex(window_labels_list)
-        .reset_index()
+        window_total.set_index('window_label').reindex(window_labels_list).reset_index()
     )
     total_data['total_demand'] = total_data['total_demand'].fillna(0)
 
@@ -923,8 +911,8 @@ def main():
         y=total_data['total_demand'],
         mode='lines+markers',
         name='Total Demand',
-        line=dict(color=AQUILA_COLORS[0], width=3),
-        marker=dict(size=10, color=AQUILA_COLORS[0], symbol='circle'),
+        line=dict(color=AQUILA_COLORS[3], width=3),
+        marker=dict(size=10, color=AQUILA_COLORS[3], symbol='circle'),
         yaxis='y2',
         showlegend=True,
         hovertemplate=(
@@ -991,7 +979,6 @@ def main():
             traceorder='normal',
         ),
         height=680,
-        width=1400,
         margin=dict(t=110, b=160, l=80, r=80),
         hovermode='x unified',
     )
