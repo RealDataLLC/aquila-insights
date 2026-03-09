@@ -24,17 +24,15 @@ def _get_logo_b64() -> str:
 
 
 def add_aquila_logo(fig, sizex: float = 0.12, opacity: float = 0.7):
-    """Add Aquila logo below the chart area, aligned to the bottom-right margin.
+    """Add Aquila logo above the chart area, aligned to the top-right margin.
 
-    The logo is placed below the plot area (not overlaying chart data) by
-    anchoring the top of the image to y=-0.02 (slightly below the bottom edge
-    of the plot). The bottom margin is expanded to at least 150 px so the logo
-    and any horizontal legend sitting further down are both fully visible with
-    clear separation between them.
+    The logo is placed above the plot area (not overlaying chart data) by
+    anchoring the bottom of the image to y=1.02 (slightly above the top edge
+    of the plot). The top margin is expanded to at least 60 px so the logo
+    is fully visible.
 
-    Layout positions (paper coordinates, where y=0 = plot bottom):
-      Logo  : y=-0.02 → extends down ~12% of plot height → ends near y=-0.14
-      Legend: typically y=-0.25 (bottom) → sits clearly below the logo
+    Layout positions (paper coordinates, where y=1 = plot top):
+      Logo  : y=1.02 → extends up ~12% of plot height into the top margin
 
     Parameters
     ----------
@@ -48,22 +46,21 @@ def add_aquila_logo(fig, sizex: float = 0.12, opacity: float = 0.7):
     -------
     plotly.graph_objects.Figure  (same object, modified in place)
     """
-    # Ensure enough bottom margin for logo (~12% of plot height) + horizontal
-    # legend (~25% of plot height further down) to coexist without clipping.
-    current_b = (fig.layout.margin.b or 0) if fig.layout.margin else 0
-    if current_b < 150:
-        fig.update_layout(margin=dict(b=150))
+    # Ensure enough top margin for logo (~12% of plot height).
+    current_t = (fig.layout.margin.t or 0) if fig.layout.margin else 0
+    if current_t < 60:
+        fig.update_layout(margin=dict(t=60))
 
     fig.add_layout_image(dict(
         source=f"data:image/png;base64,{_get_logo_b64()}",
         xref="paper",
         yref="paper",
         x=1.0,
-        y=-0.02,     # Slightly below the plot area bottom edge
+        y=1.02,      # Slightly above the plot area top edge
         sizex=sizex,
         sizey=sizex,
         xanchor="right",
-        yanchor="top",  # top of logo at y=-0.02; extends downward into margin
+        yanchor="bottom",  # bottom of logo at y=1.02; extends upward into margin
         opacity=opacity,
         layer="above",
     ))
@@ -142,11 +139,11 @@ def aquila_styled_line_chart(
             title_font_family=AQUILA_FONT,
             orientation="h",
             yanchor="bottom",
-            y=-0.30,       # Pushed lower so legend clears the logo above it
+            y=-0.25,
             xanchor="center",
             x=0.5,
         ),
-        margin=dict(b=150),  # Large enough for logo (~12% depth) + legend at y=-0.30
+        margin=dict(b=80),
         xaxis_tickangle=90,
         xaxis=dict(
             showline=True,
