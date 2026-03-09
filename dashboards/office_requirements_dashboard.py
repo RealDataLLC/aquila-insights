@@ -585,6 +585,15 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_
 app.title = "Aquila Insights Dashboard"
 app.server.secret_key = os.getenv('FLASK_SECRET_KEY', 'aquila-dashboard-2026-change-me')
 
+# Shared chart config: show modebar on hover with PNG download, hide clutter
+_CHART_CONFIG = {
+    'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d',
+                                'hoverClosestCartesian', 'hoverCompareCartesian',
+                                'toggleSpikelines'],
+    'displaylogo': False,
+    'toImageButtonOptions': {'format': 'png', 'scale': 2},
+}
+
 
 @app.server.route('/logout')
 def _logout():
@@ -718,13 +727,63 @@ main_layout = dbc.Container([
                         html.Button('Export to CSV', id='export-btn', className='btn btn-primary',
                                     style={'width': '100%', 'marginTop': '30px', 'backgroundColor': AQUILA_COLORS[0], 'borderColor': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT}),
                         dcc.Download(id='download-csv')
-                    ])
+                    ]),
+
+                    # Annual Demand Chart filters
+                    html.Hr(style={'marginTop': '24px', 'marginBottom': '12px'}),
+                    html.P("Annual Demand Filters", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT,
+                                                           'fontSize': '13px', 'color': AQUILA_COLORS[0], 'marginBottom': '8px'}),
+                    html.Label("Submarket:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '8px'}),
+                    dcc.Dropdown(
+                        id='demand-submarket-filter',
+                        options=[
+                            {'label': 'Citywide', 'value': 'Citywide'},
+                            {'label': 'CBD', 'value': 'CBD'},
+                            {'label': 'SW - Southwest', 'value': 'SW'},
+                            {'label': 'NW - Northwest', 'value': 'NW'},
+                            {'label': 'E - East', 'value': 'E'},
+                            {'label': 'C - Central', 'value': 'C'},
+                        ],
+                        value='Citywide',
+                        multi=False,
+                        style={'fontFamily': AQUILA_FONT}
+                    ),
+                    html.Label("Size:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT, 'marginTop': '16px'}),
+                    dcc.Dropdown(
+                        id='demand-size-filter',
+                        options=[
+                            {'label': 'All', 'value': 'All'},
+                            {'label': 'Sub 10k SF', 'value': 'Sub 10k SF'},
+                            {'label': '10k-25k SF', 'value': '10k-25k SF'},
+                            {'label': '25k-50k SF', 'value': '25k-50k SF'},
+                            {'label': '50k-100k SF', 'value': '50k-100k SF'},
+                            {'label': 'Mega Requirements', 'value': 'Mega Requirements'},
+                        ],
+                        value=['All'],
+                        multi=True,
+                        style={'fontFamily': AQUILA_FONT}
+                    ),
                 ])
             ])
         ], width=3),
 
-        # Right area - Metric Cards + Charts
+        # Right area - Annual Demand Chart (top) + Metric Cards + Charts
         dbc.Col([
+            # ----------------------------------------------------------------
+            # Annual Demand by Tenant Size (Rolling 12-Month Windows) - TOP
+            # ----------------------------------------------------------------
+            html.H5(
+                "Annual Demand by Tenant Size (Rolling 12-Month Windows)",
+                style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '12px'}
+            ),
+            dcc.Loading(
+                id='loading-demand-chart',
+                type='default',
+                children=[dcc.Graph(id='demand-chart', config=_CHART_CONFIG)]
+            ),
+
+            html.Hr(style={'marginTop': '30px', 'marginBottom': '20px'}),
+
             dcc.Loading(
                 id="loading-charts",
                 type="default",
@@ -770,13 +829,13 @@ main_layout = dbc.Container([
                     ], style={'marginBottom': '20px'}),
 
                     # SF Range Chart
-                    dcc.Graph(id='sf-range-chart', config={'displayModeBar': False}, style={'marginBottom': '30px'}),
+                    dcc.Graph(id='sf-range-chart', config=_CHART_CONFIG, style={'marginBottom': '30px'}),
 
                     # Count Chart
-                    dcc.Graph(id='count-chart', config={'displayModeBar': False}, style={'marginBottom': '30px'}),
+                    dcc.Graph(id='count-chart', config=_CHART_CONFIG, style={'marginBottom': '30px'}),
 
                     # Industry Pie Chart
-                    dcc.Graph(id='industry-pie-chart', config={'displayModeBar': False}, style={'marginBottom': '30px'}),
+                    dcc.Graph(id='industry-pie-chart', config=_CHART_CONFIG, style={'marginBottom': '30px'}),
 
                     # Data Table
                     dash_table.DataTable(
@@ -806,56 +865,6 @@ main_layout = dbc.Container([
                         ]
                     )
                 ]
-            ),
-
-            # ----------------------------------------------------------------
-            # Annual Demand by Tenant Size (Rolling 12-Month Windows)
-            # ----------------------------------------------------------------
-            html.Hr(style={'marginTop': '30px', 'marginBottom': '20px'}),
-            html.H5(
-                "Annual Demand by Tenant Size (Rolling 12-Month Windows)",
-                style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '12px'}
-            ),
-            dbc.Row([
-                dbc.Col([
-                    html.Label("Submarket:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT}),
-                    dcc.Dropdown(
-                        id='demand-submarket-filter',
-                        options=[
-                            {'label': 'Citywide', 'value': 'Citywide'},
-                            {'label': 'CBD', 'value': 'CBD'},
-                            {'label': 'SW - Southwest', 'value': 'SW'},
-                            {'label': 'NW - Northwest', 'value': 'NW'},
-                            {'label': 'E - East', 'value': 'E'},
-                            {'label': 'C - Central', 'value': 'C'},
-                        ],
-                        value='Citywide',
-                        multi=False,
-                        style={'fontFamily': AQUILA_FONT}
-                    ),
-                ], width=4),
-                dbc.Col([
-                    html.Label("Size:", style={'fontWeight': 'bold', 'fontFamily': AQUILA_FONT}),
-                    dcc.Dropdown(
-                        id='demand-size-filter',
-                        options=[
-                            {'label': 'All', 'value': 'All'},
-                            {'label': 'Sub 10k SF', 'value': 'Sub 10k SF'},
-                            {'label': '10k-25k SF', 'value': '10k-25k SF'},
-                            {'label': '25k-50k SF', 'value': '25k-50k SF'},
-                            {'label': '50k-100k SF', 'value': '50k-100k SF'},
-                            {'label': 'Mega Requirements', 'value': 'Mega Requirements'},
-                        ],
-                        value=['All'],
-                        multi=True,
-                        style={'fontFamily': AQUILA_FONT}
-                    ),
-                ], width=8),
-            ], style={'marginBottom': '16px'}),
-            dcc.Loading(
-                id='loading-demand-chart',
-                type='default',
-                children=[dcc.Graph(id='demand-chart', config={'displayModeBar': False})]
             ),
         ], width=9)
     ], style={'marginTop': '20px'})
