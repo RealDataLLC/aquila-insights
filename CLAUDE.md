@@ -287,7 +287,11 @@ python reports/cleanup_quarterly_data.py                            # Apply chan
 
 **Key architecture:** Data is never filtered by date -- date range only slices display. Rolling averages computed on full dataset first, then split into current/prior periods. Prior year = same range shifted back 12 months.
 
+**Layout:** Annual Demand chart sits at the **top** of the right column (above metric cards). All filters — including `demand-submarket-filter` (single-select, includes "Citywide") and `demand-size-filter` (multi-select) — live in the left sidebar under "Annual Demand Filters". These remain separate IDs from `submarket-filter`/`size-filter` because `aggregate_annual_demand()` uses `df_raw` (un-exploded) and handles Citywide differently.
+
 **Annual demand chart:** Uses rolling 12-month windows (same logic as `requirements.py` Chart 7). `aggregate_annual_demand()` builds windows ending at the last full calendar month, assigns records via `pd.cut`, and returns `(window_by_size, window_total, window_labels_list)`. X-axis shows "Mar 2025–Feb 2026" range labels at −45°. Submarket and size dropdowns filter data before window computation.
+
+**PNG export:** All four `dcc.Graph` components use `config=_CHART_CONFIG` (defined after app init) — shows modebar on hover with PNG download button (`toImageButtonOptions: format=png, scale=2`), removes noisy buttons (`select2d`, `lasso2d`, `autoScale2d`, spike lines, hover compare), hides Plotly logo.
 
 **Logo:** Fixed top-left logo bar (`position: fixed; top: 0; left: 0; zIndex: 1000`) is always visible in both the login form and main dashboard. `page-content` div has `paddingTop: 58px` to prevent content hiding under the bar.
 
@@ -482,7 +486,7 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 ---
 
 **Last Updated:** 2026-03-09
-**Document Version:** 6.4.0
+**Document Version:** 6.5.0
 
 ---
 

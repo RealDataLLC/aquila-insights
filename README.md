@@ -270,6 +270,7 @@ All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.5.0** | 2026-03-09 | Dashboard UX — moved Annual Demand chart to top of right column; consolidated `demand-submarket-filter` and `demand-size-filter` into left sidebar; all charts export to PNG via Plotly modebar (`_CHART_CONFIG` with `toImageButtonOptions`) |
 | **6.4.0** | 2026-03-09 | Magic link auth for `@aquilacommercial.com` — `APP_URL` env var replaces hardcoded Vercel URL; documented `SUPABASE_ANON_KEY`, `FLASK_SECRET_KEY`, `APP_URL` as required Vercel env vars |
 | **6.3.0** | 2026-03-06 | Dashboard annual demand chart converted to rolling 12M windows — `aggregate_annual_demand()` now returns `(window_by_size, window_total, window_labels_list)`; solid bars, single total line, "Mar 2025–Feb 2026" range labels on x-axis; matches `requirements.py` Chart 7 behavior |
 | **6.2.0** | 2026-03-06 | Removed annualized projection from demand charts — `demand_by_market.py` now uses rolling 12M trailing windows with zero-filled sparse months; `requirements.py` Chart 7 shows actual YTD with "Data through [Month Year]" subtitle; dashboard fixed top-left logo bar |
