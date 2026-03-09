@@ -575,7 +575,7 @@ default_start = max_complete_month - pd.DateOffset(months=12)
 # AUTH LAYOUT
 # ============================================================================
 
-_VERCEL_URL = 'https://aquila-insights.vercel.app'
+_VERCEL_URL = os.getenv('APP_URL', 'https://aquila-insights.vercel.app').rstrip('/')
 
 login_form_div = html.Div([
     html.H4("Austin Office Requirements", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '4px'}),
