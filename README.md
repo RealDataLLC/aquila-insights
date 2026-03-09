@@ -263,3 +263,35 @@ python -m generators.economic.fred_indicators
 ```
 
 All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}/{filename}.html`
+
+---
+
+## Changelog
+
+| Version | Date | Summary |
+|---------|------|---------|
+| **6.4.0** | 2026-03-09 | Magic link auth for `@aquilacommercial.com` — `APP_URL` env var replaces hardcoded Vercel URL; documented `SUPABASE_ANON_KEY`, `FLASK_SECRET_KEY`, `APP_URL` as required Vercel env vars |
+| **6.3.0** | 2026-03-06 | Dashboard annual demand chart converted to rolling 12M windows — `aggregate_annual_demand()` now returns `(window_by_size, window_total, window_labels_list)`; solid bars, single total line, "Mar 2025–Feb 2026" range labels on x-axis; matches `requirements.py` Chart 7 behavior |
+| **6.2.0** | 2026-03-06 | Removed annualized projection from demand charts — `demand_by_market.py` now uses rolling 12M trailing windows with zero-filled sparse months; `requirements.py` Chart 7 shows actual YTD with "Data through [Month Year]" subtitle; dashboard fixed top-left logo bar |
+| **6.1.0** | 2026-03-05 | Vercel deployment for office requirements dashboard — `api/index.py` WSGI entry, `vercel.json`, brand constants stub, `server = app.server`, added numpy to requirements |
+| **6.0.0** | 2026-03-04 | CLAUDE.md consolidated (1498→418 lines); added custom slash commands (`.claude/commands/`) |
+| **5.3.0** | 2026-03-02 | Report pagination — building lists and large availabilities chunked at 35 rows/page with "Page X of Y" labels; TOC disclaimer anchored to bottom; new separate UC/Proposed pipeline templates |
+| **5.2.0** | 2026-03-02 | Report style fixes — TOC heading Futura Light/Navy, pipeline split into two independently page-counted sections, industrial rental chart vacancy line corrected to Glass Blue Alt |
+| **5.1.0** | 2026-03-02 | PNG arrow icons for KPI direction indicators (Greenspace up, Signal down); CSS polish for TOC/section dividers/pipeline; all secondary y-axes fixed to start at 0% |
+| **5.0.0** | 2026-02-27 | MAJOR — Created `aquila/` shared package (brand, connectors, charts, dateutil, git); reorganized all 13 generators to `generators/` by domain; `aquila_graphing_tools.py` converted to backward-compat shim |
+| **4.4.0** | 2026-02-26 | Updated to 13-color 2026 palette (Glass Blue Alt added at [2], all indices reordered); centered all chart titles globally; fixed Austin 2025 chart colors and size-range sequential ordering |
+| **4.3.0** | 2026-02-25 | Added 12 Office Market Metrics charts (CBD/NW/SW/Domain: vacancy rate, rental rate, opex) via Supabase `market_tables_office` |
+| **4.2.0** | 2026-02-25 | Added 6 Austin Economy charts from `Industries and Companies 2025.xlsx` (jobs by industry/location/month, HQ activity, top companies) |
+| **4.1.0** | 2026-02-25 | Enhanced cleanup script — auto report-type detection, Supabase inventory loading, Major Leases sort/name-match, Major Sales portfolio consolidation, pipeline UC verification, Proposed sorting |
+| **4.0.0** | 2026-02-24 | MAJOR — Added Industrial Quarterly Report PDF generator (~45 pages, 52 charts, 9 templates, 5 new modules); dual property types (Industrial + Flex); generation-based large availabilities; regional comparison charts |
+| **3.5.0** | 2026-02-24 | Added pre-report cleanup script (`cleanup_quarterly_data.py`) with abbreviation standardization, Vertical Format tab creation; fixed Quarterly Changes NRA title and Property ID comma formatting |
+| **3.4.0** | 2026-02-24 | Added 2 long-term performance pages (10 charts: Of Submarkets 2×3 + CBD vs Suburban 2×2); Class B asking rates; submarket-stacked absorption; fully stacked direct/sublease vacancy chart |
+| **3.3.0** | 2026-02-24 | Added Table of Contents page with two-pass page number computation and anchor hyperlinks |
+| **3.2.0** | 2026-02-23 | Report layout fixes — Major Sales as table layout, Pipeline Proposed as single fixed-width table, chart fonts scaled 1.5×, building list totals in `<tfoot>` |
+| **3.1.0** | 2026-02-23 | Added Development Pipeline pages (UC + Proposed) and Quarterly Changes page; chart export scale 2×→3× |
+| **3.0.0** | 2026-02-19 | MAJOR — Added Office Quarterly Report PDF generator (Plotly + Jinja2 + WeasyPrint, ~50 pages, 48 charts, 9 templates) |
+| **2.3.0** | 2026-02-19 | Added Industrial NNN Rental Rates chart (Northeast/Southeast/Williamson County) |
+| **2.2.0** | 2026-02-19 | Added Office Requirements Dashboard (Dash app with submarket/industry/size filters, YoY comparison, 3-month rolling avg) |
+| **2.1.0** | 2026-02-19 | Added 2026 annualized projection to demand-by-tenant-size charts (main + 5 submarkets); YTD pace factor formula |
+| **2.0.0** | 2026-02-10 | MAJOR — CLAUDE.md condensed 80%; all scripts renamed for clarity; organized by data source |
+| **1.0–1.4** | 2026-01-15–02-09 | Initial documentation; FRED indicators; 2026 brand palette rebrand; Industrial Demand charts; categorized chart subdirectories |
