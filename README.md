@@ -39,20 +39,6 @@ Update `reports/report_config.py` with the new quarter before generating. Source
 
 [Requirements YoY Rolling 12-Month [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_yoy_rolling_12m.html) - Rolling 12-month average SF and count with prior year comparison
 
-[Office Demand by Tenant Size [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_demand_by_tenant_size.html) - Annual demand grouped by size category with total demand line
-
-#### Demand by Market
-
-[Office Demand by Tenant Size - CBD [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_demand_by_tenant_size_cbd.html)
-
-[Office Demand by Tenant Size - Southwest [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_demand_by_tenant_size_sw.html)
-
-[Office Demand by Tenant Size - Northwest [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_demand_by_tenant_size_nw.html)
-
-[Office Demand by Tenant Size - East [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_demand_by_tenant_size_e.html)
-
-[Office Demand by Tenant Size - Central [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_demand_by_tenant_size_c.html)
-
 ### Market Metrics
 [Asking vs Effective Rent by Submarket [2026-01-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_asking_vs_effective_rent_by_submarket.html)
 
