@@ -10,6 +10,8 @@ These are data plots for Aquila Commercial, maintained by [Nelson Lin](mailto:ne
 
 ## Office
 
+[Broker vs. Direct Deals – Net Effective Rent by Building [2026-03-11]](https://realdatallc.github.io/aquila-insights/charts/office/broker-comparison.html) - New leases only; compares represented vs. unrepresented tenants within same buildings
+
 ### Quarterly Reports
 The Office Quarterly Report is generated programmatically from Supabase + Excel data using Plotly charts, Jinja2 templates, and WeasyPrint PDF conversion. It covers 4 Austin submarkets and 6 micromarkets, producing a ~50-page branded PDF with 55 charts.
 
