@@ -51,6 +51,18 @@
     page: toc-page;
 }
 
+/* Quarterly Changes page: suppress page number and don't increment counter */
+@page quarterly-changes-page {
+    counter-increment: page 0;
+    @bottom-right {
+        content: none;
+    }
+}
+
+.quarterly-changes-page {
+    page: quarterly-changes-page;
+}
+
 /* ── Base Styles ───────────────────────────────────────────── */
 * {
     box-sizing: border-box;
@@ -181,7 +193,7 @@ body {
 }
 
 .toc-group-desc {
-    font-size: 7pt;
+    font-size: 9pt;
     color: var(--text-light);
     line-height: 1.4;
     margin-bottom: 8px;
@@ -210,8 +222,9 @@ body {
 }
 
 .toc-entry-label {
+    font-family: "Futura LT Pro Book", "Futura Book", "Futura LT Pro", "Futura", Arial, sans-serif;
     font-size: 8pt;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--navy);
@@ -232,7 +245,7 @@ body {
 }
 
 .toc-footer-note {
-    font-size: 7.5pt;
+    font-size: 9pt;
     color: var(--text-dark);
     line-height: 1.6;
     margin-bottom: 10px;
@@ -471,7 +484,7 @@ body {
     background-color: var(--light-gray);
     padding: 10px 14px;
     margin-top: 10px;
-    font-size: 7.5pt;
+    font-size: 9pt;
     color: var(--text-dark);
     line-height: 1.5;
 }
@@ -637,7 +650,7 @@ body {
 }
 
 .pipeline-blurb {
-    font-size: 8pt;
+    font-size: 9pt;
     color: var(--text-dark);
     margin: 10px 0 14px 0;
     line-height: 1.5;
