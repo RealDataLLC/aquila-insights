@@ -12,6 +12,23 @@ These are data plots for Aquila Commercial, maintained by [Nelson Lin](mailto:ne
 
 [Broker vs. Direct Deals – Net Effective Rent by Building [2026-03-11]](https://realdatallc.github.io/aquila-insights/charts/office/broker-comparison.html) - New leases only; compares represented vs. unrepresented tenants within same buildings
 
+### Aquila Benefit Dashboard
+Interactive local dashboard comparing AQUILA-brokered deals vs peer deals in the same building/year using Skyline (restb.ai) lease comp data.
+
+```bash
+python dashboards/office_requirements_dashboard.py
+# Open http://127.0.0.1:8050/ and click the 'Aquila Benefit' tab
+```
+
+**Aquila Benefit tab features:**
+- KPI cards: Deals Analyzed, Win Rate, Median Savings, Total SF
+- Average NER by Year — grouped bar chart (AQUILA Navy vs Market Peers Concrete)
+- NER Savings Per Deal — horizontal bar chart (Greenspace = saved, Signal = didn't)
+- Click any deal bar to expand a detail panel showing the AQUILA deal card + all peer comps
+- Deal Browser — filterable/sortable table of all AQUILA deals with peer avg NER and savings
+- Broker List — leaderboard ranked by total deals, with win rate and savings per broker
+- Filter by year (pill buttons) and lease type (dropdown, defaults to New)
+
 ### Quarterly Reports
 The Office Quarterly Report is generated programmatically from Supabase + Excel data using Plotly charts, Jinja2 templates, and WeasyPrint PDF conversion. It covers 4 Austin submarkets and 6 micromarkets, producing a ~50-page branded PDF with 55 charts.
 
@@ -211,6 +228,8 @@ aquila-insights/
 │
 ├── reports/                   # Quarterly PDF report generators
 ├── dashboards/                # Local interactive Dash apps
+│   ├── office_requirements_dashboard.py  # Requirements + Aquila Benefit tabs
+│   └── aquila_benefit.py      #   Aquila Benefit module (Skyline NER analysis)
 ├── charts/                    # Published HTML charts (GitHub Pages)
 ├── data/                      # Input data files (Excel, CSV)
 ├── notebooks/                 # Jupyter development notebooks
@@ -258,6 +277,7 @@ All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.6.0** | 2026-03-12 | Aquila Benefit dashboard tab — Skyline API connector (`aquila/connectors/skyline.py`), NER comparison module (`dashboards/aquila_benefit.py`); two-tab layout in office requirements dashboard (Requirements + Aquila Benefit) |
 | **6.5.0** | 2026-03-09 | Dashboard UX — moved Annual Demand chart to top of right column; consolidated `demand-submarket-filter` and `demand-size-filter` into left sidebar; all charts export to PNG via Plotly modebar (`_CHART_CONFIG` with `toImageButtonOptions`) |
 | **6.4.0** | 2026-03-09 | Magic link auth for `@aquilacommercial.com` — `APP_URL` env var replaces hardcoded Vercel URL; documented `SUPABASE_ANON_KEY`, `FLASK_SECRET_KEY`, `APP_URL` as required Vercel env vars |
 | **6.3.0** | 2026-03-06 | Dashboard annual demand chart converted to rolling 12M windows — `aggregate_annual_demand()` now returns `(window_by_size, window_total, window_labels_list)`; solid bars, single total line, "Mar 2025–Feb 2026" range labels on x-axis; matches `requirements.py` Chart 7 behavior |

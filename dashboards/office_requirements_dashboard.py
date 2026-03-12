@@ -51,6 +51,7 @@ except ImportError as e:
     sys.exit(1)
 
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
+import aquila_benefit
 
 # Load environment variables from parent directory
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'aquila_graph.env')
@@ -552,6 +553,16 @@ def calculate_metrics(monthly_current, monthly_prior):
 print("Loading requirements data...")
 df_global_raw, df_global = load_requirements_data()
 
+# Load Skyline lease data for Aquila Benefit tab
+print("Loading Skyline lease data...")
+try:
+    df_skyline = aquila_benefit.load_skyline_leases()
+    print(f"Loaded {len(df_skyline)} Skyline leases")
+except Exception as e:
+    print(f"WARNING: Failed to load Skyline data: {e}")
+    import pandas as _pd
+    df_skyline = _pd.DataFrame()
+
 # Parse individual industries from comma-separated values (inclusive matching)
 _all_industry_raw = df_global['industry'].dropna().unique().tolist()
 _individual_industries = set()
@@ -638,7 +649,7 @@ auth_layout = dbc.Container([
 # MAIN LAYOUT (existing dashboard, now with logo header)
 # ============================================================================
 
-main_layout = dbc.Container([
+_requirements_content = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.H2("Austin Office Requirements", style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'margin': 0}),
@@ -869,6 +880,28 @@ main_layout = dbc.Container([
         ], width=9)
     ], style={'marginTop': '20px'})
 ], fluid=True)
+
+# Build benefit tab content
+_benefit_content = aquila_benefit.build_benefit_layout(df_skyline)
+
+# Tab styling
+_TAB_STYLE = {"fontFamily": AQUILA_FONT, "padding": "10px 20px"}
+_TAB_SELECTED_STYLE = {
+    "fontFamily": AQUILA_FONT, "padding": "10px 20px",
+    "borderTop": f"3px solid {AQUILA_COLORS[0]}",
+    "fontWeight": "bold", "color": AQUILA_COLORS[0],
+}
+
+main_layout = html.Div([
+    dcc.Tabs(id="dashboard-tabs", value="tab-requirements", children=[
+        dcc.Tab(label="Requirements", value="tab-requirements",
+                style=_TAB_STYLE, selected_style=_TAB_SELECTED_STYLE,
+                children=[_requirements_content]),
+        dcc.Tab(label="Aquila Benefit", value="tab-benefit",
+                style=_TAB_STYLE, selected_style=_TAB_SELECTED_STYLE,
+                children=[_benefit_content]),
+    ]),
+])
 
 # Root layout: fixed top-left logo bar + Location shell + dynamic page-content
 app.layout = html.Div([
@@ -1483,6 +1516,9 @@ def update_demand_chart(submarket, sizes):
 # ============================================================================
 # WSGI SERVER (for Vercel and other WSGI hosts)
 # ============================================================================
+
+# Register Aquila Benefit callbacks
+aquila_benefit.register_callbacks(app, df_skyline)
 
 server = app.server
 
