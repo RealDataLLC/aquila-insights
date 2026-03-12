@@ -642,11 +642,13 @@ def build_page_sequence(env, config, data, charts):
             page_map[anchor] = page_num
         pdf_page_counter[0] += pdf_pages
 
-    # ── 1c. Quarterly Changes ─────────────────────────────────────
+    # ── 1c. Quarterly Changes (Internal Use Only) ──────────────────
+    # QC pages are excluded from page count and TOC.
     qc_page = _render_quarterly_changes(env, config, data)
-    _add(qc_page)
     if qc_page:
-        print("  Rendered: Quarterly Changes")
+        content_pages.append(qc_page)
+        # Do NOT increment pdf_page_counter — QC is excluded from page numbering
+        print("  Rendered: Quarterly Changes (Internal Use Only)")
 
     # ── 2. Citywide ──────────────────────────────────────────────
     kpi_page = _render_kpi_header(env, config, data, 'Citywide',

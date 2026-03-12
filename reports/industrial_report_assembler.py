@@ -664,16 +664,10 @@ def _render_toc(env, config, page_map):
 
     regional_entries = []
     for anchor, label in [
-        ('by-the-numbers',          'By the Numbers'),
-        ('quarterly-changes',       'Quarterly Changes'),
-        ('major-leases',            'Major Leases'),
-        ('major-sales',             'Major Sales'),
+        ('by-the-numbers',          'Regional Overall Performance'),
+        ('major-leases',            'Major Leases & Sales'),
         ('development-pipeline',    'Development Pipeline'),
-        ('large-avail-first-gen',   'Large Availabilities -- First Generation'),
-        ('large-avail-second-gen',  'Large Availabilities -- Second Generation'),
-        ('regional-industrial',     'Regional Overall -- Industrial'),
-        ('regional-flex',           'Regional Overall -- Flex'),
-        ('regional-comparison',     'Regional Comparison'),
+        ('large-avail-first-gen',   'Large Availabilities'),
     ]:
         e = _entry(anchor, label)
         if e:
@@ -736,11 +730,12 @@ def build_page_sequence(env, config, data, charts):
     if kpi_page:
         print("  Rendered: By the Numbers")
 
-    # Quarterly Changes
+    # Quarterly Changes (Internal Use Only) — excluded from page count and TOC
     qc_page = _render_quarterly_changes(env, config, data)
-    _add(qc_page, anchor='quarterly-changes')
     if qc_page:
-        print("  Rendered: Quarterly Changes")
+        content_pages.append(qc_page)
+        # Do NOT increment pdf_page_counter — QC is excluded from page numbering
+        print("  Rendered: Quarterly Changes (Internal Use Only)")
 
     # Major Leases
     leases_page = _render_major_leases(env, config, data)
