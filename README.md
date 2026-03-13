@@ -45,6 +45,8 @@ python reports/generate_office_report.py --skip-charts
 
 Update `reports/report_config.py` with the new quarter before generating. Source data is read from `Q:\0-Quarterly Reports\0-Office\{YEAR} Q{N}\`.
 
+Submarket boundary maps (Citywide, CBD, NW, SW, East) are generated from KMZ polygon data using Plotly Scattermapbox. Requires `MAPBOX_API_KEY` in `aquila_graph.env`.
+
 ### Tenant Requirements
 [Requirements Total SF [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/requirements_sf_total.html) - Combined historical data from 2018+
 
@@ -227,6 +229,7 @@ aquila-insights/
 │       └── permits.py
 │
 ├── reports/                   # Quarterly PDF report generators
+│   └── map_builder.py         #   Submarket maps (KMZ -> Mapbox -> PNG)
 ├── dashboards/                # Local interactive Dash apps
 │   ├── office_requirements_dashboard.py  # Requirements + Aquila Benefit tabs
 │   └── aquila_benefit.py      #   Aquila Benefit module (Skyline NER analysis)
@@ -277,6 +280,7 @@ All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.7.0** | 2026-03-13 | Office report submarket maps — `reports/map_builder.py` generates Plotly Scattermapbox maps from KMZ polygon data (13 submarkets); Citywide + 4 submarket maps embedded as base64 PNGs in KPI header pages; Mapbox "light" basemap with brand-colored polygons |
 | **6.6.0** | 2026-03-12 | Aquila Benefit dashboard tab — Skyline API connector (`aquila/connectors/skyline.py`), NER comparison module (`dashboards/aquila_benefit.py`); two-tab layout in office requirements dashboard (Requirements + Aquila Benefit) |
 | **6.5.0** | 2026-03-09 | Dashboard UX — moved Annual Demand chart to top of right column; consolidated `demand-submarket-filter` and `demand-size-filter` into left sidebar; all charts export to PNG via Plotly modebar (`_CHART_CONFIG` with `toImageButtonOptions`) |
 | **6.4.0** | 2026-03-09 | Magic link auth for `@aquilacommercial.com` — `APP_URL` env var replaces hardcoded Vercel URL; documented `SUPABASE_ANON_KEY`, `FLASK_SECRET_KEY`, `APP_URL` as required Vercel env vars |

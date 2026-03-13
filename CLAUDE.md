@@ -90,7 +90,8 @@ aquila-insights/
 │   ├── chart_builder.py            # Office: Plotly -> PNG via Kaleido
 │   ├── industrial_chart_builder.py # Industrial: Plotly -> PNG via Kaleido
 │   ├── report_assembler.py         # Office: Jinja2 render + WeasyPrint -> PDF
-│   └── industrial_report_assembler.py # Industrial: render + WeasyPrint -> PDF
+│   ├── industrial_report_assembler.py # Industrial: render + WeasyPrint -> PDF
+│   └── map_builder.py             # Submarket maps: KMZ -> Scattermapbox -> PNG
 │
 ├── dashboards/                      # Interactive Dash apps (local only, not published)
 │   ├── office_requirements_dashboard.py  # Main Dash app (Requirements + Aquila Benefit tabs)
@@ -235,6 +236,7 @@ Both office and industrial reports use the same architecture: config -> cleanup 
 - `report_assembler.py` does Jinja2 rendering + WeasyPrint PDF; two-pass TOC build
 - Citywide uses `table_type="overall"` (not "competitive set")
 - Long-term pages: "Of Submarkets" (2x3 grid) + "CBD vs Suburban" (2x2 grid); Suburban = NW + SW combined
+- `map_builder.py` generates Scattermapbox submarket maps from KMZ polygon data; exported as PNG via Kaleido, embedded as base64 data URIs
 
 ### Industrial Report
 
@@ -418,7 +420,7 @@ python -m generators.development.permits
 
 ### aquila_graph.env (gitignored)
 
-Required keys: `FRED_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY` (service role), `SKYLINE_API_KEY` (Skyline/restb.ai Bearer token), `GOOGLE_SERVICE_ACCOUNT_TYPE` through `GOOGLE_UNIVERSE_DOMAIN` (12 Google SA fields).
+Required keys: `FRED_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY` (service role), `SKYLINE_API_KEY` (Skyline/restb.ai Bearer token), `MAPBOX_API_KEY` (Mapbox access token for submarket maps), `GOOGLE_SERVICE_ACCOUNT_TYPE` through `GOOGLE_UNIVERSE_DOMAIN` (12 Google SA fields).
 
 Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.env`
 
@@ -453,6 +455,7 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 | Issue | Solution |
 |-------|----------|
 | **WeasyPrint DLL error** | `OSError: cannot load library 'libgobject-2.0-0'` — install GTK3 via MSYS2: `pacman -S mingw-w64-ucrt-x86_64-gtk3`, add `C:\msys64\ucrt64\bin` to PATH |
+| **Maps not generating** | Ensure `MAPBOX_API_KEY` is set in `aquila_graph.env`; map generation skips gracefully if missing |
 | **PDF write PermissionError** | PDF is open in a viewer — close it first |
 | **--skip-charts not finding PNGs** | Chart filenames are lowercased but keys are title-case — `_find_existing_charts()` handles the mapping |
 | **Citywide data missing** | Citywide uses `table_type="overall"`, not `"competitive set"` — `get_kpi_data()` auto-detects |
@@ -501,8 +504,8 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 ---
 
-**Last Updated:** 2026-03-12
-**Document Version:** 6.6.0
+**Last Updated:** 2026-03-13
+**Document Version:** 6.7.0
 
 ---
 

@@ -42,7 +42,13 @@
         </div>
     </div>
 
+    {% if map_image_uri %}
+    <div class="submarket-map">
+        <img src="{{ map_image_uri }}" alt="{{ submarket_name }} Submarket Map" />
+    </div>
+    {% else %}
     <div class="map-placeholder">
         Submarket Map — Coming Soon
     </div>
+    {% endif %}
 </div>

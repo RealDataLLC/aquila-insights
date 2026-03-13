@@ -48,7 +48,7 @@ def _render_title_page(env, config):
     )
 
 
-def _render_kpi_header(env, config, data, submarket, anchor_id=None, arrow_uris=None):
+def _render_kpi_header(env, config, data, submarket, anchor_id=None, arrow_uris=None, map_image_uri=None):
     """Render a KPI header page for a submarket."""
     from reports.data_loader import get_kpi_data
     kpi = get_kpi_data(data, submarket)
@@ -73,6 +73,7 @@ def _render_kpi_header(env, config, data, submarket, anchor_id=None, arrow_uris=
         anchor_id=anchor_id,
         arrow_up_uri=arrow_uris.get('arrow_up'),
         arrow_down_uri=arrow_uris.get('arrow_down'),
+        map_image_uri=map_image_uri,
     )
 
 
@@ -597,7 +598,7 @@ def _render_sublease_report(env, config, data, rows_per_page=30):
     return pages
 
 
-def build_page_sequence(env, config, data, charts):
+def build_page_sequence(env, config, data, charts, maps=None):
     """
     Build the ordered list of rendered page HTML strings.
     Section order matches the InDesign quarterly report PDF:
@@ -619,6 +620,16 @@ def build_page_sequence(env, config, data, charts):
     """
     # ── Load arrow PNG assets ──────────────────────────────────────
     arrow_uris = _load_arrow_uris(config.STATIC_DIR)
+
+    # ── Load map image data URIs ────────────────────────────────
+    map_uris = {}
+    if maps:
+        for sub_name, png_path in maps.items():
+            if os.path.exists(png_path):
+                import base64 as _b64
+                with open(png_path, 'rb') as f:
+                    b64 = _b64.b64encode(f.read()).decode()
+                map_uris[sub_name] = f'data:image/png;base64,{b64}'
 
     # ── Helper to track anchor → page number ─────────────────────
     # Page numbering: title=1, TOC=2, then content starts at 3.
@@ -652,7 +663,8 @@ def build_page_sequence(env, config, data, charts):
 
     # ── 2. Citywide ──────────────────────────────────────────────
     kpi_page = _render_kpi_header(env, config, data, 'Citywide',
-                                   anchor_id='citywide-kpi', arrow_uris=arrow_uris)
+                                   anchor_id='citywide-kpi', arrow_uris=arrow_uris,
+                                   map_image_uri=map_uris.get('Citywide'))
     _add(kpi_page)
     if kpi_page:
         print("  Rendered: Citywide KPI header")
@@ -699,7 +711,8 @@ def build_page_sequence(env, config, data, charts):
     for submarket in config.SUBMARKETS_WITH_DETAIL:
         kpi_anchor, _perf_anchor = _submarket_anchors.get(submarket, (None, None))
         kpi_page = _render_kpi_header(env, config, data, submarket,
-                                       anchor_id=kpi_anchor, arrow_uris=arrow_uris)
+                                       anchor_id=kpi_anchor, arrow_uris=arrow_uris,
+                                       map_image_uri=map_uris.get(submarket))
         _add(kpi_page, anchor=kpi_anchor)
         if kpi_page:
             print(f"  Rendered: {submarket} KPI header")
@@ -804,7 +817,7 @@ def render_html(pages, config):
     return html
 
 
-def generate_report(data, charts, config, html_only=False):
+def generate_report(data, charts, config, html_only=False, maps=None):
     """
     Main entry point: render templates → HTML → PDF.
     If html_only=True, skip PDF and just save HTML for browser preview.
@@ -816,7 +829,7 @@ def generate_report(data, charts, config, html_only=False):
     env = _build_jinja_env(config.TEMPLATES_DIR)
 
     # Build page sequence
-    pages = build_page_sequence(env, config, data, charts)
+    pages = build_page_sequence(env, config, data, charts, maps=maps)
     print(f"\n  Total pages rendered: {len(pages)}")
 
     # Render full HTML

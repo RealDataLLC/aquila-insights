@@ -433,6 +433,17 @@ body {
     margin-top: 30px;
 }
 
+.submarket-map {
+    margin-top: 30px;
+    text-align: center;
+}
+.submarket-map img {
+    width: 100%;
+    height: auto;
+    max-height: 500px;
+    object-fit: contain;
+}
+
 /* ── Performance Page ──────────────────────────────────────── */
 .performance-page {
     page-break-after: always;

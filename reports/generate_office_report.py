@@ -18,6 +18,7 @@ from reports.data_loader import load_all_data
 from reports.chart_builder import generate_all_charts
 from reports.report_assembler import generate_report
 from reports.cleanup_quarterly_data import run_cleanup
+from reports.map_builder import generate_submarket_maps
 
 
 def main():
@@ -51,11 +52,37 @@ def main():
         print("\n  Generating charts...")
         charts = generate_all_charts(data, config)
 
+    # Step 2b: Generate submarket maps
+    if args.skip_charts:
+        maps = _find_existing_maps(config.CHARTS_DIR)
+    else:
+        maps = generate_submarket_maps(config.CHARTS_DIR)
+
     # Step 3: Assemble report
-    output = generate_report(data, charts, config, html_only=args.html_only)
+    output = generate_report(data, charts, config, html_only=args.html_only, maps=maps)
 
     print(f"\n  Output: {output}")
     return output
+
+
+def _find_existing_maps(charts_dir):
+    """Scan charts_dir for existing map PNGs and return {submarket: path}."""
+    maps = {}
+    if not os.path.exists(charts_dir):
+        return maps
+    # Map filenames: map_citywide.png, map_cbd.png, etc.
+    name_map = {
+        'map_citywide.png': 'Citywide',
+        'map_cbd.png': 'CBD',
+        'map_northwest.png': 'Northwest',
+        'map_southwest.png': 'Southwest',
+        'map_east.png': 'East',
+    }
+    for fname, key in name_map.items():
+        path = os.path.join(charts_dir, fname)
+        if os.path.exists(path):
+            maps[key] = path
+    return maps
 
 
 def _find_existing_charts(charts_dir):
