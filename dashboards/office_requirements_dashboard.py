@@ -892,15 +892,19 @@ _TAB_SELECTED_STYLE = {
     "fontWeight": "bold", "color": AQUILA_COLORS[0],
 }
 
+# Use empty dcc.Tab labels + always-in-DOM content divs to avoid
+# dcc.Tabs conditionally un-mounting inactive tab children
+# (which breaks pattern-matching callbacks and the demand chart).
 main_layout = html.Div([
     dcc.Tabs(id="dashboard-tabs", value="tab-requirements", children=[
         dcc.Tab(label="Requirements", value="tab-requirements",
-                style=_TAB_STYLE, selected_style=_TAB_SELECTED_STYLE,
-                children=[_requirements_content]),
+                style=_TAB_STYLE, selected_style=_TAB_SELECTED_STYLE),
         dcc.Tab(label="Aquila Benefit", value="tab-benefit",
-                style=_TAB_STYLE, selected_style=_TAB_SELECTED_STYLE,
-                children=[_benefit_content]),
+                style=_TAB_STYLE, selected_style=_TAB_SELECTED_STYLE),
     ]),
+    html.Div(id="tab-pane-requirements", children=[_requirements_content]),
+    html.Div(id="tab-pane-benefit", children=[_benefit_content],
+             style={"display": "none"}),
 ])
 
 # Root layout: fixed top-left logo bar + Location shell + dynamic page-content
@@ -925,6 +929,18 @@ app.layout = html.Div([
 @app.callback(Output('page-content', 'children'), Input('url', 'pathname'))
 def display_page(pathname):
     return main_layout if session.get('authenticated') else auth_layout
+
+
+@app.callback(
+    [Output("tab-pane-requirements", "style"),
+     Output("tab-pane-benefit", "style")],
+    Input("dashboard-tabs", "value"),
+)
+def _switch_dashboard_tab(active_tab):
+    """Toggle visibility of tab panes (both always in DOM for callbacks)."""
+    if active_tab == "tab-benefit":
+        return {"display": "none"}, {"display": "block"}
+    return {"display": "block"}, {"display": "none"}
 
 
 @app.callback(
