@@ -18,3 +18,4 @@ load_dotenv(_ENV_PATH)
 from .supabase import get_supabase_client  # noqa: E402
 from .gsheets import get_gsheets_client    # noqa: E402
 from .fred import fetch_fred_series        # noqa: E402
+from .skyline import fetch_all_leases     # noqa: E402

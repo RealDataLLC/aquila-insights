@@ -30,6 +30,7 @@
 3. **Google Sheets** - Industrial TITM (ID: `1natA0ALaQnX3U_vGC5Vrchy1QqmbW8k0zvTKwuE2wys`)
 4. **FRED API** - Economic indicators
 5. **Excel Files** - Property management, transactions, quarterly report data (Q: drive)
+6. **Skyline API** (restb.ai) - Lease comparables for AQUILA Benefit analysis (`SKYLINE_API_KEY`)
 
 ---
 
@@ -46,7 +47,8 @@ aquila-insights/
 │   └── connectors/                  #   Data source clients (auto-loads aquila_graph.env)
 │       ├── supabase.py              #     get_supabase_client(use_service_role=True)
 │       ├── gsheets.py               #     get_gsheets_client()
-│       └── fred.py                  #     fetch_fred_series()
+│       ├── fred.py                  #     fetch_fred_series()
+│       └── skyline.py               #     fetch_all_leases()
 │
 ├── generators/                      # Chart generators (organized by domain)
 │   ├── office/                      #   5 generators -> 29 charts
@@ -91,6 +93,8 @@ aquila-insights/
 │   └── industrial_report_assembler.py # Industrial: render + WeasyPrint -> PDF
 │
 ├── dashboards/                      # Interactive Dash apps (local only, not published)
+│   ├── office_requirements_dashboard.py  # Main Dash app (Requirements + Aquila Benefit tabs)
+│   └── aquila_benefit.py            #   Aquila Benefit tab module (Skyline NER analysis)
 ├── data/                            # Input data files (Excel, CSV)
 ├── notebooks/                       # Jupyter development notebooks
 ├── archive/                         # Deprecated/test scripts
@@ -159,6 +163,7 @@ from aquila.brand import AQUILA_COLORS, AQUILA_FONT, NAVY, GLASS_BLUE, COPPER, B
 from aquila.connectors.supabase import get_supabase_client  # use_service_role=True for RLS tables
 from aquila.connectors.gsheets import get_gsheets_client
 from aquila.connectors.fred import fetch_fred_series
+from aquila.connectors.skyline import fetch_all_leases
 
 # Utilities
 from aquila.dateutil import parse_quarter, quarter_sort_key
@@ -283,7 +288,18 @@ python reports/cleanup_quarterly_data.py                            # Apply chan
 ## Dashboards
 
 **File:** `dashboards/office_requirements_dashboard.py` (Dash app at http://127.0.0.1:8050/)
-**Data:** Same Google Sheets as static charts. Run: `python dashboards/office_requirements_dashboard.py`
+**Data:** Google Sheets (Requirements tab) + Skyline API (Aquila Benefit tab). Run: `python dashboards/office_requirements_dashboard.py`
+
+**Tabs:** The dashboard has two top-level tabs:
+- **Requirements** — original office requirements analysis (unchanged)
+- **Aquila Benefit** — NER comparison: AQUILA-brokered deals vs peer deals in same building/year
+
+**Aquila Benefit module** (`dashboards/aquila_benefit.py`):
+- `load_skyline_leases()` — fetches all Skyline leases, flattens nested fields, flags `is_aquila` via `tenantBrokerage.name`
+- `build_ner_comparison(df, lease_types, years)` — matches AQUILA deals to peers in same `(property_id, year)`, computes `savings = peer_avg_ner - aquila_ner`
+- Sub-tabs: Charts (KPIs + grouped bar avg NER + horizontal savings chart + click detail panel), Deal Browser (filterable DataTable), Broker List (leaderboard)
+- `register_callbacks(app, df_leases)` — called from main dashboard after app init
+- Skyline data loaded at startup as `df_skyline`; gracefully falls back to empty DataFrame on failure
 
 **Key architecture:** Data is never filtered by date -- date range only slices display. Rolling averages computed on full dataset first, then split into current/prior periods. Prior year = same range shifted back 12 months.
 
@@ -402,7 +418,7 @@ python -m generators.development.permits
 
 ### aquila_graph.env (gitignored)
 
-Required keys: `FRED_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY` (service role), `GOOGLE_SERVICE_ACCOUNT_TYPE` through `GOOGLE_UNIVERSE_DOMAIN` (12 Google SA fields).
+Required keys: `FRED_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY` (service role), `SKYLINE_API_KEY` (Skyline/restb.ai Bearer token), `GOOGLE_SERVICE_ACCOUNT_TYPE` through `GOOGLE_UNIVERSE_DOMAIN` (12 Google SA fields).
 
 Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.env`
 
@@ -485,8 +501,8 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 ---
 
-**Last Updated:** 2026-03-09
-**Document Version:** 6.5.0
+**Last Updated:** 2026-03-12
+**Document Version:** 6.6.0
 
 ---
 
