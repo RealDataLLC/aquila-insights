@@ -533,17 +533,17 @@ def register_callbacks(app, df_leases):
     """Register all Aquila Benefit callbacks on the Dash app."""
 
     # ---- Year pill click ----
+    # Must use ALL (not MATCH) because the Output is a plain component, not pattern-matched.
     @app.callback(
         Output("benefit-selected-year", "data"),
-        Input({"type": "benefit-year-btn", "index": MATCH}, "n_clicks"),
+        Input({"type": "benefit-year-btn", "index": ALL}, "n_clicks"),
         prevent_initial_call=True,
     )
-    def _on_year_click(n_clicks):
+    def _on_year_click(n_clicks_list):
         ctx = callback_context
         if not ctx.triggered:
             return no_update
         prop_id = ctx.triggered[0]["prop_id"]
-        # Extract index from pattern match
         import json
         btn_id = json.loads(prop_id.split(".")[0])
         return btn_id["index"]
