@@ -16,7 +16,45 @@ try:
 except ImportError:
     from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 
-from aquila.connectors.skyline import fetch_all_leases
+try:
+    from aquila.connectors.skyline import fetch_all_leases
+except ImportError:
+    # Vercel deployment: aquila package not available — inline Skyline fetch logic
+    import os as _os
+    import requests as _requests
+
+    _SKYLINE_BASE_URL = "https://api.withskyline.com/external/v1"
+
+    def fetch_all_leases(lease_type=None, start_date=None, end_date=None):
+        api_key = _os.getenv("SKYLINE_API_KEY", "")
+        headers = {"Authorization": f"Bearer {api_key}"}
+        params = {"pageSize": 100, "sortBy": "executionDate", "sortOrder": "desc"}
+        if lease_type:
+            params["leaseType"] = lease_type
+        if start_date:
+            params["executionDate_gte"] = start_date
+        if end_date:
+            params["executionDate_lte"] = end_date
+        all_leases, page = [], 1
+        while True:
+            params["page"] = page
+            try:
+                resp = _requests.get(
+                    f"{_SKYLINE_BASE_URL}/leases", headers=headers, params=params
+                )
+                resp.raise_for_status()
+                body = resp.json()
+            except Exception as e:
+                print(f"    [ERROR] Skyline API page {page}: {e}")
+                break
+            data = body.get("data", [])
+            pagination = body.get("pagination", {})
+            all_leases.extend(data)
+            if not pagination.get("hasNextPage", False):
+                break
+            page += 1
+        return all_leases
+
 
 
 # ---------------------------------------------------------------------------
