@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from dash import html, dcc, dash_table, Input, Output, State, callback_context, no_update, MATCH
+from dash import html, dcc, dash_table, Input, Output, State, callback_context, no_update, MATCH, ALL
 
 # Brand constants (local stub or parent package)
 try:
