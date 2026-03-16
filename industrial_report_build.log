@@ -1,0 +1,172 @@
+Resorting to unclean kill browser.
+Resorting to unclean kill browser.
+============================================================
+AQUILA Industrial Quarterly Report - Q4 2025
+============================================================
+============================================================
+QUARTERLY DATA CLEANUP -- Q4 2025
+============================================================
+
+  Loading inventory data from Supabase...
+    Loaded 1000 rows from inventory_industrial
+    Inventory lookup: 277 building names indexed
+
+  Processing: Major Leases & Sales
+    'Vertical Format' tab already exists -- skipping.
+    No changes needed.
+
+  Processing: Large Availabilities
+    No changes needed.
+
+  Processing: Building List
+    No changes needed.
+
+  Processing: Development Pipeline
+    Pipeline verification: 13 warning(s)
+    [WARN] UC building not in inventory: 'Freehill Airport Business Park'
+    [WARN] UC building not in inventory: 'GTX Logistics Park - Phase II'
+    [WARN] UC building not in inventory: 'McCarty Park - Phase I'
+    [WARN] UC building not in inventory: 'Titanium Commerce Park - Phase I'
+    [WARN] UC building not in inventory: 'Airpark 130 - Phase I'
+    [WARN] UC building not in inventory: 'Southeast Crossing'
+    [WARN] UC building not in inventory: 'Colorado Bend Industrial - Phase I'
+    [WARN] UC building not in inventory: 'Travis South - Phase II'
+    [WARN] UC building not in inventory: 'San Marcos Business Park, Bldg. C'
+    [WARN] UC building not in inventory: 'Point 45'
+    [WARN] UC building not in inventory: 'Cedar Tech'
+    [WARN] UC building not in inventory: 'Eagle35'
+    [WARN] UC building not in inventory: 'Gradiant Technology Park Phase I'
+    No changes needed.
+
+  Processing: Existing Supply NRA Changes [Q4].csv
+    No changes needed.
+
+  Processing: Status_Changes [Q4].csv
+    No changes needed.
+
+  Processing: Vacancy_Changes [Q4].csv
+    Column 'Property Name': 4 cell(s) updated
+    Column 'Building Park': 8 cell(s) updated
+
+============================================================
+CLEANUP COMPLETE -- Updated 12 cell(s) across 7 file(s)
+============================================================
+============================================================
+LOADING ALL DATA SOURCES
+============================================================
+  Loading Supabase market_tables_industrial...
+    Loaded 479 rows, 18 groups
+    Using Supabase as data source
+  Loading Major Leases & Sales...
+    Leases: 19 rows, Sales: 14 rows
+  Loading Large Availabilities...
+    First Gen (Q2 Availabilities - First Gen): 45 rows
+    Second Gen (Q2 Availabilities - Second Gen): 14 rows
+  Loading Development Pipeline...
+    Q4 2025 Development Pipeline: 27 rows
+    Proposed: 46 rows
+  Loading Building Lists...
+    East_Flex: 14 rows
+    East_Industrial: 5 rows
+    Hays County_Flex: 13 rows
+    Hays County_Industrial: 21 rows
+    North Central_Flex: 77 rows
+    North Central_Industrial: 34 rows
+    Northeast_Flex: 37 rows
+    Northeast_Industrial: 43 rows
+    South_Flex: 16 rows
+    South_Industrial: 5 rows
+    Southeast_Flex: 40 rows
+    Southeast_Industrial: 40 rows
+    Southwest_Flex: 4 rows
+    Southwest_Industrial: 1 rows
+    Williamson County_Flex: 33 rows
+    Williamson County_Industrial: 44 rows
+  Loading Quarterly Changes...
+    Existing Supply NRA Changes: 1 rows
+    Status Changes: 15 rows
+    Vacancy Changes: 31 rows
+============================================================
+DATA LOADING COMPLETE
+============================================================
+
+  Generating charts...
+    Generated 3 charts for Regional_Industrial
+    Generated 3 charts for Regional_Flex
+    Generated 3 charts for East_Industrial
+    Generated 3 charts for East_Flex
+    Generated 3 charts for Hays County_Industrial
+    Generated 3 charts for Hays County_Flex
+    Generated 3 charts for North Central_Industrial
+    Generated 3 charts for North Central_Flex
+    Generated 3 charts for Northeast_Industrial
+    Generated 3 charts for Northeast_Flex
+    Generated 3 charts for South_Industrial
+    Generated 3 charts for South_Flex
+    Generated 3 charts for Southeast_Industrial
+    Generated 3 charts for Southeast_Flex
+    Generated 3 charts for Williamson County_Industrial
+    Generated 3 charts for Williamson County_Flex
+    Generated 2 regional comparison charts for Industrial
+    Generated 2 regional comparison charts for Flex
+
+  Total charts generated: 52
+
+============================================================
+ASSEMBLING INDUSTRIAL REPORT
+============================================================
+  Rendered: By the Numbers
+  Rendered: Quarterly Changes (Internal Use Only)
+  Rendered: Major Leases
+  Rendered: Major Sales
+  Rendered: Development Pipeline
+  Rendered: Large Availabilities -- First Generation (2 page(s))
+  Rendered: Large Availabilities -- Second Generation (1 page(s))
+  Rendered: Regional Overall -- Industrial
+  Rendered: Regional Overall -- Flex
+  Rendered: Regional Comparison -- Industrial Vacancy Rate
+  Rendered: Regional Comparison -- Industrial Avg Base Rent
+  Rendered: Regional Comparison -- Flex Vacancy Rate
+  Rendered: Regional Comparison -- Flex Avg Base Rent
+  Rendered: East -- Industrial
+  Rendered: East -- Flex
+  Rendered: Hays County -- Industrial
+  Rendered: Hays County -- Flex
+  Rendered: North Central -- Industrial
+  Rendered: North Central -- Flex
+  Rendered: Northeast -- Industrial
+  Rendered: Northeast -- Flex
+  Rendered: South -- Industrial
+  Rendered: South -- Flex
+  Rendered: Southeast -- Industrial
+  Rendered: Southeast -- Flex
+  Rendered: Williamson County -- Industrial
+  Rendered: Williamson County -- Flex
+  Rendered: East_Flex building list (1 page(s))
+  Rendered: East_Industrial building list (1 page(s))
+  Rendered: Hays County_Flex building list (1 page(s))
+  Rendered: Hays County_Industrial building list (1 page(s))
+  Rendered: North Central_Flex building list (3 page(s))
+  Rendered: North Central_Industrial building list (1 page(s))
+  Rendered: Northeast_Flex building list (2 page(s))
+  Rendered: Northeast_Industrial building list (2 page(s))
+  Rendered: South_Flex building list (1 page(s))
+  Rendered: South_Industrial building list (1 page(s))
+  Rendered: Southeast_Flex building list (2 page(s))
+  Rendered: Southeast_Industrial building list (2 page(s))
+  Rendered: Southwest_Flex building list (1 page(s))
+  Rendered: Southwest_Industrial building list (1 page(s))
+  Rendered: Williamson County_Flex building list (1 page(s))
+  Rendered: Williamson County_Industrial building list (2 page(s))
+  Rendered: Table of Contents
+  Rendered: Title page
+
+  Total pages rendered: 53
+  HTML saved: C:\Users\NLin\Documents\Github\aquila-insights\reports\industrial\2025_Q4\AQUILA_Industrial_Report_2025_Q4.html
+  Converting to PDF...
+  PDF saved: C:\Users\NLin\Documents\Github\aquila-insights\reports\industrial\2025_Q4\AQUILA_Industrial_Report_2025_Q4.pdf
+============================================================
+INDUSTRIAL REPORT GENERATION COMPLETE
+============================================================
+
+  Output: C:\Users\NLin\Documents\Github\aquila-insights\reports\industrial\2025_Q4\AQUILA_Industrial_Report_2025_Q4.pdf

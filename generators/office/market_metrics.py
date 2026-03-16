@@ -192,6 +192,17 @@ def build_rental_chart(df, display_name, y_range=None, dtick=None):
         layout['yaxis']['dtick'] = dtick
     layout['barmode'] = 'stack'
     layout['bargap'] = 0.3
+    layout['legend'] = dict(
+        font=dict(family=AQUILA_FONT, size=11, color=NAVY),
+        bgcolor='white',
+        bordercolor='#E8E8E8',
+        borderwidth=1,
+        orientation='h',
+        yanchor='top',
+        y=-0.2,
+        xanchor='center',
+        x=0.5,
+    )
     fig.update_layout(**layout)
     return fig
 
@@ -237,9 +248,7 @@ def main():
         charts_saved = []
 
         # -- Standardized y-axis scales for cross-submarket comparison ---
-        # Vacancy: all 4 submarkets share 0-30% in 5% increments
-        VACANCY_RANGE = [0, 0.30]
-        VACANCY_DTICK = 0.05
+        # Vacancy: auto-scale to data (no fixed range)
         # Rental rate: CBD/NW/SW share $0-$70 in $10 increments; Domain uses auto
         RENT_RANGE_SHARED = [0, 70]
         RENT_DTICK_SHARED = 10
@@ -258,11 +267,10 @@ def main():
 
             is_domain = (slug == domain_slug)
 
-            # Vacancy rate — all share same scale
+            # Vacancy rate — auto-scale to data
             path = os.path.join(OUTPUT_DIR, f'office_vacancy_rate_{slug}.html')
             fig = build_vacancy_chart(
                 df, display_name, line_color,
-                y_range=VACANCY_RANGE, dtick=VACANCY_DTICK,
             )
             write_chart_html(fig, path)
             charts_saved.append(path)

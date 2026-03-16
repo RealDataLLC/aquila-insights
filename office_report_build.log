@@ -1,0 +1,192 @@
+Resorting to unclean kill browser.
+Resorting to unclean kill browser.
+Resorting to unclean kill browser.
+============================================================
+AQUILA Office Quarterly Report - Q4 2025
+============================================================
+============================================================
+QUARTERLY DATA CLEANUP -- Q4 2025
+============================================================
+
+  Loading inventory data from Supabase...
+    Loaded 1000 rows from inventory_office
+    Inventory lookup: 32 building names indexed
+
+  Processing: Major Leases & Sales
+    'Vertical Format' tab already exists -- skipping.
+    No changes needed.
+
+  Processing: Office Availability
+    No changes needed.
+
+  Processing: Building List
+    No changes needed.
+
+  Processing: Citywide Pipeline
+    Pipeline verification: 4 warning(s)
+    [WARN] UC building not in inventory: 'CBD'
+    [WARN] UC building not in inventory: 'NW'
+    [WARN] UC building not in inventory: 'East'
+    [WARN] UC building not in inventory: 'SW'
+    No changes needed.
+
+  Processing: Existing Supply NRA Changes [Q4].csv
+    No changes needed.
+
+  Processing: Status_Changes [Q4].csv
+    No changes needed.
+
+  Processing: Vacancy_Changes [Q4].csv
+    Column 'Property Name': 1 cell(s) updated
+    Column 'Building Park': 18 cell(s) updated
+
+============================================================
+CLEANUP COMPLETE -- Updated 19 cell(s) across 7 file(s)
+============================================================
+============================================================
+LOADING ALL DATA SOURCES
+============================================================
+  Loading Supabase market_tables_office...
+    Loaded 544 rows, 17 groups
+  Loading Major Leases & Sales...
+    Leases: 12 rows, Sales: 12 rows
+  Loading Office Availability...
+    RawData: 181 rows
+    Subleases: 35 rows
+    CBD: 31 rows
+    East: 15 rows
+    Northwest: 52 rows
+    Southwest: 11 rows
+  Loading Citywide Pipeline...
+    Totals: 4 rows
+    Under Construction: 16 rows
+    East: 11 rows
+    SW: 6 rows
+    NW: 19 rows
+    Proposed: 61 rows
+    Sheet1: 60 rows
+  Loading Building Lists...
+    CBD: 55 rows
+    Central: 5 rows
+    Domain: 10 rows
+    East: 26 rows
+    Far Northeast: 9 rows
+    Far Northwest: 19 rows
+    Far South: 4 rows
+    Far Southwest: 39 rows
+    Near Northwest: 39 rows
+    Near South: 2 rows
+    Near Southwest: 12 rows
+    Northeast: 2 rows
+    Outer Eastside: 1 rows
+    Shepherd Mountain: 16 rows
+    South: 2 rows
+    Southeast: 3 rows
+    Upper Eastside: 1 rows
+    West Central: 6 rows
+  Loading Availability Tables...
+    Dir Avail: 8 rows
+    Dir Avail -%: 8 rows
+    Sub Avail: 8 rows
+    Sub Avail - %: 8 rows
+  Loading Quarterly Changes...
+    Existing Supply NRA Changes: 0 rows
+    Status Changes: 4 rows
+    Vacancy Changes: 31 rows
+============================================================
+DATA LOADING COMPLETE
+============================================================
+
+  Generating charts...
+    Generated 3 charts for Citywide_overall
+    Generated 3 charts for CBD_competitive set
+    Generated 3 charts for Northwest_competitive set
+    Generated 3 charts for Southwest_competitive set
+    Generated 3 charts for East_competitive set
+    Generated 3 charts for Domain_micromarket
+    Generated 3 charts for Shepherd Mountain_micromarket
+    Generated 3 charts for Near Northwest_micromarket
+    Generated 3 charts for Far Northwest_micromarket
+    Generated 3 charts for Near Southwest_micromarket
+    Generated 3 charts for Far Southwest_micromarket
+    Generated 3 charts for CBD_overall
+    Generated 3 charts for Northwest_overall
+    Generated 3 charts for Southwest_overall
+    Generated 3 charts for East_overall
+    Generated 10 long-term charts
+
+  Total charts generated: 55
+
+  Generating submarket maps...
+    Parsed 13 polygons from KMZ
+    Map saved: map_citywide.png
+    Map saved: map_cbd.png
+    Map saved: map_northwest.png
+    Map saved: map_southwest.png
+    Map saved: map_east.png
+    Generated 5 maps
+
+============================================================
+ASSEMBLING REPORT
+============================================================
+  Rendered: Quarterly Changes (Internal Use Only)
+  Rendered: Citywide KPI header
+  Rendered: Citywide competitive set performance
+  Rendered: Major Leases
+  Rendered: Major Sales
+  Rendered: Development Pipeline (2 pages)
+  Rendered: CBD KPI header
+  Rendered: CBD competitive set performance
+  Rendered: CBD large availability (1 page(s))
+  Rendered: Northwest KPI header
+  Rendered: Northwest competitive set performance
+  Rendered: Northwest large availability (2 page(s))
+  Rendered: Southwest KPI header
+  Rendered: Southwest competitive set performance
+  Rendered: Southwest large availability (1 page(s))
+  Rendered: East KPI header
+  Rendered: East competitive set performance
+  Rendered: East large availability (1 page(s))
+  Rendered: Domain micromarket performance
+  Rendered: Shepherd Mountain micromarket performance
+  Rendered: Near Northwest micromarket performance
+  Rendered: Far Northwest micromarket performance
+  Rendered: Near Southwest micromarket performance
+  Rendered: Far Southwest micromarket performance
+  Rendered: Long-term performance – Of Submarkets
+  Rendered: Long-term performance – CBD vs Suburban
+  Rendered: CBD overall performance
+  Rendered: Northwest overall performance
+  Rendered: Southwest overall performance
+  Rendered: East overall performance
+  Rendered: 2 sublease report page(s)
+  Rendered: CBD building list (2 page(s))
+  Rendered: Central building list (1 page(s))
+  Rendered: Domain building list (1 page(s))
+  Rendered: East building list (1 page(s))
+  Rendered: Far Northeast building list (1 page(s))
+  Rendered: Far Northwest building list (1 page(s))
+  Rendered: Far South building list (1 page(s))
+  Rendered: Far Southwest building list (2 page(s))
+  Rendered: Near Northwest building list (2 page(s))
+  Rendered: Near South building list (1 page(s))
+  Rendered: Near Southwest building list (1 page(s))
+  Rendered: Northeast building list (1 page(s))
+  Rendered: Outer Eastside building list (1 page(s))
+  Rendered: Shepherd Mountain building list (1 page(s))
+  Rendered: South building list (1 page(s))
+  Rendered: Southeast building list (1 page(s))
+  Rendered: Upper Eastside building list (1 page(s))
+  Rendered: West Central building list (1 page(s))
+  Rendered: Table of Contents
+  Rendered: Title page
+
+  Total pages rendered: 57
+  HTML saved: C:\Users\NLin\Documents\Github\aquila-insights\reports\office\2025_Q4\AQUILA_Office_Report_2025_Q4.html
+  Converting to PDF...
+  PDF saved: C:\Users\NLin\Documents\Github\aquila-insights\reports\office\2025_Q4\AQUILA_Office_Report_2025_Q4.pdf
+============================================================
+REPORT GENERATION COMPLETE
+============================================================
+
+  Output: C:\Users\NLin\Documents\Github\aquila-insights\reports\office\2025_Q4\AQUILA_Office_Report_2025_Q4.pdf
