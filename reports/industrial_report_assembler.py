@@ -391,7 +391,7 @@ def _render_industrial_pipeline(env, config, data):
     )
 
 
-def _render_large_availability(env, config, data, generation, rows_per_page=35):
+def _render_large_availability(env, config, data, generation, rows_per_page=30):
     """
     Render large availability page(s) for a generation (first_gen or second_gen).
     Uses columns: property_name, Property Address, Total Available Space (SF), submarket_name.
@@ -456,6 +456,7 @@ def _render_large_availability(env, config, data, generation, rows_per_page=35):
             total_sf=total_sf if is_last and total_sf > 0 else None,
             blurb=blurb_text if page_idx == 1 else "",
             anchor_id=anchor_map.get(generation) if page_idx == 1 else None,
+            start_index=i,
         ))
     return pages
 
@@ -542,7 +543,7 @@ def _render_regional_comparison(env, config, data, charts, property_type, metric
     )
 
 
-def _render_building_list(env, config, data, sheet_name, rows_per_page=35):
+def _render_building_list(env, config, data, sheet_name, rows_per_page=30):
     """Render building list page(s) for a sheet (reuses office template).
     Returns a list of HTML strings (one per page) with pagination labels.
     """
@@ -594,6 +595,7 @@ def _render_building_list(env, config, data, sheet_name, rows_per_page=35):
             rows=chunk,
             page_label=page_label,
             totals=show_totals,
+            start_index=i,
         ))
     return pages
 
@@ -664,7 +666,7 @@ def _render_toc(env, config, page_map):
 
     regional_entries = []
     for anchor, label in [
-        ('by-the-numbers',          'Regional Overall Performance'),
+        ('by-the-numbers',          'By the Numbers'),
         ('major-leases',            'Major Leases & Sales'),
         ('development-pipeline',    'Development Pipeline'),
         ('large-avail-first-gen',   'Large Availabilities'),
@@ -845,6 +847,7 @@ def render_html(pages, config):
         css_report=css_report_uri,
         css_tables=css_tables_uri,
         pages=pages,
+        footer_text='Aquila Industrial Report',
     )
     return html
 

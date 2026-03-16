@@ -125,7 +125,7 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 [Industrial Requirements Average SF [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_sf_avg.html) - Monthly average SF with record count
 
 ### Market Metrics
-[NNN Rental Rates by Submarket [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_nnn_rent_by_submarket.html)
+[NNN Rental Rates by Submarket [2026-03-16]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_nnn_rent_by_submarket.html)
 
 [Vacancy Rate by Submarket [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/vacancy_rate_industrial.html)
 
@@ -280,6 +280,7 @@ All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.8.0** | 2026-03-16 | Report styling overhaul — chart legends moved below charts (horizontal, centered); table pagination reduced to 30 rows/page with continuous row numbering across pages; building lists now include `#` column; TOC entry labels enlarged to 12pt; TOC section headers enlarged to 12pt; footer shows "Aquila Office/Industrial Report" on bottom-left of all pages (except title/TOC); disclaimer text full-width with 8pt right padding; long-term performance chart color swaps for clarity; industrial NNN rent chart legend moved to bottom |
 | **6.7.0** | 2026-03-13 | Office report submarket maps — `reports/map_builder.py` generates Plotly Scattermapbox maps from KMZ polygon data (13 submarkets); Citywide + 4 submarket maps embedded as base64 PNGs in KPI header pages; Mapbox "light" basemap with brand-colored polygons |
 | **6.6.0** | 2026-03-12 | Aquila Benefit dashboard tab — Skyline API connector (`aquila/connectors/skyline.py`), NER comparison module (`dashboards/aquila_benefit.py`); two-tab layout in office requirements dashboard (Requirements + Aquila Benefit) |
 | **6.5.0** | 2026-03-09 | Dashboard UX — moved Annual Demand chart to top of right column; consolidated `demand-submarket-filter` and `demand-size-filter` into left sidebar; all charts export to PNG via Plotly modebar (`_CHART_CONFIG` with `toImageButtonOptions`) |

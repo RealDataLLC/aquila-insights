@@ -92,7 +92,7 @@ def build_regional_comparison_chart(data_by_submarket, metric_col, submarkets, n
 
     layout = {**LAYOUT_DEFAULTS}
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0,
+        orientation='h', yanchor='top', y=-0.28, xanchor='left', x=0,
         font=dict(size=10),
     )
     fig.update_layout(**layout)

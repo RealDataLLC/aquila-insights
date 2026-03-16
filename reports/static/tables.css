@@ -54,13 +54,13 @@ tbody tr:nth-child(even) {
 }
 
 .perf-table thead th {
-    font-size: 7pt;
-    padding: 4px 6px;
+    font-size: 9pt;
+    padding: 5px 8px;
 }
 
 .perf-table tbody td {
-    font-size: 7.5pt;
-    padding: 3px 6px;
+    font-size: 9pt;
+    padding: 5px 8px;
 }
 
 /* ── Building List Table ───────────────────────────────────── */
