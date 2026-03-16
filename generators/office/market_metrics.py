@@ -156,6 +156,7 @@ def build_vacancy_chart(df, display_name, line_color, y_range=None, dtick=None):
         y_title='Total Vacancy Rate',
     )
     layout['yaxis']['tickformat'] = '.0%'
+    layout['yaxis']['rangemode'] = 'tozero'
     if y_range is not None:
         layout['yaxis']['range'] = y_range
     if dtick is not None:
