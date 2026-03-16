@@ -51,12 +51,13 @@ aquila-insights/
 │       └── skyline.py               #     fetch_all_leases()
 │
 ├── generators/                      # Chart generators (organized by domain)
-│   ├── office/                      #   5 generators -> 29 charts
+│   ├── office/                      #   6 generators -> 32 charts
 │   │   ├── requirements.py          #     7 requirement charts (Google Sheets)
 │   │   ├── demand_by_market.py      #     5 submarket demand charts (Google Sheets)
 │   │   ├── transactions.py          #     2 transaction charts (Excel)
 │   │   ├── market_metrics.py        #     12 vacancy/rent/opex charts (Supabase)
-│   │   └── building_performance.py  #     4 occupancy/rent by size (Supabase)
+│   │   ├── building_performance.py  #     4 occupancy/rent by size (Supabase)
+│   │   └── ti_allowance.py          #     3 TI allowance charts by size/term/type (Skyline)
 │   ├── industrial/                  #   3 generators -> 9 charts
 │   │   ├── vacancy.py               #     1 vacancy chart (Supabase)
 │   │   ├── demand.py                #     5 TITM demand charts (Google Sheets)
@@ -70,9 +71,9 @@ aquila-insights/
 │   └── development/                 #   1 generator -> 6 charts
 │       └── permits.py               #     Development pipeline charts (API)
 │
-├── charts/                          # Published HTML charts (GitHub Pages) - 59 total
+├── charts/                          # Published HTML charts (GitHub Pages) - 62 total
 │   ├── property-management/         # 1 chart
-│   ├── office/                      # 29 charts
+│   ├── office/                      # 32 charts
 │   ├── industrial/                  # 9 charts
 │   ├── economic-indicators/         # 14 charts
 │   └── development/                 # 6 charts
@@ -178,7 +179,7 @@ from aquila.git import commit_and_push_all
 
 ---
 
-## Chart Generators (13 generators, 59 charts)
+## Chart Generators (14 generators, 62 charts)
 
 | Domain | Generator | Charts | Data Source |
 |--------|-----------|--------|-------------|
@@ -187,6 +188,7 @@ from aquila.git import commit_and_push_all
 | office | `generators/office/transactions.py` | 2 | Excel |
 | office | `generators/office/market_metrics.py` | 12 | Supabase |
 | office | `generators/office/building_performance.py` | 4 | Supabase |
+| office | `generators/office/ti_allowance.py` | 3 | Skyline API |
 | industrial | `generators/industrial/vacancy.py` | 1 | Supabase |
 | industrial | `generators/industrial/demand.py` | 5 | Google Sheets |
 | industrial | `generators/industrial/nnn_rent.py` | 1 | Supabase |
@@ -211,6 +213,8 @@ from aquila.git import commit_and_push_all
 **Industrial NNN Rent** (`nnn_rent.py`): Submarkets: Northeast, Southeast, Williamson County. Date range starts 2022 Q1; update `END_QUARTER` constant for new quarters.
 
 **Building Performance** (`building_performance.py`): Supabase tables `quarterly_report_data_office` and `quarterly_report_data_industrial`. Filters: `aquila_competitive_set=True`, `building_status='Existing'`. Auto-creates 5 size bins using quintiles.
+
+**TI Allowance** (`ti_allowance.py`): Skyline API, office properties only. 3 charts: average TI per SF by space size (Small 0-5k / Medium 5k-20k / Large 20k+), by lease term (Short 1-24M / Medium 25-60M / Long 61+M), and by lease type (New Lease / Renewal / Expansion / Sublease). Colors: Brass (top tier), Navy (mid), Concrete (low), Signal red (Sublease).
 
 **Austin Economy** (`austin_economy.py`): `data/Industries and Companies 2025.xlsx`. 6 charts: jobs by industry, new vs expanded, jobs by location, HQ activity, monthly jobs, top companies.
 
@@ -396,8 +400,8 @@ fig.update_yaxes(tickprefix='$', tickformat=',')  # Currency
 
 ```bash
 # Update all charts
-python update_all_charts.py                    # All 13 generators (~59 charts)
-python update_all_charts.py --group office     # Office only (29 charts)
+python update_all_charts.py                    # All 14 generators (~62 charts)
+python update_all_charts.py --group office     # Office only (32 charts)
 python update_all_charts.py --group industrial # Industrial only (9 charts)
 python update_all_charts.py --group economic   # Economic only (14 charts)
 python update_all_charts.py --group property_mgmt

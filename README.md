@@ -67,6 +67,13 @@ Submarket boundary maps (Citywide, CBD, NW, SW, East) are generated from KMZ pol
 
 [Office Weighted Average Rent by Building Size [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/office_rent_by_size.html)
 
+### TI Allowance
+[TI Allowance by Size of Space [2026-03-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_ti_by_size.html) - Average TI per SF by space size (Small/Medium/Large), office only
+
+[TI Allowance by Lease Term [2026-03-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_ti_by_lease_term.html) - Average TI per SF by lease term (Short/Medium/Long), office only
+
+[TI Allowance by Lease Type [2026-03-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_ti_by_lease_type.html) - Average TI per SF by lease type (New/Renewal/Expansion/Sublease), office only
+
 #### Vacancy Rates (Competitive Set)
 [Vacancy Rate — CBD [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_cbd.html)
 
