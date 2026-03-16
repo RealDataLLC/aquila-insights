@@ -20,7 +20,7 @@
         <tbody>
             {% for row in rows %}
             <tr>
-                <td class="row-num">{{ loop.index }}</td>
+                <td class="row-num">{{ start_index + loop.index }}</td>
                 <td>{{ row.property_name }}</td>
                 <td>{{ row.property_address }}</td>
                 <td>{{ "{:,.0f}".format(row.available_sf) if row.available_sf else "---" }}</td>

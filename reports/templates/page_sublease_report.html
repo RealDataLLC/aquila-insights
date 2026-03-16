@@ -19,7 +19,7 @@
         <tbody>
             {% for row in rows %}
             <tr>
-                <td class="row-num">{{ loop.index }}</td>
+                <td class="row-num">{{ start_index + loop.index }}</td>
                 <td>{{ row.property_name }}</td>
                 <td>{{ row.tenants if row.tenants else "—" }}</td>
                 <td>{{ "{:,.0f}".format(row.sublease_sf) if row.sublease_sf else "—" }}</td>

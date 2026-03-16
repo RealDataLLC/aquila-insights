@@ -17,7 +17,7 @@
         <tbody>
             {% for row in rows %}
             <tr>
-                <td class="row-num">{{ loop.index }}</td>
+                <td class="row-num">{{ start_index + loop.index }}</td>
                 <td>{{ row.property_name }}</td>
                 <td>{{ "{:,.0f}".format(row.direct_vacant) if row.direct_vacant else "—" }}</td>
                 <td>{{ "{:,.0f}".format(row.sublet_vacant) if row.sublet_vacant else "—" }}</td>

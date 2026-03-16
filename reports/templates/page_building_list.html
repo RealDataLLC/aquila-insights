@@ -7,6 +7,7 @@
     <table class="building-list-table">
         <thead>
             <tr>
+                <th>#</th>
                 <th>Building Name</th>
                 <th>Net Rentable<br>Area (SF)</th>
                 <th>Direct<br>Vacant SF</th>
@@ -16,16 +17,18 @@
         <tbody>
             {% for row in rows %}
             <tr>
+                <td class="row-num">{{ start_index + loop.index }}</td>
                 <td>{{ row.building_name }}</td>
-                <td>{{ "{:,.0f}".format(row.nra) if row.nra else "—" }}</td>
-                <td>{{ "{:,.0f}".format(row.direct_vacant) if row.direct_vacant else "—" }}</td>
-                <td>{{ "{:,.0f}".format(row.sublease_vacant) if row.sublease_vacant else "—" }}</td>
+                <td>{{ "{:,.0f}".format(row.nra) if row.nra else "---" }}</td>
+                <td>{{ "{:,.0f}".format(row.direct_vacant) if row.direct_vacant else "---" }}</td>
+                <td>{{ "{:,.0f}".format(row.sublease_vacant) if row.sublease_vacant else "---" }}</td>
             </tr>
             {% endfor %}
         </tbody>
         {% if totals %}
         <tfoot>
             <tr class="totals-row">
+                <td></td>
                 <td>TOTAL</td>
                 <td>{{ "{:,.0f}".format(totals.nra) }}</td>
                 <td>{{ "{:,.0f}".format(totals.direct_vacant) }}</td>

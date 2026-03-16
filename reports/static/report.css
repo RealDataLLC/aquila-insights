@@ -32,17 +32,31 @@
         font-size: 8pt;
         color: var(--text-light);
     }
+
+    @bottom-left {
+        content: string(report-title);
+        font-family: "Futura LT Pro", "Futura", Arial, sans-serif;
+        font-size: 7pt;
+        color: var(--text-light);
+        letter-spacing: 0.5px;
+    }
 }
 
 @page :first {
     @bottom-right {
         content: none;
     }
+    @bottom-left {
+        content: none;
+    }
 }
 
-/* TOC page: suppress page number */
+/* TOC page: suppress page number and footer */
 @page toc-page {
     @bottom-right {
+        content: none;
+    }
+    @bottom-left {
         content: none;
     }
 }
@@ -51,12 +65,27 @@
     page: toc-page;
 }
 
-/* Quarterly Changes page: suppress page number and don't increment counter */
+/* Quarterly Changes page: suppress page number, footer, and don't increment counter */
 @page quarterly-changes-page {
     counter-increment: page 0;
     @bottom-right {
         content: none;
     }
+    @bottom-left {
+        content: none;
+    }
+}
+
+/* Hidden element that feeds the left footer via CSS string-set */
+.report-footer-text {
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    font-size: 0;
+    line-height: 0;
+    margin: 0;
+    padding: 0;
+    string-set: report-title content();
 }
 
 .quarterly-changes-page {
@@ -164,7 +193,7 @@ body {
 
 .toc-rule {
     border: none;
-    border-top: 2px solid var(--glass-blue);
+    border-top: 1px solid var(--glass-blue);
     margin-bottom: 20px;
 }
 
@@ -184,7 +213,7 @@ body {
 }
 
 .toc-group-title {
-    font-size: 8pt;
+    font-size: 12pt;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
@@ -213,7 +242,7 @@ body {
 }
 
 .toc-page-num {
-    font-size: 16pt;
+    font-size: 12pt;
     font-weight: 300;
     color: var(--copper);
     line-height: 1;
@@ -223,7 +252,7 @@ body {
 
 .toc-entry-label {
     font-family: "Futura LT Pro Book", "Futura Book", "Futura LT Pro", "Futura", Arial, sans-serif;
-    font-size: 8pt;
+    font-size: 12pt;
     font-weight: 400;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -237,9 +266,8 @@ body {
 
 .toc-footer {
     margin-top: auto;
-    max-width: 85%;
     position: absolute;
-    bottom: 0;
+    bottom: -20px;
     left: 0;
     right: 0;
 }
@@ -261,9 +289,9 @@ body {
     color: var(--text-light);
     line-height: 1.5;
     padding-top: 10px;
+    padding-right: 8pt;
+    margin-right: 8pt;
     border-top: 1px solid var(--border-gray);
-    
-    
 }
 
 /* ── Section Headers ───────────────────────────────────────── */
@@ -513,7 +541,7 @@ body {
 
 .section-divider {
     border: none;
-    border-top: 2px solid var(--glass-blue);
+    border-top: 1px solid var(--glass-blue);
     margin: 8px 0 0 0;
 }
 
@@ -533,7 +561,7 @@ body {
 .sales-table-grid {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 16px 12px;
+    border-spacing: 16px 18px;
     margin-top: 8px;
     margin-bottom: 0;
     margin-left: -20px;          /* offset half the gap so columns center on page */
@@ -581,7 +609,7 @@ body {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 0;
-    font-size: 8pt;
+    font-size: 9pt;
 }
 
 .sale-table tbody td {

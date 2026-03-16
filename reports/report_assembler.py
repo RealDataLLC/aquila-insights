@@ -78,7 +78,7 @@ def _render_kpi_header(env, config, data, submarket, anchor_id=None, arrow_uris=
 
 
 def _render_performance_page(env, config, data, charts, submarket, table_type,
-                              display_type=None, anchor_id=None):
+                              display_type=None, anchor_id=None, quarter_label=None):
     """Render a performance page (table + 3 charts).
     display_type overrides the section label shown on the page.
     """
@@ -130,6 +130,7 @@ def _render_performance_page(env, config, data, charts, submarket, table_type,
         charts=chart_uris,
         note=None,
         anchor_id=anchor_id,
+        quarter_label=quarter_label,
     )
 
 
@@ -187,7 +188,7 @@ def _render_major_sales(env, config, data):
     )
 
 
-def _render_large_availability(env, config, data, submarket, rows_per_page=35):
+def _render_large_availability(env, config, data, submarket, rows_per_page=30):
     """Render large availability page(s) for a submarket.
     Returns a list of HTML strings (one per page) with pagination labels.
     """
@@ -226,11 +227,12 @@ def _render_large_availability(env, config, data, submarket, rows_per_page=35):
             submarket_name=submarket,
             rows=chunk,
             page_label=page_label,
+            start_index=i,
         ))
     return pages
 
 
-def _render_building_list(env, config, data, submarket, rows_per_page=35):
+def _render_building_list(env, config, data, submarket, rows_per_page=30):
     """Render building list page(s) for a submarket/micromarket.
     Returns a list of HTML strings (one per page) with pagination labels.
     """
@@ -277,6 +279,7 @@ def _render_building_list(env, config, data, submarket, rows_per_page=35):
             rows=chunk,
             page_label=page_label,
             totals=show_totals,
+            start_index=i,
         ))
     return pages
 
@@ -321,7 +324,7 @@ def _render_toc(env, config, page_map, city_photo_path=None):
     # Appendix entries
     appendix_entries = []
     for anchor, label in [
-        ('micromarket-performance',  'Competitive Set Micromarket Performance & Building Lists'),
+        ('micromarket-performance',  'Micromarket Performance and Building Lists'),
         ('long-term-performance',    'Long-Term Performance'),
         ('overall-performance',      'Overall Submarket Performance'),
         ('sublease-report',          'Sublease Report & Direct/Sublease Availability'),
@@ -594,6 +597,7 @@ def _render_sublease_report(env, config, data, rows_per_page=30):
             subtitle=subtitle,
             rows=chunk,
             anchor_id=anchor,
+            start_index=i,
         ))
     return pages
 
@@ -671,7 +675,8 @@ def build_page_sequence(env, config, data, charts, maps=None):
 
     perf = _render_performance_page(env, config, data, charts, 'Citywide', 'overall',
                                      display_type='Competitive Set',
-                                     anchor_id='citywide-performance')
+                                     anchor_id='citywide-performance',
+                                     quarter_label=config.REPORT_LABEL)
     _add(perf, anchor='citywide-performance')
     if perf:
         print("  Rendered: Citywide competitive set performance")
@@ -813,6 +818,7 @@ def render_html(pages, config):
         css_report=css_report_uri,
         css_tables=css_tables_uri,
         pages=pages,
+        footer_text='Aquila Office Report',
     )
     return html
 

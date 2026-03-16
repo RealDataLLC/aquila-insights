@@ -25,11 +25,11 @@ LAYOUT_DEFAULTS = dict(
     font=dict(family=AQUILA_FONT, color=NAVY, size=15),
     plot_bgcolor='white',
     paper_bgcolor='white',
-    margin=dict(l=50, r=50, t=10, b=40),
+    margin=dict(l=50, r=50, t=10, b=90),
     legend=dict(
         orientation='h',
-        yanchor='bottom',
-        y=1.02,
+        yanchor='top',
+        y=-0.28,
         xanchor='left',
         x=0,
         font=dict(size=12),
@@ -225,9 +225,9 @@ def build_long_term_vacancy_chart(df, submarket_name):
     )
 
     layout = {**LAYOUT_DEFAULTS}
-    layout['margin'] = dict(l=40, r=40, t=10, b=50)
+    layout['margin'] = dict(l=40, r=40, t=10, b=70)
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=10)
+        orientation='h', yanchor='top', y=-0.28, xanchor='left', x=0, font=dict(size=10)
     )
     fig.update_layout(**layout, barmode='stack')
     _apply_axes(fig, y2_tickformat='.0%')
@@ -246,12 +246,12 @@ def build_long_term_asking_rates(df):
     ))
     fig.add_trace(go.Scatter(
         x=df['quarter'], y=df['average_class_b_rent'],
-        name='Class B', mode='lines', line=dict(color=BRASS, width=2),
+        name='Class B', mode='lines', line=dict(color=COPPER, width=2),
     ))
     layout = {**LAYOUT_DEFAULTS}
-    layout['margin'] = dict(l=40, r=20, t=10, b=50)
+    layout['margin'] = dict(l=40, r=20, t=10, b=70)
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=10)
+        orientation='h', yanchor='top', y=-0.28, xanchor='left', x=0, font=dict(size=10)
     )
     fig.update_layout(**layout)
     fig.update_xaxes(tickfont=dict(size=9), dtick=4, tickangle=-45)
@@ -270,7 +270,7 @@ def build_long_term_absorption(df_cw, df_cbd=None, df_nw=None, df_sw=None):
     submarket_traces = [
         ('CBD',       df_cbd, NAVY),
         ('Northwest', df_nw,  GLASS_BLUE),
-        ('Southwest', df_sw,  BRASS),
+        ('Southwest', df_sw,  COPPER),
     ]
     has_submarket_data = any(df is not None and not df.empty for _, df, _ in submarket_traces)
 
@@ -295,13 +295,13 @@ def build_long_term_absorption(df_cw, df_cbd=None, df_nw=None, df_sw=None):
         fig.add_trace(go.Scatter(
             x=df_cw['quarter'], y=df_cw['occupancy_rate'],
             name='Citywide Occupancy Rate', mode='lines',
-            line=dict(color=COPPER, width=2),
+            line=dict(color=BRASS, width=2),
         ), secondary_y=True)
 
     layout = {**LAYOUT_DEFAULTS}
-    layout['margin'] = dict(l=40, r=40, t=10, b=50)
+    layout['margin'] = dict(l=40, r=40, t=10, b=70)
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=10)
+        orientation='h', yanchor='top', y=-0.28, xanchor='left', x=0, font=dict(size=10)
     )
     fig.update_layout(**layout, barmode='relative')
     _apply_axes(fig, y2_tickformat='.0%')
@@ -325,12 +325,12 @@ def build_cbd_suburban_asking_chart(df_cbd, df_suburban):
     fig.add_trace(go.Scatter(
         x=df_suburban['quarter'], y=df_suburban['average_class_a_rent'],
         name='Suburban', mode='lines',
-        line=dict(color=BRASS, width=2),
+        line=dict(color=COPPER, width=2),
     ))
     layout = {**LAYOUT_DEFAULTS}
-    layout['margin'] = dict(l=40, r=20, t=10, b=50)
+    layout['margin'] = dict(l=40, r=20, t=10, b=70)
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=10)
+        orientation='h', yanchor='top', y=-0.28, xanchor='left', x=0, font=dict(size=10)
     )
     fig.update_layout(**layout)
     fig.update_xaxes(tickfont=dict(size=9), dtick=4, tickangle=-45)
@@ -349,11 +349,11 @@ def build_cbd_suburban_vacancy_chart(df_cbd, df_suburban):
 
     fig.add_trace(go.Bar(
         x=df_suburban['quarter'], y=df_suburban['vacant_available_sf_sublet'],
-        name='Suburban Sublease', marker_color=BRASS,
+        name='Suburban Sublease', marker_color=COPPER,
     ), secondary_y=False)
     fig.add_trace(go.Bar(
         x=df_suburban['quarter'], y=df_suburban['vacant_available_sf_direct'],
-        name='Suburban Direct', marker_color=BRASS,
+        name='Suburban Direct', marker_color=COPPER,
         marker_pattern_shape='/',
     ), secondary_y=False)
     fig.add_trace(go.Bar(
@@ -384,9 +384,9 @@ def build_cbd_suburban_vacancy_chart(df_cbd, df_suburban):
     ), secondary_y=True)
 
     layout = {**LAYOUT_DEFAULTS}
-    layout['margin'] = dict(l=40, r=40, t=10, b=50)
+    layout['margin'] = dict(l=40, r=40, t=10, b=70)
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=9)
+        orientation='h', yanchor='top', y=-0.28, xanchor='left', x=0, font=dict(size=9)
     )
     fig.update_layout(**layout, barmode='stack')
     _apply_axes(fig, y2_tickformat='.0%')
@@ -423,19 +423,19 @@ def build_cbd_suburban_direct_sublease_chart(df_cbd, df_suburban):
     fig.add_trace(go.Bar(
         x=quarters,
         y=[sub.loc[q, 'vacant_available_sf_sublet'] if q in sub.index else 0 for q in quarters],
-        name='Suburban Sublease', marker_color=BRASS,
+        name='Suburban Sublease', marker_color=COPPER,
     ))
     fig.add_trace(go.Bar(
         x=quarters,
         y=[sub.loc[q, 'vacant_available_sf_direct'] if q in sub.index else 0 for q in quarters],
-        name='Suburban Direct', marker_color=BRASS,
+        name='Suburban Direct', marker_color=COPPER,
         marker_pattern_shape='/',
     ))
 
     layout = {**LAYOUT_DEFAULTS}
-    layout['margin'] = dict(l=40, r=20, t=10, b=50)
+    layout['margin'] = dict(l=40, r=20, t=10, b=70)
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=9)
+        orientation='h', yanchor='top', y=-0.28, xanchor='left', x=0, font=dict(size=9)
     )
     fig.update_layout(**layout, barmode='stack')
     fig.update_xaxes(tickfont=dict(size=9), dtick=4, tickangle=-45)
@@ -452,7 +452,7 @@ def build_cbd_suburban_under_construction_chart(df_cbd, df_suburban, df_east=Non
 
     traces = [
         ('CBD', df_cbd, NAVY),
-        ('Suburban', df_suburban, BRASS),
+        ('Suburban', df_suburban, COPPER),
     ]
     if df_east is not None and not df_east.empty:
         traces.append(('East', df_east, GLASS_BLUE))
@@ -465,9 +465,9 @@ def build_cbd_suburban_under_construction_chart(df_cbd, df_suburban, df_east=Non
         ))
 
     layout = {**LAYOUT_DEFAULTS}
-    layout['margin'] = dict(l=40, r=20, t=10, b=50)
+    layout['margin'] = dict(l=40, r=20, t=10, b=70)
     layout['legend'] = dict(
-        orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0, font=dict(size=10)
+        orientation='h', yanchor='top', y=-0.28, xanchor='left', x=0, font=dict(size=10)
     )
     fig.update_layout(**layout, barmode='stack')
     fig.update_xaxes(tickfont=dict(size=9), dtick=4, tickangle=-45)
