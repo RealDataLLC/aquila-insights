@@ -960,20 +960,15 @@ def handle_login(n_clicks, email):
         # Build redirect URL from forwarded headers (Vercel proxy) so
         # preview/staging deployments get magic links pointing back to themselves
         proto = flask_request.headers.get('X-Forwarded-Proto', 'https')
-        host = flask_request.headers.get('X-Forwarded-Host', flask_request.host)
-        base_url = f"{proto}://{host}"
-        redirect_url = f"{base_url}/auth/callback"
-        print(f"[AUTH DEBUG] proto={proto} host={host} redirect_url={redirect_url}")
-        print(f"[AUTH DEBUG] all forwarded headers: "
-              f"X-Forwarded-Host={flask_request.headers.get('X-Forwarded-Host')} "
-              f"X-Forwarded-Proto={flask_request.headers.get('X-Forwarded-Proto')} "
-              f"Host={flask_request.headers.get('Host')} "
-              f"X-Vercel-Deployment-Url={flask_request.headers.get('X-Vercel-Deployment-Url')}")
+        host = (flask_request.headers.get('X-Forwarded-Host')
+                or flask_request.headers.get('Host')
+                or flask_request.host)
+        redirect_url = f"{proto}://{host}/auth/callback"
         _supabase_auth.auth.sign_in_with_otp({
             "email": email.strip(),
             "options": {"email_redirect_to": redirect_url}
         })
-        return "", f"Magic link sent! (debug: redirecting to {redirect_url})"
+        return "", "Magic link sent! Check your inbox."
     except Exception as e:
         return f"Error sending link: {str(e)}", ""
 
