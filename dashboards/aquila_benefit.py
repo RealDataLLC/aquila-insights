@@ -121,7 +121,8 @@ def load_skyline_leases():
     df = pd.DataFrame(rows)
     df["property_id"] = df["property_id"].astype(str)
     df["execution_date"] = pd.to_datetime(df["execution_date"], errors="coerce")
-    df["year"] = df["execution_date"].dt.year.astype("Int64")
+    # Use regular int (0 for NaT rows) so Plotly can JSON-serialize it in customdata
+    df["year"] = df["execution_date"].dt.year.fillna(0).astype(int)
 
     # Identify AQUILA deals
     df["is_aquila"] = (
