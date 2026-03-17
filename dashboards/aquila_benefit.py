@@ -119,6 +119,7 @@ def load_skyline_leases():
         })
 
     df = pd.DataFrame(rows)
+    df["property_id"] = df["property_id"].astype(str)
     df["execution_date"] = pd.to_datetime(df["execution_date"], errors="coerce")
     df["year"] = df["execution_date"].dt.year.astype("Int64")
 
@@ -183,7 +184,7 @@ def build_ner_comparison(df, lease_types=None, years=None):
 def get_peer_comps(df, property_id, year, lease_types=None):
     """Return peer (non-AQUILA) deals for a given building and year."""
     mask = (
-        (df["property_id"] == property_id)
+        (df["property_id"].astype(str) == str(property_id))
         & (df["year"] == year)
         & (~df["is_aquila"])
         & (df["ner"].notna())
@@ -730,6 +731,18 @@ def register_callbacks(app, df_leases):
     def _style_year_btn(selected_year, btn_id):
         return btn_id["index"] != (selected_year or "all")
 
+    # Default placeholder for building detail panel
+    _default_building_detail = html.Div([
+        html.Div(
+            "\u2190",
+            style={"fontSize": "32px", "color": "#CCC", "marginBottom": "8px"},
+        ),
+        html.P(
+            "Select a building to view deal terms",
+            style={"color": "#999", "fontFamily": AQUILA_FONT, "fontSize": "14px"},
+        ),
+    ], style={"textAlign": "center", "paddingTop": "120px"})
+
     # ---- Main update: KPIs + charts + building list ----
     @app.callback(
         [
@@ -737,6 +750,8 @@ def register_callbacks(app, df_leases):
             Output("benefit-ner-chart", "figure"),
             Output("benefit-savings-chart", "figure"),
             Output("benefit-building-list", "children"),
+            Output("benefit-building-detail", "children", allow_duplicate=True),
+            Output("benefit-detail-panel", "children", allow_duplicate=True),
         ],
         [
             Input("benefit-selected-year", "data"),
@@ -792,7 +807,8 @@ def register_callbacks(app, df_leases):
             # Building list for Deal Browser
             building_list = _build_building_list(comp_df)
 
-            return kpi_cards, ner_fig, savings_fig, building_list
+            return (kpi_cards, ner_fig, savings_fig, building_list,
+                    _default_building_detail, [])
         except Exception as exc:
             import traceback
             traceback.print_exc()
@@ -803,6 +819,8 @@ def register_callbacks(app, df_leases):
                 empty_fig,
                 empty_fig,
                 html.P(f"Error loading data: {exc}", style={"color": "red"}),
+                _default_building_detail,
+                [],
             )
 
     # ---- Savings chart click -> detail panel ----
@@ -851,6 +869,11 @@ def register_callbacks(app, df_leases):
             # Use callback_context for broader Dash version compatibility
             ctx = callback_context
             if not ctx.triggered:
+                return no_update
+
+            # Guard: triggered value must be > 0 (not a re-render with n_clicks=0)
+            triggered_value = ctx.triggered[0].get("value", 0)
+            if not triggered_value or triggered_value == 0:
                 return no_update
 
             # Find which button was clicked
