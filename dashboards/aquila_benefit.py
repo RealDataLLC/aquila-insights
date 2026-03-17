@@ -4,7 +4,6 @@ Aquila Benefit tab -- NER analysis comparing AQUILA-brokered deals vs peers.
 Provides layout builder and callback registration for the main dashboard.
 """
 
-import dash
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -705,10 +704,22 @@ def register_callbacks(app, df_leases):
         prevent_initial_call=True,
     )
     def _on_year_click(n_clicks_list):
-        triggered = dash.ctx.triggered_id
-        if triggered is None:
+        if not n_clicks_list or all(
+            n is None or n == 0 for n in n_clicks_list
+        ):
             return no_update
-        return triggered["index"]
+
+        ctx = callback_context
+        if not ctx.triggered:
+            return no_update
+
+        prop_id_str = ctx.triggered[0]["prop_id"]
+        import json as _json
+        try:
+            btn_id = _json.loads(prop_id_str.rsplit(".", 1)[0])
+            return btn_id["index"]
+        except (ValueError, KeyError, TypeError):
+            return no_update
 
     # ---- Year pill styling ----
     @app.callback(
@@ -808,51 +819,65 @@ def register_callbacks(app, df_leases):
         prevent_initial_call=True,
     )
     def _on_building_click(n_clicks_list, selected_year):
-        triggered = dash.ctx.triggered_id
-        if triggered is None:
-            return no_update
-
-        # Check if any button was actually clicked (not just initial render)
-        if all(n is None or n == 0 for n in n_clicks_list):
-            return no_update
-
-        card_key = triggered["index"]  # format: "property_id|year"
-        parts = card_key.split("|", 1)
-        if len(parts) != 2:
-            return no_update
-
-        prop_id, yr_str = parts
         try:
-            yr = int(yr_str)
-        except (ValueError, TypeError):
-            return no_update
+            # Guard: no clicks yet (initial render / year change re-render)
+            if not n_clicks_list or all(
+                n is None or n == 0 for n in n_clicks_list
+            ):
+                return no_update
 
-        # Get AQUILA deals for this building+year
-        years_filter = None
-        if selected_year and selected_year != "all":
+            # Use callback_context for broader Dash version compatibility
+            ctx = callback_context
+            if not ctx.triggered:
+                return no_update
+
+            # Find which button was clicked
+            prop_id_str = ctx.triggered[0]["prop_id"]  # e.g. '{"index":"pid|2023","type":"benefit-building-card"}.n_clicks'
+            import json as _json
             try:
-                years_filter = [int(selected_year)]
+                btn_id = _json.loads(prop_id_str.rsplit(".", 1)[0])
+                card_key = btn_id["index"]
+            except (ValueError, KeyError, TypeError):
+                return no_update
+
+            parts = card_key.split("|", 1)
+            if len(parts) != 2:
+                return no_update
+
+            prop_id, yr_str = parts
+            try:
+                yr = int(yr_str)
             except (ValueError, TypeError):
-                pass
+                return no_update
 
-        comp_df = build_ner_comparison(
-            df_leases, lease_types=["New"], years=years_filter
-        )
-        if comp_df.empty:
-            return html.P("No comparison data.", style={"padding": "20px"})
+            # Get AQUILA deals for this building+year
+            years_filter = None
+            if selected_year and selected_year != "all":
+                try:
+                    years_filter = [int(selected_year)]
+                except (ValueError, TypeError):
+                    pass
 
-        building_deals = comp_df[
-            (comp_df["property_id"] == prop_id) & (comp_df["year"] == yr)
-        ]
-        if building_deals.empty:
-            return html.P("No deals found for this building.",
-                          style={"padding": "20px"})
+            comp_df = build_ner_comparison(
+                df_leases, lease_types=["New"], years=years_filter
+            )
+            if comp_df.empty:
+                return html.P("No comparison data.", style={"padding": "20px"})
 
-        # Build detail cards for each AQUILA deal + peers
-        panels = []
-        for _, deal_row in building_deals.iterrows():
-            deal = deal_row.to_dict()
-            peers = get_peer_comps(df_leases, prop_id, yr, lease_types=["New"])
-            panels.append(_build_detail_panel(deal, peers))
+            building_deals = comp_df[
+                (comp_df["property_id"] == prop_id) & (comp_df["year"] == yr)
+            ]
+            if building_deals.empty:
+                return html.P("No deals found for this building.",
+                              style={"padding": "20px"})
 
-        return html.Div(panels)
+            # Build detail cards for each AQUILA deal + peers
+            panels = []
+            for _, deal_row in building_deals.iterrows():
+                deal = deal_row.to_dict()
+                peers = get_peer_comps(df_leases, prop_id, yr, lease_types=["New"])
+                panels.append(_build_detail_panel(deal, peers))
+
+            return html.Div(panels)
+        except Exception:
+            return no_update
