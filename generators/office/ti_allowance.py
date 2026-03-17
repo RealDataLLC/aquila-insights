@@ -71,11 +71,16 @@ def _load_data() -> pd.DataFrame:
 
 
 def _avg_ti_by_year(df: pd.DataFrame, group_col: str) -> pd.DataFrame:
-    """Return pivot of mean TI per year × group_col (columns = groups)."""
+    """Return pivot of SF-weighted average TI per year × group_col (columns = groups)."""
+    df2 = df[df["size_sf"].notna() & df["size_sf"].gt(0)].copy()
+
+    def _wavg(g):
+        return (g["ti_allowance"] * g["size_sf"]).sum() / g["size_sf"].sum()
+
     agg = (
-        df.groupby(["year", group_col])["ti_allowance"]
-        .mean()
-        .reset_index()
+        df2.groupby(["year", group_col])
+        .apply(_wavg, include_groups=False)
+        .reset_index(name="ti_allowance")
     )
     pivot = agg.pivot(index="year", columns=group_col, values="ti_allowance")
     return pivot
