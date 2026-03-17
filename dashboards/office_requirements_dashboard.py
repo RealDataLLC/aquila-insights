@@ -32,7 +32,7 @@ from dash import dcc, html, Input, Output, State, dash_table, callback_context
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dotenv import load_dotenv
-from flask import session
+from flask import session, request as flask_request
 
 try:
     from supabase import create_client as _supabase_create_client
@@ -957,9 +957,11 @@ def handle_login(n_clicks, email):
     if not _supabase_auth:
         return "Auth service unavailable. Check SUPABASE_URL and SUPABASE_ANON_KEY.", ""
     try:
+        # Use the request's own host so preview/staging deployments work too
+        base_url = flask_request.host_url.rstrip('/')
         _supabase_auth.auth.sign_in_with_otp({
             "email": email.strip(),
-            "options": {"email_redirect_to": f"{_VERCEL_URL}/auth/callback"}
+            "options": {"email_redirect_to": f"{base_url}/auth/callback"}
         })
         return "", "Magic link sent! Check your inbox."
     except Exception as e:
