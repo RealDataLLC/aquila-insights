@@ -957,8 +957,11 @@ def handle_login(n_clicks, email):
     if not _supabase_auth:
         return "Auth service unavailable. Check SUPABASE_URL and SUPABASE_ANON_KEY.", ""
     try:
-        # Use the request's own host so preview/staging deployments work too
-        base_url = flask_request.host_url.rstrip('/')
+        # Build redirect URL from forwarded headers (Vercel proxy) so
+        # preview/staging deployments get magic links pointing back to themselves
+        proto = flask_request.headers.get('X-Forwarded-Proto', 'https')
+        host = flask_request.headers.get('X-Forwarded-Host', flask_request.host)
+        base_url = f"{proto}://{host}"
         _supabase_auth.auth.sign_in_with_otp({
             "email": email.strip(),
             "options": {"email_redirect_to": f"{base_url}/auth/callback"}
