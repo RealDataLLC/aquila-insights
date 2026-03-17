@@ -962,11 +962,18 @@ def handle_login(n_clicks, email):
         proto = flask_request.headers.get('X-Forwarded-Proto', 'https')
         host = flask_request.headers.get('X-Forwarded-Host', flask_request.host)
         base_url = f"{proto}://{host}"
+        redirect_url = f"{base_url}/auth/callback"
+        print(f"[AUTH DEBUG] proto={proto} host={host} redirect_url={redirect_url}")
+        print(f"[AUTH DEBUG] all forwarded headers: "
+              f"X-Forwarded-Host={flask_request.headers.get('X-Forwarded-Host')} "
+              f"X-Forwarded-Proto={flask_request.headers.get('X-Forwarded-Proto')} "
+              f"Host={flask_request.headers.get('Host')} "
+              f"X-Vercel-Deployment-Url={flask_request.headers.get('X-Vercel-Deployment-Url')}")
         _supabase_auth.auth.sign_in_with_otp({
             "email": email.strip(),
-            "options": {"email_redirect_to": f"{base_url}/auth/callback"}
+            "options": {"email_redirect_to": redirect_url}
         })
-        return "", "Magic link sent! Check your inbox."
+        return "", f"Magic link sent! (debug: redirecting to {redirect_url})"
     except Exception as e:
         return f"Error sending link: {str(e)}", ""
 
