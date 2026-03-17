@@ -732,18 +732,6 @@ def register_callbacks(app, df_leases):
     def _style_year_btn(selected_year, btn_id):
         return btn_id["index"] != (selected_year or "all")
 
-    # Default placeholder for building detail panel
-    _default_building_detail = html.Div([
-        html.Div(
-            "\u2190",
-            style={"fontSize": "32px", "color": "#CCC", "marginBottom": "8px"},
-        ),
-        html.P(
-            "Select a building to view deal terms",
-            style={"color": "#999", "fontFamily": AQUILA_FONT, "fontSize": "14px"},
-        ),
-    ], style={"textAlign": "center", "paddingTop": "120px"})
-
     # ---- Main update: KPIs + charts + building list ----
     @app.callback(
         [
@@ -751,8 +739,6 @@ def register_callbacks(app, df_leases):
             Output("benefit-ner-chart", "figure"),
             Output("benefit-savings-chart", "figure"),
             Output("benefit-building-list", "children"),
-            Output("benefit-building-detail", "children", allow_duplicate=True),
-            Output("benefit-detail-panel", "children", allow_duplicate=True),
         ],
         [
             Input("benefit-selected-year", "data"),
@@ -808,8 +794,7 @@ def register_callbacks(app, df_leases):
             # Building list for Deal Browser
             building_list = _build_building_list(comp_df)
 
-            return (kpi_cards, ner_fig, savings_fig, building_list,
-                    _default_building_detail, [])
+            return kpi_cards, ner_fig, savings_fig, building_list
         except Exception as exc:
             import traceback
             traceback.print_exc()
@@ -820,8 +805,6 @@ def register_callbacks(app, df_leases):
                 empty_fig,
                 empty_fig,
                 html.P(f"Error loading data: {exc}", style={"color": "red"}),
-                _default_building_detail,
-                [],
             )
 
     # ---- Savings chart click -> detail panel ----
