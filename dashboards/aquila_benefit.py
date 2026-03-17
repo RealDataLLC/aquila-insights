@@ -743,48 +743,67 @@ def register_callbacks(app, df_leases):
         ],
     )
     def _update_benefit(selected_year):
-        years = None
-        if selected_year and selected_year != "all":
-            try:
-                years = [int(selected_year)]
-            except (ValueError, TypeError):
-                years = None
+        try:
+            years = None
+            if selected_year and selected_year != "all":
+                try:
+                    years = [int(selected_year)]
+                except (ValueError, TypeError):
+                    years = None
 
-        # Always filter to New deals for comparison
-        lease_types = ["New"]
+            # Always filter to New deals for comparison
+            lease_types = ["New"]
 
-        comp_df = build_ner_comparison(df_leases, lease_types=lease_types, years=years)
-        kpis = compute_kpis(comp_df)
+            comp_df = build_ner_comparison(df_leases, lease_types=lease_types, years=years)
+            kpis = compute_kpis(comp_df)
 
-        # KPI cards (styled for navy header)
-        kpi_items = [
-            (f"{kpis['deals']:,}", "DEALS"),
-            (f"{kpis['win_rate']:.0f}%", "WIN RATE"),
-            (f"+${kpis['median_savings']:,.2f}", "MEDIAN SAVINGS"),
-            (f"{kpis['total_sf']:,.0f}", "TOTAL SF"),
-        ]
-        kpi_cards = []
-        for value, label in kpi_items:
-            kpi_cards.append(html.Div([
-                html.Div(value, style={
-                    "fontSize": "22px", "fontWeight": "bold",
-                    "color": AQUILA_COLORS[5], "fontFamily": AQUILA_FONT,
-                    "lineHeight": "1.1",
-                }),
-                html.Div(label, style={
-                    "fontSize": "10px", "color": AQUILA_COLORS[1],
-                    "fontFamily": AQUILA_FONT, "letterSpacing": "1px",
-                }),
-            ], style={"textAlign": "center"}))
+            # KPI cards (styled for navy header)
+            deals_str = f"{kpis['deals']:,}"
+            win_str = f"{kpis['win_rate']:.0f}%" if pd.notna(kpis['win_rate']) else "0%"
+            sav_val = kpis['median_savings']
+            sav_str = f"+${sav_val:,.2f}" if pd.notna(sav_val) else "+$0.00"
+            sf_val = kpis['total_sf']
+            sf_str = f"{sf_val:,.0f}" if pd.notna(sf_val) else "0"
 
-        # Charts
-        ner_fig = _build_avg_ner_chart(comp_df)
-        savings_fig = _build_savings_chart(comp_df)
+            kpi_items = [
+                (deals_str, "DEALS"),
+                (win_str, "WIN RATE"),
+                (sav_str, "MEDIAN SAVINGS"),
+                (sf_str, "TOTAL SF"),
+            ]
+            kpi_cards = []
+            for value, label in kpi_items:
+                kpi_cards.append(html.Div([
+                    html.Div(value, style={
+                        "fontSize": "22px", "fontWeight": "bold",
+                        "color": AQUILA_COLORS[5], "fontFamily": AQUILA_FONT,
+                        "lineHeight": "1.1",
+                    }),
+                    html.Div(label, style={
+                        "fontSize": "10px", "color": AQUILA_COLORS[1],
+                        "fontFamily": AQUILA_FONT, "letterSpacing": "1px",
+                    }),
+                ], style={"textAlign": "center"}))
 
-        # Building list for Deal Browser
-        building_list = _build_building_list(comp_df)
+            # Charts
+            ner_fig = _build_avg_ner_chart(comp_df)
+            savings_fig = _build_savings_chart(comp_df)
 
-        return kpi_cards, ner_fig, savings_fig, building_list
+            # Building list for Deal Browser
+            building_list = _build_building_list(comp_df)
+
+            return kpi_cards, ner_fig, savings_fig, building_list
+        except Exception as exc:
+            import traceback
+            traceback.print_exc()
+            empty_fig = go.Figure()
+            empty_fig.update_layout(font=dict(family=AQUILA_FONT))
+            return (
+                [html.Div(f"Error: {exc}", style={"color": "red"})],
+                empty_fig,
+                empty_fig,
+                html.P(f"Error loading data: {exc}", style={"color": "red"}),
+            )
 
     # ---- Savings chart click -> detail panel ----
     @app.callback(
@@ -793,23 +812,26 @@ def register_callbacks(app, df_leases):
         prevent_initial_call=True,
     )
     def _on_savings_click(click_data):
-        if not click_data or not click_data.get("points"):
+        try:
+            if not click_data or not click_data.get("points"):
+                return no_update
+
+            point = click_data["points"][0]
+            custom = point.get("customdata")
+            if custom is None or len(custom) < 3:
+                return no_update
+
+            prop_id, year, lease_id = custom[0], custom[1], custom[2]
+
+            mask = df_leases["lease_id"] == lease_id
+            if not mask.any():
+                return html.P("Deal not found.")
+
+            deal = df_leases[mask].iloc[0].to_dict()
+            peers = get_peer_comps(df_leases, prop_id, year, lease_types=["New"])
+            return _build_detail_panel(deal, peers)
+        except Exception:
             return no_update
-
-        point = click_data["points"][0]
-        custom = point.get("customdata")
-        if custom is None or len(custom) < 3:
-            return no_update
-
-        prop_id, year, lease_id = custom[0], custom[1], custom[2]
-
-        mask = df_leases["lease_id"] == lease_id
-        if not mask.any():
-            return html.P("Deal not found.")
-
-        deal = df_leases[mask].iloc[0].to_dict()
-        peers = get_peer_comps(df_leases, prop_id, year, lease_types=["New"])
-        return _build_detail_panel(deal, peers)
 
     # ---- Building card click -> detail panel in Deal Browser ----
     @app.callback(
