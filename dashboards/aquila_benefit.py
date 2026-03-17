@@ -4,6 +4,7 @@ Aquila Benefit tab -- NER analysis comparing AQUILA-brokered deals vs peers.
 Provides layout builder and callback registration for the main dashboard.
 """
 
+import dash
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -205,25 +206,6 @@ def compute_kpis(comp_df):
     }
 
 
-def compute_broker_leaderboard(comp_df):
-    """Aggregate comparison results by AQUILA tenant broker."""
-    if comp_df.empty:
-        return pd.DataFrame()
-
-    grouped = comp_df.groupby("tenant_broker", dropna=False).agg(
-        deals=("lease_id", "count"),
-        wins=("win", "sum"),
-        total_sf=("size_sf", "sum"),
-        median_savings=("savings", "median"),
-        avg_savings=("savings", "mean"),
-    ).reset_index()
-    grouped["win_rate"] = (grouped["wins"] / grouped["deals"] * 100).round(1)
-    grouped = grouped.sort_values("deals", ascending=False)
-    grouped.columns = ["Broker", "Deals", "Wins", "Total SF",
-                       "Median Savings", "Avg Savings", "Win Rate"]
-    return grouped
-
-
 # ---------------------------------------------------------------------------
 # Chart builders
 # ---------------------------------------------------------------------------
@@ -365,6 +347,195 @@ def _build_detail_panel(aquila_deal, peer_comps):
 
 
 # ---------------------------------------------------------------------------
+# Broker list builder (static, full dataset)
+# ---------------------------------------------------------------------------
+
+def _build_broker_list_content(df_leases):
+    """Build horizontal bar broker list from full dataset (all years, all types)."""
+    if df_leases.empty:
+        return html.P("No data available.", style={"padding": "20px"})
+
+    aquila_deals = df_leases[df_leases["is_aquila"]]
+    broker_counts = (
+        aquila_deals
+        .groupby("tenant_broker", dropna=False)
+        .size()
+        .reset_index(name="deals")
+    )
+    broker_counts = broker_counts.dropna(subset=["tenant_broker"])
+    broker_counts = broker_counts[broker_counts["tenant_broker"].str.strip() != ""]
+    broker_counts = broker_counts.sort_values("deals", ascending=False)
+
+    num_brokers = len(broker_counts)
+    max_deals = broker_counts["deals"].max() if not broker_counts.empty else 1
+
+    items = []
+    for _, row in broker_counts.iterrows():
+        bar_pct = (row["deals"] / max_deals) * 100
+        items.append(html.Div([
+            html.Div(
+                row["tenant_broker"],
+                style={
+                    "fontWeight": "bold", "color": AQUILA_COLORS[0],
+                    "width": "200px", "flexShrink": "0",
+                    "fontFamily": AQUILA_FONT, "fontSize": "14px",
+                },
+            ),
+            html.Div(
+                style={
+                    "width": f"{bar_pct}%", "height": "10px",
+                    "backgroundColor": AQUILA_COLORS[0],
+                    "borderRadius": "5px", "flexGrow": "1",
+                    "maxWidth": "400px", "minWidth": "4px",
+                },
+            ),
+            html.Span(
+                f"{row['deals']} deals",
+                style={
+                    "marginLeft": "12px", "color": "#666",
+                    "whiteSpace": "nowrap", "fontFamily": AQUILA_FONT,
+                    "fontSize": "13px",
+                },
+            ),
+        ], style={
+            "display": "flex", "alignItems": "center",
+            "padding": "10px 20px",
+            "borderBottom": f"1px solid {AQUILA_COLORS[7]}",
+        }))
+
+    return html.Div([
+        html.Div([
+            html.H5("AQUILA Tenant Rep Brokers", style={
+                "color": "white", "marginBottom": "4px",
+                "fontFamily": AQUILA_FONT, "fontWeight": "bold",
+            }),
+            html.P(
+                f"{num_brokers} confirmed brokers "
+                f"- deal counts across full dataset (all years, all deal types)",
+                style={
+                    "color": AQUILA_COLORS[5], "fontSize": "13px",
+                    "marginBottom": "0", "fontFamily": AQUILA_FONT,
+                },
+            ),
+        ], style={
+            "backgroundColor": AQUILA_COLORS[0],
+            "padding": "16px 20px",
+            "borderRadius": "8px 8px 0 0",
+        }),
+        html.Div(items, style={
+            "border": f"1px solid {AQUILA_COLORS[7]}",
+            "borderTop": "none",
+            "borderRadius": "0 0 8px 8px",
+            "maxHeight": "600px", "overflowY": "auto",
+            "backgroundColor": "white",
+        }),
+    ], style={"maxWidth": "700px"})
+
+
+# ---------------------------------------------------------------------------
+# Building list for Deal Browser
+# ---------------------------------------------------------------------------
+
+def _build_building_list(comp_df):
+    """Build scrollable building list from comparison results."""
+    if comp_df.empty:
+        return html.Div(
+            html.P("No buildings match current filters.",
+                   style={"color": "#999", "padding": "20px", "textAlign": "center"}),
+        )
+
+    # Group by building + year
+    grouped = comp_df.groupby(
+        ["property_id", "building_name", "year"], dropna=False
+    ).agg(
+        deal_count=("lease_id", "count"),
+        avg_savings=("savings", "mean"),
+        any_win=("win", "any"),
+    ).reset_index()
+    grouped = grouped.sort_values(["year", "building_name"], ascending=[True, True])
+
+    items = []
+    for _, row in grouped.iterrows():
+        savings = row["avg_savings"]
+        is_win = savings > 0
+        indicator_color = AQUILA_COLORS[6] if is_win else AQUILA_COLORS[11]
+        indicator_symbol = "V" if is_win else "X"
+        savings_text = f"${abs(savings):,.2f}/SF"
+        if not is_win:
+            savings_text = f"-{savings_text}"
+
+        pid = row["property_id"] or ""
+        yr = int(row["year"]) if pd.notna(row["year"]) else 0
+        card_key = f"{pid}|{yr}"
+        deal_word = "deal" if row["deal_count"] == 1 else "deals"
+
+        items.append(html.Div(
+            [
+                html.Div([
+                    html.Div(
+                        row["building_name"] or "Unknown",
+                        style={
+                            "fontWeight": "bold", "color": AQUILA_COLORS[0],
+                            "fontSize": "14px", "fontFamily": AQUILA_FONT,
+                        },
+                    ),
+                    html.Div(
+                        f"{yr} - {row['deal_count']} {deal_word}",
+                        style={
+                            "fontSize": "12px", "color": "#888",
+                            "fontFamily": AQUILA_FONT,
+                        },
+                    ),
+                ], style={"flex": "1"}),
+                html.Div([
+                    html.Span(
+                        indicator_symbol,
+                        style={
+                            "fontWeight": "bold", "color": indicator_color,
+                            "marginRight": "4px",
+                        },
+                    ),
+                    html.Span(
+                        savings_text,
+                        style={
+                            "fontWeight": "bold", "color": indicator_color,
+                            "fontFamily": AQUILA_FONT, "fontSize": "13px",
+                        },
+                    ),
+                ], style={"textAlign": "right", "whiteSpace": "nowrap"}),
+            ],
+            id={"type": "benefit-building-card", "index": card_key},
+            n_clicks=0,
+            style={
+                "display": "flex", "alignItems": "center",
+                "padding": "12px 16px", "cursor": "pointer",
+                "borderBottom": f"1px solid {AQUILA_COLORS[7]}",
+            },
+        ))
+
+    count = len(grouped)
+    return html.Div([
+        html.Div(
+            f"BUILDINGS ({count})",
+            style={
+                "backgroundColor": AQUILA_COLORS[0], "color": "white",
+                "padding": "10px 16px", "fontWeight": "bold",
+                "fontFamily": AQUILA_FONT, "fontSize": "13px",
+                "borderRadius": "8px 8px 0 0",
+                "letterSpacing": "0.5px",
+            },
+        ),
+        html.Div(items, style={
+            "maxHeight": "550px", "overflowY": "auto",
+            "border": f"1px solid {AQUILA_COLORS[7]}",
+            "borderTop": "none",
+            "borderRadius": "0 0 8px 8px",
+            "backgroundColor": "white",
+        }),
+    ])
+
+
+# ---------------------------------------------------------------------------
 # Layout
 # ---------------------------------------------------------------------------
 
@@ -372,8 +543,9 @@ def build_benefit_layout(df_leases):
     """Build the complete Aquila Benefit tab layout."""
     lease_types = sorted(df_leases["lease_type"].dropna().unique().tolist()) if not df_leases.empty else []
     years = sorted(df_leases["year"].dropna().unique().tolist()) if not df_leases.empty else []
+    year_range = f"{min(years)}-{max(years)}" if years else "N/A"
 
-    # Year filter pills
+    # Year filter pill buttons
     year_buttons = [dbc.Button(
         "All", id={"type": "benefit-year-btn", "index": "all"},
         color="primary", size="sm", className="me-1 mb-1", outline=False,
@@ -384,144 +556,138 @@ def build_benefit_layout(df_leases):
             color="primary", size="sm", className="me-1 mb-1", outline=True,
         ))
 
-    # -- Charts sub-tab --
+    # Broker list (static, computed once from full data)
+    broker_content = _build_broker_list_content(df_leases)
+
+    # ---- Header bar (navy, shared across all sub-tabs) ----
+    header_bar = html.Div([
+        # Left: title info
+        html.Div([
+            html.Div(
+                "AQUILA COMMERCIAL - BENEFIT ANALYSIS",
+                style={
+                    "color": AQUILA_COLORS[5], "fontSize": "12px",
+                    "fontWeight": "bold", "letterSpacing": "2px",
+                    "fontFamily": AQUILA_FONT, "marginBottom": "4px",
+                },
+            ),
+            html.H4(
+                "Tenant Rep NER Analysis",
+                style={
+                    "color": "white", "fontFamily": AQUILA_FONT,
+                    "fontWeight": "bold", "marginBottom": "6px",
+                },
+            ),
+            html.P(
+                f"New deals only - Same building - Same year - {year_range} - Duplicates removed",
+                style={
+                    "color": AQUILA_COLORS[1], "fontSize": "13px",
+                    "fontFamily": AQUILA_FONT, "marginBottom": "8px",
+                },
+            ),
+            html.Div(
+                "Lower NER = tenant pays less = better deal",
+                style={
+                    "display": "inline-block",
+                    "backgroundColor": "rgba(255,255,255,0.15)",
+                    "color": AQUILA_COLORS[5], "fontSize": "12px",
+                    "padding": "4px 12px", "borderRadius": "12px",
+                    "fontFamily": AQUILA_FONT,
+                },
+            ),
+        ], style={"flex": "1"}),
+        # Right: KPI cards
+        html.Div(id="benefit-kpi-row", style={
+            "display": "flex", "gap": "24px", "alignItems": "center",
+        }),
+    ], style={
+        "display": "flex", "alignItems": "center",
+        "backgroundColor": AQUILA_COLORS[0],
+        "padding": "20px 24px",
+        "borderRadius": "8px 8px 0 0",
+    })
+
+    # ---- Filter row: year pills ----
+    filter_row = html.Div([
+        html.Div([
+            html.Span("Year:", style={
+                "fontWeight": "bold", "fontFamily": AQUILA_FONT,
+                "marginRight": "8px", "fontSize": "13px",
+            }),
+            html.Div(year_buttons, className="d-flex flex-wrap"),
+        ], style={"flex": "1", "display": "flex", "alignItems": "center"}),
+    ], style={
+        "padding": "12px 24px",
+        "borderBottom": f"1px solid {AQUILA_COLORS[7]}",
+        "backgroundColor": "#FAFAFA",
+    })
+
+    # ---- Charts sub-tab ----
     charts_tab = dbc.Tab(label="Charts", tab_id="benefit-charts", children=[
         dbc.Container([
-            # Filters row
-            dbc.Row([
-                dbc.Col([
-                    html.Label("Year", style={"fontWeight": "bold", "fontFamily": AQUILA_FONT}),
-                    html.Div(year_buttons, className="d-flex flex-wrap"),
-                ], md=8),
-                dbc.Col([
-                    html.Label("Lease Type", style={"fontWeight": "bold", "fontFamily": AQUILA_FONT}),
-                    dcc.Dropdown(
-                        id="benefit-lease-type",
-                        options=[{"label": t, "value": t} for t in lease_types],
-                        value=["New"] if "New" in lease_types else [],
-                        multi=True,
-                        placeholder="All types",
-                    ),
-                ], md=4),
-            ], className="mb-3 mt-3"),
-
-            # KPI row
-            dbc.Row(id="benefit-kpi-row", className="mb-3"),
-
-            # Charts
             dbc.Row([
                 dbc.Col(dcc.Graph(id="benefit-ner-chart", config=_CHART_CONFIG), md=6),
                 dbc.Col(dcc.Graph(id="benefit-savings-chart", config=_CHART_CONFIG), md=6),
-            ]),
-
-            # Detail panel (hidden until click)
+            ], className="mt-3"),
             html.Div(id="benefit-detail-panel"),
-
-            # Hidden store for selected year
-            dcc.Store(id="benefit-selected-year", data="all"),
         ], fluid=True),
     ])
 
-    # -- Deal Browser sub-tab --
-    deal_columns = [
-        {"name": "Building", "id": "building_name"},
-        {"name": "Tenant", "id": "tenant_name"},
-        {"name": "Year", "id": "year"},
-        {"name": "NER", "id": "ner", "type": "numeric",
-         "format": dash_table.FormatTemplate.money(2)},
-        {"name": "Base Rate", "id": "base_rate", "type": "numeric",
-         "format": dash_table.FormatTemplate.money(2)},
-        {"name": "TI", "id": "ti_allowance", "type": "numeric",
-         "format": dash_table.FormatTemplate.money(2)},
-        {"name": "Free Mo", "id": "free_months", "type": "numeric"},
-        {"name": "Size SF", "id": "size_sf", "type": "numeric",
-         "format": dash_table.FormatTemplate.money(0)},
-        {"name": "Term", "id": "lease_term", "type": "numeric"},
-        {"name": "Type", "id": "lease_type"},
-        {"name": "Broker", "id": "tenant_broker"},
-        {"name": "Peer Avg NER", "id": "peer_avg_ner", "type": "numeric",
-         "format": dash_table.FormatTemplate.money(2)},
-        {"name": "Savings", "id": "savings", "type": "numeric",
-         "format": dash_table.FormatTemplate.money(2)},
-    ]
-
+    # ---- Deal Browser sub-tab ----
     deal_browser_tab = dbc.Tab(label="Deal Browser", tab_id="benefit-deals", children=[
         dbc.Container([
-            dash_table.DataTable(
-                id="benefit-deal-table",
-                columns=deal_columns,
-                data=[],
-                sort_action="native",
-                filter_action="native",
-                page_size=20,
-                style_table={"overflowX": "auto"},
-                style_header={
-                    "backgroundColor": AQUILA_COLORS[0],
-                    "color": "white",
-                    "fontWeight": "bold",
-                    "fontFamily": AQUILA_FONT,
-                },
-                style_cell={
-                    "fontFamily": AQUILA_FONT,
-                    "fontSize": "13px",
-                    "padding": "6px 10px",
-                },
-                style_data_conditional=[{
-                    "if": {"row_index": "odd"},
-                    "backgroundColor": "#F9F9F9",
-                }],
-            ),
-        ], fluid=True, className="mt-3"),
+            dbc.Row([
+                dbc.Col(
+                    html.Div(id="benefit-building-list"),
+                    md=4, style={"paddingRight": "0"},
+                ),
+                dbc.Col(
+                    html.Div(id="benefit-building-detail", children=[
+                        html.Div([
+                            html.Div(
+                                "<-",
+                                style={
+                                    "fontSize": "32px", "color": "#CCC",
+                                    "marginBottom": "8px",
+                                },
+                            ),
+                            html.P(
+                                "Select a building to view deal terms",
+                                style={
+                                    "color": "#999", "fontFamily": AQUILA_FONT,
+                                    "fontSize": "14px",
+                                },
+                            ),
+                        ], style={
+                            "textAlign": "center", "paddingTop": "120px",
+                        }),
+                    ]),
+                    md=8, style={
+                        "borderLeft": f"1px solid {AQUILA_COLORS[7]}",
+                        "minHeight": "400px",
+                    },
+                ),
+            ], className="mt-3"),
+        ], fluid=True),
     ])
 
-    # -- Broker List sub-tab --
-    broker_columns = [
-        {"name": "Broker", "id": "Broker"},
-        {"name": "Deals", "id": "Deals", "type": "numeric"},
-        {"name": "Wins", "id": "Wins", "type": "numeric"},
-        {"name": "Win Rate", "id": "Win Rate", "type": "numeric"},
-        {"name": "Total SF", "id": "Total SF", "type": "numeric",
-         "format": dash_table.FormatTemplate.money(0)},
-        {"name": "Median Savings", "id": "Median Savings", "type": "numeric",
-         "format": dash_table.FormatTemplate.money(2)},
-        {"name": "Avg Savings", "id": "Avg Savings", "type": "numeric",
-         "format": dash_table.FormatTemplate.money(2)},
-    ]
-
+    # ---- Broker List sub-tab ----
     broker_tab = dbc.Tab(label="Broker List", tab_id="benefit-brokers", children=[
         dbc.Container([
-            dash_table.DataTable(
-                id="benefit-broker-table",
-                columns=broker_columns,
-                data=[],
-                sort_action="native",
-                page_size=20,
-                style_table={"overflowX": "auto"},
-                style_header={
-                    "backgroundColor": AQUILA_COLORS[0],
-                    "color": "white",
-                    "fontWeight": "bold",
-                    "fontFamily": AQUILA_FONT,
-                },
-                style_cell={
-                    "fontFamily": AQUILA_FONT,
-                    "fontSize": "13px",
-                    "padding": "6px 10px",
-                },
-                style_data_conditional=[{
-                    "if": {"row_index": "odd"},
-                    "backgroundColor": "#F9F9F9",
-                }],
-            ),
-        ], fluid=True, className="mt-3"),
+            html.Div(broker_content, className="mt-3"),
+        ], fluid=True),
     ])
 
     return html.Div([
-        html.H4("Aquila Benefit -- Tenant Rep NER Analysis",
-                style={"fontFamily": AQUILA_FONT, "color": AQUILA_COLORS[0],
-                       "textAlign": "center", "marginTop": "15px"}),
-        dbc.Tabs([charts_tab, deal_browser_tab, broker_tab],
-                 id="benefit-sub-tabs", active_tab="benefit-charts"),
+        header_bar,
+        filter_row,
+        dbc.Tabs(
+            [charts_tab, deal_browser_tab, broker_tab],
+            id="benefit-sub-tabs", active_tab="benefit-charts",
+        ),
+
+        # Hidden stores
+        dcc.Store(id="benefit-selected-year", data="all"),
     ])
 
 
@@ -532,85 +698,17 @@ def build_benefit_layout(df_leases):
 def register_callbacks(app, df_leases):
     """Register all Aquila Benefit callbacks on the Dash app."""
 
-    # ---- Year pill click ----
-    # Must use ALL (not MATCH) because the Output is a plain component, not pattern-matched.
+    # ---- Year pill click -> update store ----
     @app.callback(
         Output("benefit-selected-year", "data"),
         Input({"type": "benefit-year-btn", "index": ALL}, "n_clicks"),
         prevent_initial_call=True,
     )
     def _on_year_click(n_clicks_list):
-        ctx = callback_context
-        if not ctx.triggered:
+        triggered = dash.ctx.triggered_id
+        if triggered is None:
             return no_update
-        prop_id = ctx.triggered[0]["prop_id"]
-        import json
-        btn_id = json.loads(prop_id.split(".")[0])
-        return btn_id["index"]
-
-    # ---- Main update: KPIs + charts + tables ----
-    @app.callback(
-        [
-            Output("benefit-kpi-row", "children"),
-            Output("benefit-ner-chart", "figure"),
-            Output("benefit-savings-chart", "figure"),
-            Output("benefit-deal-table", "data"),
-            Output("benefit-broker-table", "data"),
-        ],
-        [
-            Input("benefit-selected-year", "data"),
-            Input("benefit-lease-type", "value"),
-            Input("benefit-sub-tabs", "active_tab"),
-        ],
-    )
-    def _update_benefit(selected_year, lease_types, active_tab):
-        years = None
-        if selected_year and selected_year != "all":
-            try:
-                years = [int(selected_year)]
-            except (ValueError, TypeError):
-                years = None
-
-        comp_df = build_ner_comparison(df_leases, lease_types=lease_types or None, years=years)
-        kpis = compute_kpis(comp_df)
-
-        # KPI cards
-        kpi_items = [
-            ("Deals Analyzed", f"{kpis['deals']:,}"),
-            ("Win Rate", f"{kpis['win_rate']:.1f}%"),
-            ("Median Savings", f"${kpis['median_savings']:,.2f}/SF"),
-            ("Total SF", f"{kpis['total_sf']:,.0f}"),
-        ]
-        kpi_cards = []
-        for label, value in kpi_items:
-            kpi_cards.append(dbc.Col(dbc.Card(dbc.CardBody([
-                html.H6(label, className="text-muted mb-1",
-                         style={"fontFamily": AQUILA_FONT, "fontSize": "12px"}),
-                html.H4(value, style={"fontFamily": AQUILA_FONT,
-                                       "color": AQUILA_COLORS[0], "marginBottom": 0}),
-            ]), className="text-center"), md=3, sm=6, xs=6, className="mb-2"))
-
-        # Charts
-        ner_fig = _build_avg_ner_chart(comp_df)
-        savings_fig = _build_savings_chart(comp_df)
-
-        # Deal browser data
-        deal_data = []
-        if not comp_df.empty:
-            show_cols = ["building_name", "tenant_name", "year", "ner",
-                         "base_rate", "ti_allowance", "free_months", "size_sf",
-                         "lease_term", "lease_type", "tenant_broker",
-                         "peer_avg_ner", "savings"]
-            for c in show_cols:
-                if c not in comp_df.columns:
-                    comp_df[c] = None
-            deal_data = comp_df[show_cols].to_dict("records")
-
-        # Broker leaderboard
-        broker_df = compute_broker_leaderboard(comp_df)
-        broker_data = broker_df.to_dict("records") if not broker_df.empty else []
-
-        return kpi_cards, ner_fig, savings_fig, deal_data, broker_data
+        return triggered["index"]
 
     # ---- Year pill styling ----
     @app.callback(
@@ -621,14 +719,69 @@ def register_callbacks(app, df_leases):
     def _style_year_btn(selected_year, btn_id):
         return btn_id["index"] != (selected_year or "all")
 
+    # ---- Main update: KPIs + charts + building list ----
+    @app.callback(
+        [
+            Output("benefit-kpi-row", "children"),
+            Output("benefit-ner-chart", "figure"),
+            Output("benefit-savings-chart", "figure"),
+            Output("benefit-building-list", "children"),
+        ],
+        [
+            Input("benefit-selected-year", "data"),
+        ],
+    )
+    def _update_benefit(selected_year):
+        years = None
+        if selected_year and selected_year != "all":
+            try:
+                years = [int(selected_year)]
+            except (ValueError, TypeError):
+                years = None
+
+        # Always filter to New deals for comparison
+        lease_types = ["New"]
+
+        comp_df = build_ner_comparison(df_leases, lease_types=lease_types, years=years)
+        kpis = compute_kpis(comp_df)
+
+        # KPI cards (styled for navy header)
+        kpi_items = [
+            (f"{kpis['deals']:,}", "DEALS"),
+            (f"{kpis['win_rate']:.0f}%", "WIN RATE"),
+            (f"+${kpis['median_savings']:,.2f}", "MEDIAN SAVINGS"),
+            (f"{kpis['total_sf']:,.0f}", "TOTAL SF"),
+        ]
+        kpi_cards = []
+        for value, label in kpi_items:
+            kpi_cards.append(html.Div([
+                html.Div(value, style={
+                    "fontSize": "22px", "fontWeight": "bold",
+                    "color": AQUILA_COLORS[5], "fontFamily": AQUILA_FONT,
+                    "lineHeight": "1.1",
+                }),
+                html.Div(label, style={
+                    "fontSize": "10px", "color": AQUILA_COLORS[1],
+                    "fontFamily": AQUILA_FONT, "letterSpacing": "1px",
+                }),
+            ], style={"textAlign": "center"}))
+
+        # Charts
+        ner_fig = _build_avg_ner_chart(comp_df)
+        savings_fig = _build_savings_chart(comp_df)
+
+        # Building list for Deal Browser
+        building_list = _build_building_list(comp_df)
+
+        return kpi_cards, ner_fig, savings_fig, building_list
+
     # ---- Savings chart click -> detail panel ----
     @app.callback(
         Output("benefit-detail-panel", "children"),
         Input("benefit-savings-chart", "clickData"),
-        State("benefit-lease-type", "value"),
         prevent_initial_call=True,
     )
-    def _on_savings_click(click_data, lease_types):
+    def _on_savings_click(click_data):
         if not click_data or not click_data.get("points"):
             return no_update
 
@@ -639,15 +792,67 @@ def register_callbacks(app, df_leases):
 
         prop_id, year, lease_id = custom[0], custom[1], custom[2]
 
-        # Find the AQUILA deal
         mask = df_leases["lease_id"] == lease_id
         if not mask.any():
             return html.P("Deal not found.")
 
         deal = df_leases[mask].iloc[0].to_dict()
-
-        # Get peer comps
-        peers = get_peer_comps(df_leases, prop_id, year,
-                               lease_types=lease_types or None)
-
+        peers = get_peer_comps(df_leases, prop_id, year, lease_types=["New"])
         return _build_detail_panel(deal, peers)
+
+    # ---- Building card click -> detail panel in Deal Browser ----
+    @app.callback(
+        Output("benefit-building-detail", "children"),
+        Input({"type": "benefit-building-card", "index": ALL}, "n_clicks"),
+        State("benefit-selected-year", "data"),
+        prevent_initial_call=True,
+    )
+    def _on_building_click(n_clicks_list, selected_year):
+        triggered = dash.ctx.triggered_id
+        if triggered is None:
+            return no_update
+
+        # Check if any button was actually clicked (not just initial render)
+        if all(n is None or n == 0 for n in n_clicks_list):
+            return no_update
+
+        card_key = triggered["index"]  # format: "property_id|year"
+        parts = card_key.split("|", 1)
+        if len(parts) != 2:
+            return no_update
+
+        prop_id, yr_str = parts
+        try:
+            yr = int(yr_str)
+        except (ValueError, TypeError):
+            return no_update
+
+        # Get AQUILA deals for this building+year
+        years_filter = None
+        if selected_year and selected_year != "all":
+            try:
+                years_filter = [int(selected_year)]
+            except (ValueError, TypeError):
+                pass
+
+        comp_df = build_ner_comparison(
+            df_leases, lease_types=["New"], years=years_filter
+        )
+        if comp_df.empty:
+            return html.P("No comparison data.", style={"padding": "20px"})
+
+        building_deals = comp_df[
+            (comp_df["property_id"] == prop_id) & (comp_df["year"] == yr)
+        ]
+        if building_deals.empty:
+            return html.P("No deals found for this building.",
+                          style={"padding": "20px"})
+
+        # Build detail cards for each AQUILA deal + peers
+        panels = []
+        for _, deal_row in building_deals.iterrows():
+            deal = deal_row.to_dict()
+            peers = get_peer_comps(df_leases, prop_id, yr, lease_types=["New"])
+            panels.append(_build_detail_panel(deal, peers))
+
+        return html.Div(panels)

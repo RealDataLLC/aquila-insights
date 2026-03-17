@@ -32,7 +32,7 @@ from dash import dcc, html, Input, Output, State, dash_table, callback_context
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dotenv import load_dotenv
-from flask import session
+from flask import session, request as flask_request
 
 try:
     from supabase import create_client as _supabase_create_client
@@ -957,9 +957,16 @@ def handle_login(n_clicks, email):
     if not _supabase_auth:
         return "Auth service unavailable. Check SUPABASE_URL and SUPABASE_ANON_KEY.", ""
     try:
+        # Build redirect URL from forwarded headers (Vercel proxy) so
+        # preview/staging deployments get magic links pointing back to themselves
+        proto = flask_request.headers.get('X-Forwarded-Proto', 'https')
+        host = (flask_request.headers.get('X-Forwarded-Host')
+                or flask_request.headers.get('Host')
+                or flask_request.host)
+        redirect_url = f"{proto}://{host}/auth/callback"
         _supabase_auth.auth.sign_in_with_otp({
             "email": email.strip(),
-            "options": {"email_redirect_to": f"{_VERCEL_URL}/auth/callback"}
+            "options": {"email_redirect_to": redirect_url}
         })
         return "", "Magic link sent! Check your inbox."
     except Exception as e:
