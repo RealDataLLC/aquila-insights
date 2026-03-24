@@ -28,7 +28,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import dash
-from dash import dcc, html, Input, Output, State, dash_table, callback_context
+from dash import dcc, html, Input, Output, State, dash_table, callback_context, no_update
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from dotenv import load_dotenv
@@ -618,19 +618,41 @@ def _logout():
 # AUTH LAYOUT
 # ============================================================================
 
-_VERCEL_URL = os.getenv('APP_URL', 'https://aquila-insights.vercel.app').rstrip('/')
+_label_style = {'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}
+_err_style = {'color': '#BF4040', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}
+_hint_style = {'textAlign': 'center', 'color': '#aaa', 'fontFamily': AQUILA_FONT, 'fontSize': '12px', 'marginTop': '16px'}
+_btn_style = {'width': '100%', 'backgroundColor': AQUILA_COLORS[0], 'border': 'none', 'fontFamily': AQUILA_FONT}
 
-login_form_div = html.Div([
+# Step 1: email entry
+_email_step = html.Div([
     html.H4("Austin Office Requirements", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '4px'}),
     html.P("Sign in with your aquilacommercial.com email", style={'textAlign': 'center', 'color': '#888', 'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'marginBottom': '24px'}),
-    html.Label("Email", style={'fontFamily': AQUILA_FONT, 'fontWeight': 'bold', 'fontSize': '14px'}),
+    html.Label("Email", style=_label_style),
     dbc.Input(id='login-email', type='email', placeholder='you@aquilacommercial.com', className='mb-3'),
-    html.Div(id='login-error', style={'color': '#BF4040', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}),
-    html.Div(id='login-success', style={'color': '#556B30', 'fontSize': '13px', 'fontFamily': AQUILA_FONT, 'marginBottom': '8px'}),
-    dbc.Button("Send Magic Link", id='login-btn', n_clicks=0,
-               style={'width': '100%', 'backgroundColor': AQUILA_COLORS[0], 'border': 'none', 'fontFamily': AQUILA_FONT}),
-    html.P("We'll email you a secure sign-in link — no password needed.",
-           style={'textAlign': 'center', 'color': '#aaa', 'fontFamily': AQUILA_FONT, 'fontSize': '12px', 'marginTop': '16px'})
+    html.Div(id='login-error', style=_err_style),
+    dbc.Button("Send Code", id='login-btn', n_clicks=0, style=_btn_style),
+    html.P("We'll email you a 6-digit confirmation code.", style=_hint_style),
+], id='email-step')
+
+# Step 2: code entry
+_code_step = html.Div([
+    html.H4("Enter Confirmation Code", style={'textAlign': 'center', 'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'marginBottom': '4px'}),
+    html.P(id='code-step-subtitle', style={'textAlign': 'center', 'color': '#888', 'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'marginBottom': '24px'}),
+    html.Label("6-digit code", style=_label_style),
+    dbc.Input(id='otp-code', type='text', placeholder='123456', maxLength=6, className='mb-3',
+              style={'textAlign': 'center', 'fontSize': '20px', 'letterSpacing': '8px', 'fontFamily': AQUILA_FONT}),
+    html.Div(id='verify-error', style=_err_style),
+    dbc.Button("Verify", id='verify-btn', n_clicks=0, style=_btn_style),
+    html.P([
+        html.A("Back", id='back-to-email', href='#',
+               style={'color': AQUILA_COLORS[0], 'fontFamily': AQUILA_FONT, 'fontSize': '13px', 'textDecoration': 'underline', 'cursor': 'pointer'})
+    ], style={'textAlign': 'center', 'marginTop': '16px'}),
+], id='code-step', style={'display': 'none'})
+
+login_form_div = html.Div([
+    dcc.Store(id='otp-email-store'),
+    _email_step,
+    _code_step,
 ], id='login-form-div')
 
 auth_layout = dbc.Container([
@@ -944,82 +966,74 @@ def _switch_dashboard_tab(active_tab):
 
 
 @app.callback(
-    [Output('login-error', 'children'), Output('login-success', 'children')],
+    [Output('login-error', 'children'),
+     Output('email-step', 'style'),
+     Output('code-step', 'style'),
+     Output('otp-email-store', 'data'),
+     Output('code-step-subtitle', 'children')],
     Input('login-btn', 'n_clicks'),
     State('login-email', 'value'),
     prevent_initial_call=True
 )
-def handle_login(n_clicks, email):
+def handle_send_code(n_clicks, email):
+    """Send a 6-digit OTP code to the user's email."""
+    hide, show = {'display': 'none'}, {'display': 'block'}
     if not email:
-        return "Please enter your email.", ""
-    if not email.strip().lower().endswith('@aquilacommercial.com'):
-        return "Access restricted to @aquilacommercial.com addresses.", ""
+        return "Please enter your email.", show, hide, no_update, no_update
+    email = email.strip()
+    if not email.lower().endswith('@aquilacommercial.com'):
+        return "Access restricted to @aquilacommercial.com addresses.", show, hide, no_update, no_update
     if not _supabase_auth:
-        return "Auth service unavailable. Check SUPABASE_URL and SUPABASE_ANON_KEY.", ""
+        return "Auth service unavailable. Check SUPABASE_URL and SUPABASE_ANON_KEY.", show, hide, no_update, no_update
     try:
-        # Build redirect URL from forwarded headers (Vercel proxy) so
-        # preview/staging deployments get magic links pointing back to themselves
-        proto = flask_request.headers.get('X-Forwarded-Proto', 'https')
-        host = (flask_request.headers.get('X-Forwarded-Host')
-                or flask_request.headers.get('Host')
-                or flask_request.host)
-        redirect_url = f"{proto}://{host}/auth/callback"
-        _supabase_auth.auth.sign_in_with_otp({
-            "email": email.strip(),
-            "options": {"email_redirect_to": redirect_url}
+        _supabase_auth.auth.sign_in_with_otp({"email": email})
+        return "", hide, show, email, f"Code sent to {email}"
+    except Exception as e:
+        return f"Error sending code: {str(e)}", show, hide, no_update, no_update
+
+
+@app.callback(
+    [Output('email-step', 'style', allow_duplicate=True),
+     Output('code-step', 'style', allow_duplicate=True),
+     Output('otp-code', 'value'),
+     Output('verify-error', 'children', allow_duplicate=True)],
+    Input('back-to-email', 'n_clicks'),
+    prevent_initial_call=True
+)
+def handle_back_to_email(n_clicks):
+    """Go back to email entry step."""
+    return {'display': 'block'}, {'display': 'none'}, '', ''
+
+
+@app.callback(
+    [Output('verify-error', 'children'), Output('url', 'pathname')],
+    Input('verify-btn', 'n_clicks'),
+    [State('otp-code', 'value'), State('otp-email-store', 'data')],
+    prevent_initial_call=True
+)
+def handle_verify_code(n_clicks, code, email):
+    """Verify the 6-digit OTP code and log the user in."""
+    if not code or len(code.strip()) != 6:
+        return "Please enter the 6-digit code.", no_update
+    if not email or not _supabase_auth:
+        return "Session expired. Please go back and try again.", no_update
+    try:
+        response = _supabase_auth.auth.verify_otp({
+            "email": email,
+            "token": code.strip(),
+            "type": "email"
         })
-        return "", "Magic link sent! Check your inbox."
-    except Exception as e:
-        return f"Error sending link: {str(e)}", ""
-
-
-# Flask routes to handle the magic link callback
-@app.server.route('/auth/callback')
-def auth_callback():
-    """Supabase redirects here after magic link click with tokens in URL fragment.
-    Returns a minimal page with JS that extracts the token and calls /auth/set-session."""
-    return '''<!DOCTYPE html>
-<html><head><title>Signing in...</title>
-<style>body{font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f7fa}
-.msg{text-align:center;color:#172344}</style></head>
-<body><div class="msg"><p>Signing in...</p></div>
-<script>
-var hash = window.location.hash.substring(1);
-var params = new URLSearchParams(hash);
-var token = params.get('access_token');
-var refresh = params.get('refresh_token');
-if (token) {
-  fetch('/auth/set-session', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({access_token: token, refresh_token: refresh})
-  }).then(function(r){ return r.json(); }).then(function(d){
-    window.location.href = d.ok ? '/' : '/?auth_error=' + encodeURIComponent(d.error || 'unknown');
-  }).catch(function(){ window.location.href = '/?auth_error=network'; });
-} else {
-  window.location.href = '/?auth_error=no_token';
-}
-</script></body></html>'''
-
-
-@app.server.route('/auth/set-session', methods=['POST'])
-def auth_set_session():
-    """Verifies the Supabase access token, checks email domain, sets Flask session."""
-    from flask import request, jsonify
-    data = request.get_json() or {}
-    access_token = data.get('access_token')
-    if not access_token or not _supabase_auth:
-        return jsonify({'ok': False, 'error': 'missing_token'})
-    try:
-        user_response = _supabase_auth.auth.get_user(access_token)
-        email = user_response.user.email
-        if not email or not email.lower().endswith('@aquilacommercial.com'):
-            return jsonify({'ok': False, 'error': 'unauthorized_domain'})
+        user_email = response.user.email
+        if not user_email or not user_email.lower().endswith('@aquilacommercial.com'):
+            return "Unauthorized domain.", no_update
         session['authenticated'] = True
-        session['user_email'] = email
-        return jsonify({'ok': True})
+        session['user_email'] = user_email
+        return no_update, '/'
     except Exception as e:
-        return jsonify({'ok': False, 'error': str(e)})
+        msg = str(e)
+        if 'expired' in msg.lower() or 'invalid' in msg.lower():
+            return "Invalid or expired code. Please try again.", no_update
+        return f"Verification failed: {msg}", no_update
 
 
 # ============================================================================
