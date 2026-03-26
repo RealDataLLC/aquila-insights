@@ -23,7 +23,7 @@ def _get_logo_b64() -> str:
     return _LOGO_B64
 
 
-def add_aquila_logo(fig, sizex: float = 0.12, opacity: float = 0.7):
+def add_aquila_logo(fig, sizex: float = 0.12, opacity: float = 1.0):
     """Add Aquila logo above the chart area, aligned to the top-right margin.
 
     The logo is placed above the plot area (not overlaying chart data) by
@@ -67,7 +67,7 @@ def add_aquila_logo(fig, sizex: float = 0.12, opacity: float = 0.7):
     return fig
 
 
-def write_chart_html(fig, path, sizex: float = 0.12, opacity: float = 0.7):
+def write_chart_html(fig, path, sizex: float = 0.12, opacity: float = 1.0):
     """Add Aquila logo watermark and write the figure as a standalone HTML file.
 
     Use this instead of ``fig.write_html(path)`` in all chart generators.
