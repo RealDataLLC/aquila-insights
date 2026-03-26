@@ -139,7 +139,7 @@ AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"
 
 ### Logo Watermark
 
-All 59 HTML charts include an Aquila logo watermark (bottom-right, 12% width, 0.7 opacity).
+All 62 HTML charts include an Aquila logo watermark (bottom-right, 12% width, solid opacity).
 
 ```python
 # Standard pattern for generators:
@@ -508,8 +508,8 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 ---
 
-**Last Updated:** 2026-03-16
-**Document Version:** 6.8.0
+**Last Updated:** 2026-03-26
+**Document Version:** 6.9.0
 
 ---
 
