@@ -206,6 +206,32 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 ### Housing Indicators
 [Austin Housing Starts (Monthly) [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_housing_starts.html)
 
+## Census + Labor Market Intelligence
+
+### Submarket Demographics (Census ACS 5-Year + KMZ Spatial Join)
+[Population by Office Submarket [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_population_by_submarket.html)
+
+[Office-Using Occupations by Submarket [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_occupations_by_submarket.html)
+
+[Educational Attainment by Submarket [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_education_by_submarket.html)
+
+[Median Household Income by Submarket [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_income_by_submarket.html)
+
+### Office Employment Density (Census LODES + KMZ Spatial Join)
+[Office-Using Employment by Submarket — 2023 Snapshot [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/lodes_office_employment_by_submarket.html)
+
+[Office Employment Growth by Submarket 2015–2023 [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/lodes_office_employment_growth.html)
+
+### Business Formation Trends (BLS QCEW — Travis County)
+[Professional Services: Firms & Employment — Travis County [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/qcew_professional_services_travis.html)
+
+[Office Industry Sector Mix — Travis County [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/qcew_office_sector_mix.html)
+
+### MSA Comparisons
+[Population Growth: Austin vs. Sun Belt Peers [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_austin_vs_peers.html)
+
+[Office-Sector Job Growth: Austin vs. National [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/fred_office_sectors_indexed.html)
+
 ## Austin Economy
 
 ### Industries and Companies That Came to Austin in 2025
