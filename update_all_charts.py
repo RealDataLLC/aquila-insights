@@ -14,7 +14,7 @@ Generators:
   office:      requirements (7), building_performance (2), market_metrics (12),
                demand_by_market (5), transactions (2)
   industrial:  vacancy (1), building_performance (2), demand (5), nnn_rent (1)
-  economic:    fred_indicators (7), fred_housing (1), austin_economy (6)
+  economic:    fred_indicators (7), fred_housing (1), austin_economy (6), census_office (10)
   property_mgmt: ams_kpi (1)
   development: permits (2)
 """
@@ -49,6 +49,7 @@ GENERATORS = [
     ('generators.economic.fred_indicators',      'FRED Economic Indicators (7 charts)',           'economic'),
     ('generators.economic.fred_housing',         'FRED Housing Starts (1 chart)',                 'economic'),
     ('generators.economic.austin_economy',       'Austin Economy Charts (6 charts)',              'economic'),
+    ('generators.economic.census_office',        'Census + LODES Office Market Charts (10 charts)', 'economic'),
     # --- Property Management ---
     ('generators.property_mgmt.ams_kpi',         'AMS KPI Chart (1 chart)',                      'property_mgmt'),
     # --- Development ---

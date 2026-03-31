@@ -44,11 +44,13 @@ aquila-insights/
 │   ├── charts.py                    #   aquila_styled_line_chart(), write_chart_html(), add_aquila_logo()
 │   ├── dateutil.py                  #   parse_quarter(), quarter_sort_key()
 │   ├── git.py                       #   commit_and_push_all()
+│   ├── geo.py                       #   build_tract_submarket_map(), build_block_group_submarket_map()
 │   └── connectors/                  #   Data source clients (auto-loads aquila_graph.env)
 │       ├── supabase.py              #     get_supabase_client(use_service_role=True)
 │       ├── gsheets.py               #     get_gsheets_client()
 │       ├── fred.py                  #     fetch_fred_series()
-│       └── skyline.py               #     fetch_all_leases()
+│       ├── skyline.py               #     fetch_all_leases()
+│       └── census.py               #     fetch_acs_by_zcta(), fetch_tracts_acs(), fetch_lodes_wac(), fetch_qcew()
 │
 ├── generators/                      # Chart generators (organized by domain)
 │   ├── office/                      #   6 generators -> 32 charts
@@ -62,16 +64,17 @@ aquila-insights/
 │   │   ├── vacancy.py               #     1 vacancy chart (Supabase)
 │   │   ├── demand.py                #     5 TITM demand charts (Google Sheets)
 │   │   └── nnn_rent.py              #     1 NNN rent chart (Supabase)
-│   ├── economic/                    #   3 generators -> 14 charts
+│   ├── economic/                    #   4 generators -> 24 charts
 │   │   ├── fred_indicators.py       #     7 FRED indicator charts
 │   │   ├── fred_housing.py          #     1 housing starts chart
-│   │   └── austin_economy.py        #     6 Austin 2025 economy charts (Excel)
+│   │   ├── austin_economy.py        #     6 Austin 2025 economy charts (Excel)
+│   │   └── census_office.py         #     10 Census+LODES+QCEW office market charts
 │   ├── property_mgmt/               #   1 generator -> 1 chart
 │   │   └── ams_kpi.py               #     AMS managed properties KPI (Excel)
 │   └── development/                 #   1 generator -> 6 charts
 │       └── permits.py               #     Development pipeline charts (API)
 │
-├── charts/                          # Published HTML charts (GitHub Pages) - 62 total
+├── charts/                          # Published HTML charts (GitHub Pages) - 72 total
 │   ├── property-management/         # 1 chart
 │   ├── office/                      # 32 charts
 │   ├── industrial/                  # 9 charts
@@ -179,7 +182,7 @@ from aquila.git import commit_and_push_all
 
 ---
 
-## Chart Generators (14 generators, 62 charts)
+## Chart Generators (15 generators, 72 charts)
 
 | Domain | Generator | Charts | Data Source |
 |--------|-----------|--------|-------------|
@@ -195,6 +198,7 @@ from aquila.git import commit_and_push_all
 | economic | `generators/economic/fred_indicators.py` | 7 | FRED API |
 | economic | `generators/economic/fred_housing.py` | 1 | FRED API |
 | economic | `generators/economic/austin_economy.py` | 6 | Excel |
+| economic | `generators/economic/census_office.py` | 10 | Census ACS, LODES, BLS QCEW, FRED |
 | property_mgmt | `generators/property_mgmt/ams_kpi.py` | 1 | Excel |
 | development | `generators/development/permits.py` | 6 | API |
 
@@ -414,6 +418,7 @@ python -m generators.industrial.vacancy
 python -m generators.industrial.demand
 python -m generators.economic.fred_indicators
 python -m generators.economic.austin_economy
+python -m generators.economic.census_office
 python -m generators.property_mgmt.ams_kpi
 python -m generators.development.permits
 ```
@@ -424,7 +429,7 @@ python -m generators.development.permits
 
 ### aquila_graph.env (gitignored)
 
-Required keys: `FRED_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY` (service role), `SKYLINE_API_KEY` (Skyline/restb.ai Bearer token), `MAPBOX_API_KEY` (Mapbox access token for submarket maps), `GOOGLE_SERVICE_ACCOUNT_TYPE` through `GOOGLE_UNIVERSE_DOMAIN` (12 Google SA fields).
+Required keys: `FRED_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY` (service role), `SKYLINE_API_KEY` (Skyline/restb.ai Bearer token), `MAPBOX_API_KEY` (Mapbox access token for submarket maps), `CENSUS_API_KEY` (Census Bureau API key for ACS/LODES/QCEW data), `GOOGLE_SERVICE_ACCOUNT_TYPE` through `GOOGLE_UNIVERSE_DOMAIN` (12 Google SA fields).
 
 Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.env`
 
