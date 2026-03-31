@@ -153,6 +153,9 @@ def build_ner_comparison(df, lease_types=None, years=None):
     """
     work = df.copy()
 
+    if work.empty or "lease_type" not in work.columns:
+        return pd.DataFrame()
+
     if lease_types:
         work = work[work["lease_type"].isin(lease_types)]
     if years:
@@ -184,13 +187,15 @@ def build_ner_comparison(df, lease_types=None, years=None):
 
 def get_peer_comps(df, property_id, year, lease_types=None):
     """Return peer (non-AQUILA) deals for a given building and year."""
+    if df.empty or "property_id" not in df.columns:
+        return pd.DataFrame()
     mask = (
         (df["property_id"].astype(str) == str(property_id))
         & (df["year"] == year)
         & (~df["is_aquila"])
         & (df["ner"].notna())
     )
-    if lease_types:
+    if lease_types and "lease_type" in df.columns:
         mask &= df["lease_type"].isin(lease_types)
     return df[mask]
 

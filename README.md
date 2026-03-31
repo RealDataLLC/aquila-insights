@@ -140,6 +140,50 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 [Industrial Weighted Average Rent by Building Size [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_rent_by_size.html)
 
+## Retail
+
+### Market Fundamentals
+[Retail Vacancy Rate by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_vacancy_rate_by_submarket.html)
+
+[Retail NNN Rent by Submarket (RBA-Weighted) [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_nnn_rent_by_submarket.html)
+
+[Retail Net Absorption — Citywide [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_net_absorption_citywide.html)
+
+[Retail Occupancy Rate by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_occupancy_by_submarket.html)
+
+### Building Stock & Composition
+[Retail RBA by Building Age and Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_building_age_by_submarket.html)
+
+[Retail Property Type Mix by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_property_type_by_submarket.html)
+
+### Supply Pipeline & Growth
+[Retail Supply Pipeline by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_pipeline_by_submarket.html)
+
+[Retail Pipeline as % of Existing Inventory [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_pipeline_pct_by_submarket.html)
+
+[Retail Inventory Growth by Submarket (2018 vs 2025) [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_inventory_growth.html)
+
+### East Austin Spotlight
+[East Austin Retail NNN Rent vs Citywide [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_east_austin_rent.html)
+
+[East Austin Retail Occupancy vs Rent [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_east_austin_occ_vs_rent.html)
+
+### Submarket Deep Dives
+[Northeast Austin Retail Occupancy [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_northeast_occupancy.html)
+
+[Urban vs Suburban Retail Occupancy [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_urban_vs_suburban.html)
+
+[Suburban Retail Rent Growth Comparison [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_suburban_rent_growth.html)
+
+### Demographics & Retail Demand
+[Retail SF per Capita by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_sf_per_capita.html)
+
+[Population Growth vs Retail Pipeline [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_population_vs_pipeline.html)
+
+[Median Household Income vs NNN Rent [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_income_vs_rent.html)
+
+[Demographic Profile by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_demographic_profile.html)
+
 ## Economic Indicators
 
 ### Employment
@@ -287,6 +331,7 @@ All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.9.0** | 2026-03-26 | Solid logo watermark on all charts — changed default opacity from 0.7 to 1.0 in `add_aquila_logo()` and `write_chart_html()`; regenerated all 62 charts |
 | **6.8.0** | 2026-03-16 | Report styling overhaul — chart legends moved below charts (horizontal, centered); table pagination reduced to 30 rows/page with continuous row numbering across pages; building lists now include `#` column; TOC entry labels enlarged to 12pt; TOC section headers enlarged to 12pt; footer shows "Aquila Office/Industrial Report" on bottom-left of all pages (except title/TOC); disclaimer text full-width with 8pt right padding; long-term performance chart color swaps for clarity; industrial NNN rent chart legend moved to bottom |
 | **6.7.0** | 2026-03-13 | Office report submarket maps — `reports/map_builder.py` generates Plotly Scattermapbox maps from KMZ polygon data (13 submarkets); Citywide + 4 submarket maps embedded as base64 PNGs in KPI header pages; Mapbox "light" basemap with brand-colored polygons |
 | **6.6.0** | 2026-03-12 | Aquila Benefit dashboard tab — Skyline API connector (`aquila/connectors/skyline.py`), NER comparison module (`dashboards/aquila_benefit.py`); two-tab layout in office requirements dashboard (Requirements + Aquila Benefit) |

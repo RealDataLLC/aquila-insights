@@ -142,7 +142,7 @@ def main():
         fig.update_layout(
             **base_layout(
                 title=chart_title(
-                    "Jobs Created by Industry — Austin Region 2025",
+                    "Jobs Announced by Industry — Austin Region 2025",
                     f"Source: Austin Chamber of Commerce Relocations & Expansions Log · {total:,} total jobs announced"
                 ),
                 height=520,
@@ -409,7 +409,7 @@ def main():
         fig = go.Figure(data=[go.Table(
             columnwidth=[40, 200, 100, 220, 140],
             header=dict(
-                values=["#", "Company", "Jobs Created", "Industry", "Location"],
+                values=["#", "Company", "Jobs Announced", "Industry", "Location"],
                 fill_color=NAVY,
                 font=dict(family=AQUILA_FONT, size=13, color="white"),
                 align=["center", "left", "center", "left", "left"],
@@ -434,7 +434,7 @@ def main():
 
         fig.update_layout(
             title=chart_title(
-                "Top 10 Companies by Jobs Created — Austin 2025",
+                "Top 10 Companies by Jobs Announced — Austin 2025",
                 "Source: Austin Chamber of Commerce · Top 10 companies account for 70% of all announced jobs"
             ),
             plot_bgcolor="white",
