@@ -140,6 +140,50 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 [Industrial Weighted Average Rent by Building Size [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_rent_by_size.html)
 
+## Retail
+
+### Market Fundamentals
+[Retail Vacancy Rate by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_vacancy_rate_by_submarket.html)
+
+[Retail NNN Rent by Submarket (RBA-Weighted) [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_nnn_rent_by_submarket.html)
+
+[Retail Net Absorption — Citywide [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_net_absorption_citywide.html)
+
+[Retail Occupancy Rate by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_occupancy_by_submarket.html)
+
+### Building Stock & Composition
+[Retail RBA by Building Age and Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_building_age_by_submarket.html)
+
+[Retail Property Type Mix by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_property_type_by_submarket.html)
+
+### Supply Pipeline & Growth
+[Retail Supply Pipeline by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_pipeline_by_submarket.html)
+
+[Retail Pipeline as % of Existing Inventory [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_pipeline_pct_by_submarket.html)
+
+[Retail Inventory Growth by Submarket (2018 vs 2025) [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_inventory_growth.html)
+
+### East Austin Spotlight
+[East Austin Retail NNN Rent vs Citywide [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_east_austin_rent.html)
+
+[East Austin Retail Occupancy vs Rent [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_east_austin_occ_vs_rent.html)
+
+### Submarket Deep Dives
+[Northeast Austin Retail Occupancy [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_northeast_occupancy.html)
+
+[Urban vs Suburban Retail Occupancy [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_urban_vs_suburban.html)
+
+[Suburban Retail Rent Growth Comparison [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_suburban_rent_growth.html)
+
+### Demographics & Retail Demand
+[Retail SF per Capita by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_sf_per_capita.html)
+
+[Population Growth vs Retail Pipeline [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_population_vs_pipeline.html)
+
+[Median Household Income vs NNN Rent [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_income_vs_rent.html)
+
+[Demographic Profile by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_demographic_profile.html)
+
 ## Economic Indicators
 
 ### Employment
@@ -161,6 +205,32 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 ### Housing Indicators
 [Austin Housing Starts (Monthly) [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_housing_starts.html)
+
+## Census + Labor Market Intelligence
+
+### Submarket Demographics (Census ACS 5-Year + KMZ Spatial Join)
+[Population by Office Submarket [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_population_by_submarket.html)
+
+[Office-Using Occupations by Submarket [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_occupations_by_submarket.html)
+
+[Educational Attainment by Submarket [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_education_by_submarket.html)
+
+[Median Household Income by Submarket [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_income_by_submarket.html)
+
+### Office Employment Density (Census LODES + KMZ Spatial Join)
+[Office-Using Employment by Submarket — 2023 Snapshot [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/lodes_office_employment_by_submarket.html)
+
+[Office Employment Growth by Submarket 2015–2023 [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/lodes_office_employment_growth.html)
+
+### Business Formation Trends (BLS QCEW — Travis County)
+[Professional Services: Firms & Employment — Travis County [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/qcew_professional_services_travis.html)
+
+[Office Industry Sector Mix — Travis County [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/qcew_office_sector_mix.html)
+
+### MSA Comparisons
+[Population Growth: Austin vs. Sun Belt Peers [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_austin_vs_peers.html)
+
+[Office-Sector Job Growth: Austin vs. National [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/fred_office_sectors_indexed.html)
 
 ## Austin Economy
 
