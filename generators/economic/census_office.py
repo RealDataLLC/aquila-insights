@@ -759,6 +759,46 @@ def chart_d2_fred_sectors_indexed():
     print("  [OK] fred_office_sectors_indexed.html")
 
 
+def chart_d2b_fred_sectors_indexed_2020():
+    """D2b: Austin vs National office-sector job growth, indexed to April 2020."""
+    print("\n[D2b] Austin vs National Office Sectors (FRED, Apr 2020)...")
+    series = {
+        'AUST448PBSV':  ('Austin Prof & Business Svcs', NAVY,       'solid'),
+        'AUST448INFO':  ('Austin Information / Tech',   COPPER,     'solid'),
+        'USPBS':        ('US Prof & Business Svcs',     NAVY,       'dash'),
+        'USINFO':       ('US Information / Tech',       COPPER,     'dash'),
+    }
+    base_date = pd.Timestamp('2020-04-01')
+    fig = go.Figure()
+    for sid, (label, color, dash) in series.items():
+        df = fetch_fred_series(sid, label)
+        if df.empty:
+            continue
+        df = df[df['date'] >= base_date].sort_values('date')
+        base_val = df[label].iloc[0] if not df.empty else None
+        if base_val is None or base_val == 0:
+            continue
+        df['indexed'] = df[label] / base_val * 100
+        fig.add_trace(go.Scatter(
+            x=df['date'], y=df['indexed'],
+            name=label, mode='lines',
+            line=dict(color=color, width=2.5 if dash == 'solid' else 1.5, dash=dash),
+        ))
+
+    fig.update_layout(
+        **_base_layout(
+            'Office-Sector Job Growth: Austin vs. National (Apr 2020 = 100)',
+            'Employment Index (Apr 2020 = 100)',
+        ),
+        annotations=[_source_annotation(
+            'Source: Bureau of Labor Statistics via FRED. Solid = Austin MSA; Dashed = National.',
+        )],
+    )
+    fig.add_hline(y=100, line_dash='dot', line_color=CONCRETE, line_width=1)
+    write_chart_html(fig, _out('fred_office_sectors_indexed_apr2020.html'))
+    print("  [OK] fred_office_sectors_indexed_apr2020.html")
+
+
 # =============================================================================
 # Main
 # =============================================================================
@@ -791,6 +831,7 @@ def main():
     chart_d1_peer_population()
     chart_d1b_peer_population_2019()
     chart_d2_fred_sectors_indexed()
+    chart_d2b_fred_sectors_indexed_2020()
 
     print("\n" + "=" * 70)
     print("Done. Charts written to:", OUTPUT_DIR)
