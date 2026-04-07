@@ -668,6 +668,57 @@ def chart_d1_peer_population():
     print("  [OK] census_austin_vs_peers.html")
 
 
+def chart_d1b_peer_population_2019():
+    """D1b: Austin vs peer cities population growth, indexed to 2019."""
+    print("\n[D1b] Austin vs Peer Cities Population (Indexed to 2019)...")
+    years = list(range(2019, 2024))
+    msa_data = {msa: {} for msa in PEER_MSAS}
+
+    for yr in years:
+        for msa_fips in PEER_MSAS:
+            geo = f"metropolitan statistical area/micropolitan statistical area:{msa_fips}"
+            try:
+                df = _fetch_acs_raw(yr, [POPULATION], geo, 'acs1')
+                if not df.empty:
+                    val = pd.to_numeric(df.iloc[0][POPULATION], errors='coerce')
+                    msa_data[msa_fips][yr] = val
+                time.sleep(0.2)
+            except Exception:
+                pass
+
+    base_yr = 2019
+    fig = go.Figure()
+    for msa_fips, city_name in PEER_MSAS.items():
+        pop_map = msa_data[msa_fips]
+        if base_yr not in pop_map or pop_map.get(base_yr) is None:
+            continue
+        base_val = pop_map[base_yr]
+        if not base_val or np.isnan(float(base_val)):
+            continue
+        yr_list = sorted(k for k, v in pop_map.items() if v is not None and not np.isnan(float(v)))
+        idx_vals = [pop_map[y] / base_val * 100 for y in yr_list]
+        is_austin = (city_name == 'Austin')
+        fig.add_trace(go.Scatter(
+            x=yr_list, y=idx_vals,
+            name=city_name, mode='lines+markers',
+            line=dict(color=PEER_COLORS[city_name], width=3 if is_austin else 1.5),
+            marker=dict(size=7 if is_austin else 5),
+        ))
+
+    fig.update_layout(
+        **_base_layout(
+            f'Population Growth: Austin vs. Sun Belt Peers (Indexed to {base_yr})',
+            f'Population Index ({base_yr} = 100)',
+        ),
+        annotations=[_source_annotation(
+            'Source: U.S. Census Bureau ACS 1-Year Estimates (MSA level)',
+        )],
+    )
+    fig.add_hline(y=100, line_dash='dot', line_color=CONCRETE, line_width=1)
+    write_chart_html(fig, _out('census_austin_vs_peers_2019.html'))
+    print("  [OK] census_austin_vs_peers_2019.html")
+
+
 def chart_d2_fred_sectors_indexed():
     """D2: Austin vs National office-sector job growth, indexed to Jan 2015."""
     print("\n[D2] Austin vs National Office Sectors (FRED)...")
@@ -738,6 +789,7 @@ def main():
 
     # GROUP D — MSA Comparisons
     chart_d1_peer_population()
+    chart_d1b_peer_population_2019()
     chart_d2_fred_sectors_indexed()
 
     print("\n" + "=" * 70)

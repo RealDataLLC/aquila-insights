@@ -189,6 +189,8 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 ### Employment
 [Austin Employment - Office Sectors [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_employment_office_sectors.html)
 
+[Austin Employment - Office Sectors Indexed to April 2020 [2026-04-07]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/fred_office_sectors_indexed_2020.html)
+
 [Austin Employment - Industrial Sector [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_employment_industrial.html)
 
 [Austin Employment - Retail Sector [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/austin_employment_retail.html)
@@ -229,6 +231,8 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 ### MSA Comparisons
 [Population Growth: Austin vs. Sun Belt Peers [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_austin_vs_peers.html)
+
+[Population Growth: Austin vs. Sun Belt Peers - Indexed to 2019 [2026-04-07]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/census_austin_vs_peers_2019.html)
 
 [Office-Sector Job Growth: Austin vs. National [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/fred_office_sectors_indexed.html)
 
