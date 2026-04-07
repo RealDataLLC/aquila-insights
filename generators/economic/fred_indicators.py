@@ -81,7 +81,7 @@ def fetch_fred_series(series_id, series_name=None):
 
 def generate_office_employment_chart():
     """Generate Austin Employment - Office Sectors chart"""
-    print("\n[1/8] Generating: Austin Employment - Office Sectors...")
+    print("\n[1/9] Generating: Austin Employment - Office Sectors...")
 
     # Fetch employment data for office sectors
     df_prof = fetch_fred_series('AUST448PBSV', 'Professional & Business Services')
@@ -117,9 +117,77 @@ def generate_office_employment_chart():
     print("    [OK] Saved: charts/austin_employment_office_sectors.html")
 
 
+def generate_office_employment_indexed_chart():
+    """Generate Austin Employment - Office Sectors (Indexed to April 2020) chart"""
+    print("\n[2/9] Generating: Austin Employment - Office Sectors (Indexed to April 2020)...")
+
+    # Fetch employment data for office sectors
+    df_prof = fetch_fred_series('AUST448PBSV', 'Professional & Business Services')
+    df_fire = fetch_fred_series('AUST448FIRE', 'Financial Activities')
+    df_govt = fetch_fred_series('AUST448GOVT', 'Government')
+    df_info = fetch_fred_series('AUST448INFO', 'Information (Tech)')
+
+    # Check all series fetched successfully
+    if any(df.empty for df in [df_prof, df_fire, df_govt, df_info]):
+        print("    Warning: One or more series failed to fetch, skipping indexed chart")
+        return
+
+    # Merge all series on date (inner join to keep only overlapping dates)
+    df_office = df_prof.merge(df_fire, on='date', how='inner') \
+                       .merge(df_govt, on='date', how='inner') \
+                       .merge(df_info, on='date', how='inner')
+
+    # Filter to April 2020 onward
+    df_office = df_office[df_office['date'] >= '2020-04-01'].reset_index(drop=True)
+
+    if len(df_office) > 0:
+        # Index all series to 100 at April 2020 (first row after filter)
+        base_prof = df_office['Professional & Business Services'].iloc[0]
+        base_fire = df_office['Financial Activities'].iloc[0]
+        base_govt = df_office['Government'].iloc[0]
+        base_info = df_office['Information (Tech)'].iloc[0]
+
+        df_office['Professional & Business Services (Index)'] = (df_office['Professional & Business Services'] / base_prof) * 100
+        df_office['Financial Activities (Index)'] = (df_office['Financial Activities'] / base_fire) * 100
+        df_office['Government (Index)'] = (df_office['Government'] / base_govt) * 100
+        df_office['Information (Tech) (Index)'] = (df_office['Information (Tech)'] / base_info) * 100
+
+        # Convert to long format
+        df_office_long = df_office[
+            ['date',
+             'Professional & Business Services (Index)',
+             'Financial Activities (Index)',
+             'Government (Index)',
+             'Information (Tech) (Index)']
+        ].melt(
+            id_vars=['date'],
+            var_name='Sector',
+            value_name='Employment Index (Base 100 = April 2020)'
+        )
+
+        # Create chart
+        fig = aquila_styled_line_chart(
+            df_office_long,
+            x='date',
+            y='Employment Index (Base 100 = April 2020)',
+            color='Sector',
+            title='Austin Employment - Office Sectors (Indexed to April 2020)',
+            height=800
+        )
+
+        fig.update_yaxes(rangemode='tozero')
+
+        # Save chart
+        os.makedirs("charts/economic-indicators", exist_ok=True)
+        write_chart_html(fig, 'charts/economic-indicators/fred_office_sectors_indexed_2020.html')
+        print("    [OK] Saved: charts/economic-indicators/fred_office_sectors_indexed_2020.html")
+    else:
+        print("    Warning: No data available from April 2020 onward")
+
+
 def generate_industrial_employment_chart():
     """Generate Austin Employment - Industrial Sector chart"""
-    print("\n[2/8] Generating: Austin Employment - Industrial Sector...")
+    print("\n[3/9] Generating: Austin Employment - Industrial Sector...")
 
     # Fetch industrial employment data
     df_industrial = fetch_fred_series('AUST448TRAD', 'Trade, Transportation & Utilities')
@@ -143,7 +211,7 @@ def generate_industrial_employment_chart():
 
 def generate_retail_employment_chart():
     """Generate Austin Employment - Retail Sector chart"""
-    print("\n[3/8] Generating: Austin Employment - Retail Sector...")
+    print("\n[4/9] Generating: Austin Employment - Retail Sector...")
 
     # Fetch retail employment data
     df_retail = fetch_fred_series('AUST448LEIH', 'Leisure & Hospitality')
@@ -167,7 +235,7 @@ def generate_retail_employment_chart():
 
 def generate_tech_comparison_chart():
     """Generate Austin vs National Tech Employment Growth chart"""
-    print("\n[4/8] Generating: Austin vs National Tech Employment Growth...")
+    print("\n[5/9] Generating: Austin vs National Tech Employment Growth...")
 
     # Fetch tech employment data
     df_austin_tech = fetch_fred_series('AUST448INFO', 'Austin Tech')
@@ -213,7 +281,7 @@ def generate_tech_comparison_chart():
 
 def generate_wage_comparison_chart():
     """Generate Austin vs Dallas vs National Wage Growth chart"""
-    print("\n[5/7] Generating: Austin vs Dallas vs National Wage Growth...")
+    print("\n[6/9] Generating: Austin vs Dallas vs National Wage Growth...")
 
     # Fetch hourly wage data for Austin, Dallas, and Nation
     df_austin_wage = fetch_fred_series('SMU48124200500000003', 'Austin Hourly Wage')
@@ -263,7 +331,7 @@ def generate_wage_comparison_chart():
 
 def generate_interest_rates_chart():
     """Generate Interest Rates - Treasury & Mortgage chart"""
-    print("\n[6/7] Generating: Interest Rates - Treasury & Mortgage...")
+    print("\n[7/9] Generating: Interest Rates - Treasury & Mortgage...")
 
     # Fetch interest rate data
     df_treasury = fetch_fred_series('DGS10', '10-Year Treasury')
@@ -299,7 +367,7 @@ def generate_interest_rates_chart():
 
 def generate_inflation_chart():
     """Generate Inflation & PPI - CPI and Office Construction Costs chart"""
-    print("\n[7/7] Generating: Inflation & PPI - CPI and Office Construction Costs...")
+    print("\n[8/9] Generating: Inflation & PPI - CPI and Office Construction Costs...")
 
     # Fetch inflation and price index data
     df_core_cpi = fetch_fred_series('CPILFESL', 'Core CPI')
@@ -372,9 +440,10 @@ def update_readme_dates():
     with open('README.md', 'r') as f:
         content = f.read()
 
-    # Define regex patterns for all 7 charts
+    # Define regex patterns for all 8 charts
     patterns = [
-        (r'(\[Austin Employment - Office Sectors\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
+        (r'(\[Austin Employment - Office Sectors\s*(?!Indexed)\[)[^\]]+(\]\()', f'\\1{today}\\2'),
+        (r'(\[Austin Employment - Office Sectors Indexed to April 2020\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin Employment - Industrial Sector\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin Employment - Retail Sector\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
         (r'(\[Austin vs National Tech Employment Growth\s*\[)[^\]]+(\]\()', f'\\1{today}\\2'),
@@ -413,8 +482,9 @@ def main():
 
         print(f"[OK] API key loaded")
 
-        # Generate all 7 charts
+        # Generate all 8 charts
         generate_office_employment_chart()
+        generate_office_employment_indexed_chart()
         generate_industrial_employment_chart()
         generate_retail_employment_chart()
         generate_tech_comparison_chart()
@@ -423,7 +493,7 @@ def main():
         generate_inflation_chart()
 
         print("\n" + "=" * 70)
-        print("[OK] SUCCESS: All 7 FRED economic indicator charts updated")
+        print("[OK] SUCCESS: All 8 FRED economic indicator charts updated")
         print("=" * 70)
 
         # Update README if requested
@@ -432,6 +502,7 @@ def main():
 
         print("\nGenerated charts:")
         print("  • austin_employment_office_sectors.html")
+        print("  • fred_office_sectors_indexed_2020.html")
         print("  • austin_employment_industrial.html")
         print("  • austin_employment_retail.html")
         print("  • austin_vs_national_tech_employment.html")
