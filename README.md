@@ -236,6 +236,8 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 [Office-Sector Job Growth: Austin vs. National [2026-03-31]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/fred_office_sectors_indexed.html)
 
+[Office-Sector Job Growth: Austin vs. National - Indexed to Apr 2020 [2026-04-07]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/fred_office_sectors_indexed_apr2020.html)
+
 ## Austin Economy
 
 ### Industries and Companies That Came to Austin in 2025
