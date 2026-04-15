@@ -238,6 +238,18 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 [Office-Sector Job Growth: Austin vs. National - Indexed to Apr 2020 [2026-04-07]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/fred_office_sectors_indexed_apr2020.html)
 
+## Migration Analysis — Money vs. Movers
+
+[Money vs. Movers — Full Report [2026-04-15]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/migration_money_vs_movers.html) - Combined 4-page report with charts and commentary
+
+[The Divergence: Movers vs. Dollars [2026-04-15]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/migration_divergence.html) - U-Haul rank vs IRS Net AGI inflow by state
+
+[Net AGI per Net Inbound Household [2026-04-15]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/migration_dollars_per_door.html) - Dollars per door: income weight of each inbound household
+
+[Net AGI per Inbound Mover [2026-04-15]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/migration_capital_per_mover.html) - US choropleth: net wealth captured per person who moved in
+
+[Net AGI per Inbound Mover, by County [2026-04-15]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/migration_austin_split.html) - Austin MSA counties vs Texas and Florida comps
+
 ## Austin Economy
 
 ### Industries and Companies That Came to Austin in 2025
