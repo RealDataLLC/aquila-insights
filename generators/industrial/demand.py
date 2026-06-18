@@ -22,6 +22,11 @@ from dotenv import load_dotenv
 from aquila_graphing_tools import AQUILA_COLORS, AQUILA_FONT
 from aquila.charts import write_chart_html
 
+# Cap TITM data at the end of this quarter so the demand charts line up with the
+# quarterly Supabase charts. TITM is a live sheet, so without a cap it bleeds
+# into the current (partial) quarter. Update as new quarters close.
+END_QUARTER = '2026 Q1'
+
 
 def main():
     # Load environment variables
@@ -83,7 +88,7 @@ def main():
     # ============================================================================
     print("\nStep 2: Reading data from TITM tab...")
 
-    titm_ws = sheet.get_worksheet(1)  # Index 1 is TITM
+    titm_ws = sheet.worksheet('TITM')  # Look up by name (tab order changes)
     rows = titm_ws.get_all_values()
     headers = rows[0]
     df = pd.DataFrame(rows[1:], columns=headers)
@@ -125,10 +130,13 @@ def main():
     # Filter out rows with no valid data
     df = df[df['date'].notna() & df['sf_avg'].notna()].copy()
 
-    # Restrict to deals after 2021
-    df = df[df['date'] >= pd.Timestamp('2022-01-01')].copy()
+    # Restrict to 2022 Q1 through END_QUARTER (exclude the current partial quarter)
+    end_year, end_q = int(END_QUARTER.split()[0]), int(END_QUARTER.split()[1][1:])
+    end_cutoff = (pd.Timestamp(end_year + 1, 1, 1) if end_q == 4
+                  else pd.Timestamp(end_year, end_q * 3 + 1, 1))
+    df = df[(df['date'] >= pd.Timestamp('2022-01-01')) & (df['date'] < end_cutoff)].copy()
 
-    print(f"    - Valid rows (with date and SF) after 2021: {len(df)}")
+    print(f"    - Valid rows (2022 Q1 through {END_QUARTER}): {len(df)}")
     print(f"    - Date range: {df['date'].min().date()} to {df['date'].max().date()}")
     print(f"    - SF range: {df['sf_avg'].min():,.0f} to {df['sf_avg'].max():,.0f}")
     print(f"    - Median SF: {df['sf_avg'].median():,.0f}")

@@ -212,7 +212,7 @@ from aquila.git import commit_and_push_all
 
 **Office Market Metrics** (`market_metrics.py`): 12 charts (4 submarkets x 3 types). CBD/NW/SW use `table_type="competitive set"`, Domain uses `table_type="micromarket"`. Charts: vacancy rate (line), rental rate (stacked bar: Base Rent + Opex), opex (line).
 
-**Industrial Demand** (`demand.py`): TITM Google Sheet, Tab 1. Size bins: Sub 25k, 25k-50k, 50k-100k, 100k-250k, Mega (250k+).
+**Industrial Demand** (`demand.py`): TITM Google Sheet, looked up by tab name `'TITM'` (tab order changes — never hardcode the index). Size bins: Sub 25k, 25k-50k, 50k-100k, 100k-250k, Mega (250k+). TITM is a live sheet, so data is capped at the `END_QUARTER` constant (currently `2026 Q1`) to keep the charts from bleeding into the partial current quarter — bump it as new quarters close.
 
 **Industrial NNN Rent** (`nnn_rent.py`): Submarkets: Northeast, Southeast, Williamson County. Date range starts 2022 Q1; update `END_QUARTER` constant for new quarters.
 
@@ -513,8 +513,8 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 ---
 
-**Last Updated:** 2026-03-26
-**Document Version:** 6.9.0
+**Last Updated:** 2026-06-18
+**Document Version:** 6.10.0
 
 ---
 

@@ -121,24 +121,24 @@ python reports/generate_industrial_report.py --skip-charts
 Update `reports/industrial_report_config.py` with the new quarter before generating. Source data is read from `Q:\0-Quarterly Reports\0-Industrial\{YEAR} Q{N}\`.
 
 ### Tenant Demand (TITM)
-[Industrial Demand by Tenant Size [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_demand_by_tenant_size.html) - Quarterly demand grouped by size category with total demand line
+[Industrial Demand by Tenant Size [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_demand_by_tenant_size.html) - Quarterly demand grouped by size category with total demand line
 
-[Industrial Demand by Use Type [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_demand_by_use_type.html) - Distribution, Manufacturing, R&D/Lab, etc.
+[Industrial Demand by Use Type [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_demand_by_use_type.html) - Distribution, Manufacturing, R&D/Lab, etc.
 
-[Industrial Requirements by Size Range [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_by_size_range.html) - Total cumulative SF by size category
+[Industrial Requirements by Size Range [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_by_size_range.html) - Total cumulative SF by size category
 
-[Industrial Requirements Total SF [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_sf_total.html) - Monthly total SF (Low/High)
+[Industrial Requirements Total SF [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_sf_total.html) - Monthly total SF (Low/High)
 
-[Industrial Requirements Average SF [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_sf_avg.html) - Monthly average SF with record count
+[Industrial Requirements Average SF [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_sf_avg.html) - Monthly average SF with record count
 
 ### Market Metrics
-[NNN Rental Rates by Submarket [2026-03-16]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_nnn_rent_by_submarket.html)
+[NNN Rental Rates by Submarket [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_nnn_rent_by_submarket.html)
 
-[Vacancy Rate by Submarket [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/vacancy_rate_industrial.html)
+[Vacancy Rate by Submarket [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/vacancy_rate_industrial.html)
 
-[Industrial Occupancy Rate by Building Size [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_occupancy_by_size.html)
+[Industrial Occupancy Rate by Building Size [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_occupancy_by_size.html)
 
-[Industrial Weighted Average Rent by Building Size [2026-03-04]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_rent_by_size.html)
+[Industrial Weighted Average Rent by Building Size [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_rent_by_size.html)
 
 ## Retail
 
@@ -375,6 +375,7 @@ All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.10.0** | 2026-06-18 | Industrial charts refreshed to Q1 2026 — all 9 industrial charts regenerated; `nnn_rent.py` `END_QUARTER` bumped to `2026 Q1`; `demand.py` now looks up the TITM tab by name (tabs were reordered) and caps data at `END_QUARTER` so the live TITM charts no longer bleed into the partial current quarter |
 | **6.9.0** | 2026-03-26 | Solid logo watermark on all charts — changed default opacity from 0.7 to 1.0 in `add_aquila_logo()` and `write_chart_html()`; regenerated all 62 charts |
 | **6.8.0** | 2026-03-16 | Report styling overhaul — chart legends moved below charts (horizontal, centered); table pagination reduced to 30 rows/page with continuous row numbering across pages; building lists now include `#` column; TOC entry labels enlarged to 12pt; TOC section headers enlarged to 12pt; footer shows "Aquila Office/Industrial Report" on bottom-left of all pages (except title/TOC); disclaimer text full-width with 8pt right padding; long-term performance chart color swaps for clarity; industrial NNN rent chart legend moved to bottom |
 | **6.7.0** | 2026-03-13 | Office report submarket maps — `reports/map_builder.py` generates Plotly Scattermapbox maps from KMZ polygon data (13 submarkets); Citywide + 4 submarket maps embedded as base64 PNGs in KPI header pages; Mapbox "light" basemap with brand-colored polygons |
