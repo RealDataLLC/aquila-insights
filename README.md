@@ -75,31 +75,31 @@ Submarket boundary maps (Citywide, CBD, NW, SW, East) are generated from KMZ pol
 [TI Allowance by Lease Type [2026-03-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_ti_by_lease_type.html) - Average TI per SF by lease type (New/Renewal/Expansion/Sublease), office only
 
 #### Vacancy Rates (Competitive Set)
-[Vacancy Rate — CBD [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_cbd.html)
+[Vacancy Rate — CBD [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_cbd.html)
 
-[Vacancy Rate — Northwest [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_northwest.html)
+[Vacancy Rate — Northwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_northwest.html)
 
-[Vacancy Rate — Southwest [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_southwest.html)
+[Vacancy Rate — Southwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_southwest.html)
 
-[Vacancy Rate — The Domain [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_domain.html)
+[Vacancy Rate — The Domain [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_domain.html)
 
 #### Rental Rates (Competitive Set)
-[Rental Rate — CBD [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_cbd.html)
+[Rental Rate — CBD [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_cbd.html)
 
-[Rental Rate — Northwest [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_northwest.html)
+[Rental Rate — Northwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_northwest.html)
 
-[Rental Rate — Southwest [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_southwest.html)
+[Rental Rate — Southwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_southwest.html)
 
-[Rental Rate — The Domain [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_domain.html)
+[Rental Rate — The Domain [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_domain.html)
 
 #### Operating Expenses (Competitive Set)
-[Operating Expenses — CBD [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_cbd.html)
+[Operating Expenses — CBD [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_cbd.html)
 
-[Operating Expenses — Northwest [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_northwest.html)
+[Operating Expenses — Northwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_northwest.html)
 
-[Operating Expenses — Southwest [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_southwest.html)
+[Operating Expenses — Southwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_southwest.html)
 
-[Operating Expenses — The Domain [2026-05-29]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_domain.html)
+[Operating Expenses — The Domain [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_domain.html)
 
 
 ## Industrial
@@ -132,7 +132,7 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 [Industrial Requirements Average SF [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_requirements_sf_avg.html) - Monthly average SF with record count
 
 ### Market Metrics
-[NNN Rental Rates by Submarket [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_nnn_rent_by_submarket.html)
+[NNN Rental Rates by Submarket [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/industrial/industrial_nnn_rent_by_submarket.html)
 
 [Vacancy Rate by Submarket [2026-06-18]](https://realdatallc.github.io/aquila-insights/charts/industrial/vacancy_rate_industrial.html)
 

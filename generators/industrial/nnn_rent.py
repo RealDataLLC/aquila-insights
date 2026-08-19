@@ -3,7 +3,7 @@ import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..',
 """
 Create Industrial NNN Rental Rates Chart
 Generates a line chart of average NNN rental rates for Northeast, Southeast,
-and Williamson County submarkets from 2022 Q1 to 2026 Q1.
+and Williamson submarkets from 2022 Q1 to 2026 Q2.
 
 Usage:
     python3 create_industrial_nnn_rent_chart.py
@@ -22,16 +22,16 @@ from aquila.charts import write_chart_html
 load_dotenv('aquila_graph.env')
 
 # -- Config ------------------------------------------------------------------
-SUBMARKETS = ['Northeast', 'Southeast', 'Williamson County']
+SUBMARKETS = ['Northeast', 'Southeast', 'Williamson']
 START_QUARTER = '2022 Q1'
-END_QUARTER   = '2026 Q1'          # Update this as new data arrives
+END_QUARTER   = '2026 Q2'          # Update this as new data arrives
 OUTPUT_PATH   = 'charts/industrial/industrial_nnn_rent_by_submarket.html'
 
 # Northeast=Navy, Southeast=Glass Blue, Williamson=Copper (avoids two similar blues on one chart)
 SUBMARKET_COLORS = {
-    'Northeast':        AQUILA_COLORS[0],   # Navy
-    'Southeast':        AQUILA_COLORS[1],   # Glass Blue
-    'Williamson County': AQUILA_COLORS[4],  # Copper
+    'Northeast':  AQUILA_COLORS[0],   # Navy
+    'Southeast':  AQUILA_COLORS[1],   # Glass Blue
+    'Williamson': AQUILA_COLORS[4],   # Copper
 }
 
 
