@@ -143,6 +143,8 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 ## Retail
 
 ### Market Fundamentals
+[Georgetown Retail Build-Out - Full Report [2026-09-11]](https://realdatallc.github.io/aquila-insights/charts/retail/georgetown_retail_report.html)
+
 [Georgetown Retail: New Supply vs Net Absorption [2026-09-11]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_georgetown_supply_vs_absorption.html)
 
 [Georgetown Share of Metro Retail Supply and Absorption [2026-09-11]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_georgetown_metro_share.html)
