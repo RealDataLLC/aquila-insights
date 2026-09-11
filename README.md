@@ -143,6 +143,16 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 ## Retail
 
 ### Market Fundamentals
+[Georgetown Retail: New Supply vs Net Absorption [2026-09-11]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_georgetown_supply_vs_absorption.html)
+
+[Georgetown Share of Metro Retail Supply and Absorption [2026-09-11]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_georgetown_metro_share.html)
+
+[Georgetown vs Rest of Austin - Indexed Retail Growth [2026-09-11]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_georgetown_indexed_growth.html)
+
+[Retail Inventory Growth vs Absorption Capture by Submarket [2026-09-11]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_georgetown_growth_vs_capture.html)
+
+[Retail Pipeline Depth - Years of Absorption by Submarket [2026-09-11]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_georgetown_pipeline_depth.html)
+
 [Retail Vacancy Rate by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_vacancy_rate_by_submarket.html)
 
 [Retail NNN Rent by Submarket (RBA-Weighted) [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_nnn_rent_by_submarket.html)
