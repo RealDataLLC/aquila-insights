@@ -13,6 +13,7 @@
      Falls back to Jost (a Futura-class geometric sans) when Futura is absent.
      Copy follows ASD-STE100 Simplified Technical English. */
   :root{
+    color-scheme:light;
     --paper:#FFFFFF;
     --panel:#FFFFFF;
     --band:#F7F8F9;
@@ -35,26 +36,6 @@
     --grid:#E8E8E8;
     --logo-filter:none;
     --aq:"Futura LT Pro",Futura,Jost,"Century Gothic",Arial,sans-serif;
-  }
-  @media (prefers-color-scheme:dark){
-    :root:not([data-theme="light"]){
-      --paper:#0F1626; --panel:#172344; --band:#1E2C51; --navy:#172344;
-      --ink:#E6EBF3; --ink-2:#C3CDDE; --muted:#93A1B9; --concrete:#8A95AB;
-      --hairline:#2A3757; --hairline-strong:#3B4B72;
-      --copper:#DEB76D; --brass:#DEB76D; --signal:#E08585; --greenspace:#A8C083;
-      --copper-soft:#33302A; --signal-soft:#38222A;
-      --s1:#C2DAF1; --s2:#DEB76D; --s2-edge:#DEB76D;
-      --grid:#26324B; --logo-filter:brightness(0) invert(1);
-    }
-  }
-  :root[data-theme="dark"]{
-    --paper:#0F1626; --panel:#172344; --band:#1E2C51; --navy:#172344;
-    --ink:#E6EBF3; --ink-2:#C3CDDE; --muted:#93A1B9; --concrete:#8A95AB;
-    --hairline:#2A3757; --hairline-strong:#3B4B72;
-    --copper:#DEB76D; --brass:#DEB76D; --signal:#E08585; --greenspace:#A8C083;
-    --copper-soft:#33302A; --signal-soft:#38222A;
-    --s1:#C2DAF1; --s2:#DEB76D; --s2-edge:#DEB76D;
-    --grid:#26324B; --logo-filter:brightness(0) invert(1);
   }
 
   *{box-sizing:border-box}
