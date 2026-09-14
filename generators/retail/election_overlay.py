@@ -61,6 +61,9 @@ POST_ELECTION = {
 }
 
 
+SOURCE = ('Source: CoStar via AQUILA market data, Existing inventory. Election dates: U.S. general elections. Chart: AQUILA Commercial.')
+
+
 # -- Helpers -------------------------------------------------------------------
 
 def _quarter_sort_key(q_str):
@@ -69,7 +72,7 @@ def _quarter_sort_key(q_str):
     return int(m.group(1)) + int(m.group(2)) / 10 if m else 0
 
 
-def _shared_layout(title_text, y_title, height=580, subtitle=None):
+def _shared_layout(title_text, y_title, height=580, subtitle=None, source=None):
     """Title centred per brand; subtitle left-aligned, legend below the plot.
 
     add_aquila_logo() parks the watermark in the top-right margin at y=1.02, so
@@ -81,6 +84,11 @@ def _shared_layout(title_text, y_title, height=580, subtitle=None):
         annotations.append(dict(
             text=subtitle, xref='paper', yref='paper', x=0, xanchor='left', y=1.075, yanchor='bottom',
             showarrow=False, align='left', font=dict(family=AQUILA_FONT, size=12, color=CONCRETE)))
+    if source:
+        # Below the legend and the rotated tick labels; margin sized to fit.
+        annotations.append(dict(
+            text=source, xref='paper', yref='paper', x=0, xanchor='left', y=-0.36, yanchor='top',
+            showarrow=False, align='left', font=dict(family=AQUILA_FONT, size=10, color=CONCRETE)))
 
     return dict(
         title=dict(text=title_text, font=dict(family=AQUILA_FONT, size=18, color=NAVY),
@@ -95,7 +103,7 @@ def _shared_layout(title_text, y_title, height=580, subtitle=None):
                     orientation='h', yanchor='top', y=-0.22, x=0.5, xanchor='center'),
         plot_bgcolor='white', paper_bgcolor='white',
         font=dict(family=AQUILA_FONT, color=NAVY),
-        height=height, margin=dict(l=85, r=60, t=125, b=115),
+        height=height, margin=dict(l=85, r=60, t=125, b=160),
         hovermode='x unified',
     )
 
@@ -168,6 +176,7 @@ def chart_election_overlay(df):
     layout = _shared_layout(
         'Austin Retail Absorption Does Not Track the Election Calendar',
         'Net absorption (SF)',
+        source=SOURCE,
         subtitle=(f"Post-election quarters rank "
                   f"{', '.join(str(r) for r in df[df['is_post']]['rank'])} of {n}<br>"
                   f"Two midterms, both divided government: 2019 Q1 ranked "

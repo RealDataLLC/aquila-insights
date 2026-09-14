@@ -80,10 +80,19 @@ ZORI_URL = ('https://files.zillowstatic.com/research/public_csvs/zori/'
 ZORI_METRO = 'Austin, TX'
 ZORI_BENCHMARK = 'United States'
 
+# Printed on every chart. Per-chart overrides passed to _shared_layout(source=).
+SOURCE_FRED = 'Source: Realtor.com via FRED, Austin metro (CBSA 12420). Chart: AQUILA Commercial.'
+SOURCE_FRED_FHFA = ('Source: Realtor.com and FHFA all-transactions index via FRED, '
+                    'Austin metro (CBSA 12420). Chart: AQUILA Commercial.')
+SOURCE_CENSUS = ('Source: U.S. Census Bureau building permits via FRED (AUST448BPPRIV). '
+                 'Chart: AQUILA Commercial.')
+SOURCE_ZORI = ('Source: Zillow Observed Rent Index (ZORI), smoothed, all home types. '
+               'Chart: AQUILA Commercial.')
+
 
 # -- Helpers -------------------------------------------------------------------
 
-def _shared_layout(title_text, y_title, height=580, subtitle=None):
+def _shared_layout(title_text, y_title, height=580, subtitle=None, source=None):
     """Title centred per brand; subtitle left-aligned, legend below the plot.
 
     add_aquila_logo() parks the watermark in the top-right margin at y=1.02, so
@@ -95,6 +104,11 @@ def _shared_layout(title_text, y_title, height=580, subtitle=None):
         annotations.append(dict(
             text=subtitle, xref='paper', yref='paper', x=0, xanchor='left', y=1.075, yanchor='bottom',
             showarrow=False, align='left', font=dict(family=AQUILA_FONT, size=12, color=CONCRETE)))
+    if source:
+        # Sits below the legend (y=-0.16); bottom margin is sized to fit both.
+        annotations.append(dict(
+            text=source, xref='paper', yref='paper', x=0, xanchor='left', y=-0.26, yanchor='top',
+            showarrow=False, align='left', font=dict(family=AQUILA_FONT, size=10, color=CONCRETE)))
 
     return dict(
         title=dict(text=title_text, font=dict(family=AQUILA_FONT, size=18, color=NAVY),
@@ -109,7 +123,7 @@ def _shared_layout(title_text, y_title, height=580, subtitle=None):
                     orientation='h', yanchor='top', y=-0.16, x=0.5, xanchor='center'),
         plot_bgcolor='white', paper_bgcolor='white',
         font=dict(family=AQUILA_FONT, color=NAVY),
-        height=height, margin=dict(l=80, r=130, t=125, b=95),
+        height=height, margin=dict(l=80, r=130, t=125, b=135),
         hovermode='x unified',
     )
 
@@ -210,7 +224,7 @@ def chart_rent_change(z):
                 f"{y.min():+.1%} in {y.idxmin():%b %Y}<br>"
                 f"Now {y.iloc[-1]:+.1%} — negative for {run} straight months, but closing on the US")
     layout = _shared_layout('Austin Rent Growth Went From First to Last',
-                            'Rent change, year over year', subtitle=subtitle)
+                            'Rent change, year over year', subtitle=subtitle, source=SOURCE_ZORI)
     layout['yaxis']['tickformat'] = '+.0%'
     fig.update_layout(**layout)
     # CONCRETE sits under 3:1 against white, so both series are direct-labelled.
@@ -238,7 +252,7 @@ def chart_rent_gap(z):
     subtitle = (f"Worst gap {g.min():+.1f} points in {g.idxmin():%b %Y}; now {g.iloc[-1]:+.1f}<br>"
                 f"Austin still trails the national rate, by less than half as much")
     layout = _shared_layout('How Far Austin Rent Growth Trails the Nation',
-                            'Percentage points vs US', subtitle=subtitle)
+                            'Percentage points vs US', subtitle=subtitle, source=SOURCE_ZORI)
     fig.update_layout(**layout)
     _label(fig, d.index[-1], g.iloc[-1], f"{g.iloc[-1]:+.1f} pp", NAVY)
     return fig
@@ -278,7 +292,7 @@ def chart_asking_vs_achieved(monthly, hpi):
                 f"achieved is {hpi.iloc[-1] / hpi_pk - 1:+.0%}<br>"
                 f"Over the last year asking fell 9.8% while achieved rose 0.3%")
     layout = _shared_layout('Austin Housing: Asking Prices Are Not Sale Prices',
-                            f'Index ({INDEX_BASE} = 100)', subtitle=subtitle)
+                            f'Index ({INDEX_BASE} = 100)', subtitle=subtitle, source=SOURCE_FRED_FHFA)
     fig.update_layout(**layout)
     _label(fig, labels[-1], hpi_i.iloc[-1], f"Achieved {hpi_i.iloc[-1]:.0f}", NAVY)
     _label(fig, labels[-1], ask_i.iloc[-1], f"Asking {ask_i.iloc[-1]:.0f}", COPPER)
@@ -300,7 +314,7 @@ def chart_inventory(monthly):
     subtitle = (f"Active {a.iloc[-1]:,.0f}, {a.iloc[-1] / a.iloc[-13] - 1:+.1%} year over year — "
                 f"essentially flat<br>Both series swing seasonally; compare like month to like month")
     layout = _shared_layout('Austin For-Sale Inventory Has Stopped Building', 'Listings',
-                            subtitle=subtitle)
+                            subtitle=subtitle, source=SOURCE_FRED)
     layout['yaxis']['tickformat'] = ','
     fig.update_layout(**layout)
     _label(fig, d.index[-1], a.iloc[-1], f"Active {a.iloc[-1]:,.0f}", NAVY)
@@ -326,7 +340,7 @@ def chart_price_cuts(monthly):
                 f"{pk:.0%} peak in {monthly['cut_share'].idxmax():%b %Y}<br>"
                 f"Elevated versus 2019, but well off the 2022 repricing")
     layout = _shared_layout('Two in Five Austin Listings Have Cut Their Price',
-                            'Share of active listings', subtitle=subtitle)
+                            'Share of active listings', subtitle=subtitle, source=SOURCE_FRED)
     layout['yaxis']['tickformat'] = '.0%'
     fig.update_layout(**layout)
     # GLASS_ALT sits under 3:1 against white, so both series are direct-labelled.
@@ -351,7 +365,7 @@ def chart_permits(monthly):
                 f"{roll.iloc[-1] / pk - 1:+.0%} from the<br>{roll.idxmax():%b %Y} peak of {pk:,.0f} — "
                 f"the supply response has more than halved")
     layout = _shared_layout('Austin Housing Permits Have More Than Halved',
-                            'Units authorized, trailing 12 months', subtitle=subtitle)
+                            'Units authorized, trailing 12 months', subtitle=subtitle, source=SOURCE_CENSUS)
     layout['yaxis']['tickformat'] = ','
     layout['yaxis']['rangemode'] = 'tozero'
     fig.update_layout(**layout)
