@@ -211,6 +211,18 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 [Northeast's New Retail Is Half Empty [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_northeast_leaseup.html) - Lease-up of post-2024 deliveries
 
+## Residential
+
+Austin metro (CBSA 12420) housing tracker from FRED: Realtor.com listing series plus the FHFA repeat-sales index. Regenerate with `PYTHONUTF8=1 python -m generators.residential.austin_tracker`.
+
+[Austin Housing: Asking Prices Are Not Sale Prices [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_asking_vs_achieved.html) - Median listing price vs FHFA repeat-sales index, both indexed to 2019 Q1; asking -29% from peak, achieved -11%
+
+[Austin For-Sale Inventory Has Stopped Building [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_for_sale_inventory.html) - Active listings vs new listings each month
+
+[Two in Five Austin Listings Have Cut Their Price [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_listing_price_cuts.html) - Share of active listings carrying a price reduction, monthly and 12-month average
+
+[Austin Housing Permits Have More Than Halved [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_housing_permits.html) - Private housing units authorized, trailing 12 months
+
 ## Economic Indicators
 
 ### Employment
