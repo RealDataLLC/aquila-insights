@@ -201,6 +201,11 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 [Austin's Widening Vacancy Gap Is One Submarket [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_vacancy_spread.html) - Best-to-worst vacancy spread, with and without the Northeast
 
+### Elections vs Fundamentals
+[Austin Retail Absorption Does Not Track the Election Calendar [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_absorption_election_overlay.html) - Quarterly net absorption 2018-2025 with post-election quarters marked; they rank 27th, 20th, 2nd and 23rd of 31
+
+[The Same Four Quarters, Two Opposite Headlines [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_election_mean_vs_median.html) - Mean says post-election quarters run +7%, median says -21%; n=4, so both are noise
+
 ### Northeast Deep Dive
 [Northeast Retail Vacancy: Where the Empty Space Came From [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_northeast_vacancy_sources.html) - Vacant SF split between new deliveries and existing stock
 
