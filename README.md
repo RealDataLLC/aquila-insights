@@ -215,6 +215,10 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 Austin metro (CBSA 12420) housing tracker from FRED: Realtor.com listing series plus the FHFA repeat-sales index. Regenerate with `PYTHONUTF8=1 python -m generators.residential.austin_tracker`.
 
+[Austin Rent Growth Went From First to Last [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_rent_change.html) - Austin vs US rent change year over year (Zillow ZORI); peaked +21.7% Dec 2021, bottomed -4.2% Dec 2024, now -0.9%
+
+[How Far Austin Rent Growth Trails the Nation [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_rent_gap_vs_us.html) - Austin rent growth minus the national rate, in percentage points; worst -7.1pp Dec 2024, now -3.2pp
+
 [Austin Housing: Asking Prices Are Not Sale Prices [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_asking_vs_achieved.html) - Median listing price vs FHFA repeat-sales index, both indexed to 2019 Q1; asking -29% from peak, achieved -11%
 
 [Austin For-Sale Inventory Has Stopped Building [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_for_sale_inventory.html) - Active listings vs new listings each month

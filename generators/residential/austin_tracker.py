@@ -9,6 +9,16 @@ Story 10 — "Asking is not achieved" (4 charts)
   Chart 27 — Share of listings with a price cut
   Chart 28 — Housing permits, 12-month rolling
 
+Story 11 — "How Austin rents actually changed" (2 charts, Zillow ZORI)
+  Chart 29 — Austin vs US rent growth, year over year
+  Chart 30 — The gap between them, in percentage points
+
+RENT IS PLOTTED AS CHANGE, NEVER LEVEL. Four vendors publish a current Austin
+rent and they span $1,328 (Apartment List, city, all units) to $1,425
+(RealPage, professionally managed effective) to $1,500 (CoStar, metro asking)
+to $1,653 (Zillow ZORI) -- a 24% spread, because each measures a different
+slice. Rates of change are comparable where levels are not.
+
 THE HEADLINE IS THE DIVERGENCE. Median LISTING price is down 28.5% from its
 May 2022 peak; the FHFA repeat-sales index, which measures actual closings, is
 down 11.3% from its 2022 Q2 peak and has been flat for two and a half years
@@ -62,6 +72,13 @@ SERIES = {
 HPI_SERIES = 'ATNHPIUS12420Q'             # FHFA all-transactions index, quarterly
 
 INDEX_BASE = '2019Q1'
+
+# Zillow Observed Rent Index -- free public CSV, smoothed, all home types.
+# Metro rows; we take Austin against the national line as a benchmark.
+ZORI_URL = ('https://files.zillowstatic.com/research/public_csvs/zori/'
+            'Metro_zori_uc_sfrcondomfr_sm_month.csv')
+ZORI_METRO = 'Austin, TX'
+ZORI_BENCHMARK = 'United States'
 
 
 # -- Helpers -------------------------------------------------------------------
@@ -127,7 +144,105 @@ def load_data():
     return monthly, hpi
 
 
+def load_zori():
+    """Austin and national Zillow Observed Rent Index, monthly.
+
+    Returned as CHANGE, not level. Rent levels are not comparable across
+    vendors -- Apartment List, RealPage, CoStar and Zillow all publish a
+    current "Austin rent" spanning $1,328 to $1,653, because each measures a
+    different slice of the stock. Rates of change are comparable, so that is
+    what these charts plot.
+    """
+    print(f"  downloading ZORI...")
+    raw = pd.read_csv(ZORI_URL)
+    date_cols = [c for c in raw.columns if c[:4].isdigit()]
+
+    def one(region):
+        match = raw[raw['RegionName'] == region]
+        if match.empty:
+            raise RuntimeError(f"ZORI has no row for {region!r}")
+        row = match.iloc[0]
+        s = pd.Series({pd.to_datetime(c): pd.to_numeric(row[c], errors='coerce') for c in date_cols})
+        return s.dropna().sort_index()
+
+    d = pd.DataFrame({'austin': one(ZORI_METRO), 'us': one(ZORI_BENCHMARK)}).dropna()
+    d['austin_yoy'] = d['austin'].pct_change(12)
+    d['us_yoy'] = d['us'].pct_change(12)
+    d['gap_pp'] = (d['austin_yoy'] - d['us_yoy']) * 100
+    print(f"  [OK] ZORI {d.index[0]:%b %Y} -> {d.index[-1]:%b %Y}")
+    return d
+
+
+def _negative_run(yoy):
+    """Length in months of the unbroken run of negative YoY ending at the last point."""
+    run = 0
+    for v in yoy.dropna()[::-1] < 0:
+        if not v:
+            break
+        run += 1
+    return run
+
+
 # -- Charts --------------------------------------------------------------------
+
+def chart_rent_change(z):
+    """Chart 29: Austin rent growth against the national rate.
+
+    Year over year, NOT a shorter window. A 3-month annualised rate currently
+    reads +4.6% for Austin and would look like a decisive recovery, but ZORI is
+    smoothed and not seasonally adjusted -- the national series swings the same
+    way over the same months (-1.9% in Dec 2025 to +6.6% in May 2026), so most
+    of that is spring. Year over year cancels the season by construction.
+    """
+    d = z.dropna(subset=['austin_yoy']).loc['2016':]
+    fig = go.Figure()
+    fig.add_hline(y=0, line=dict(color=CONCRETE, width=1))
+    fig.add_trace(go.Scatter(x=d.index, y=d['us_yoy'], mode='lines', name='United States',
+                             line=dict(color=CONCRETE, width=2),
+                             hovertemplate='%{y:+.1%}<extra>US</extra>'))
+    fig.add_trace(go.Scatter(x=d.index, y=d['austin_yoy'], mode='lines', name='Austin metro',
+                             line=dict(color=NAVY, width=2),
+                             hovertemplate='%{y:+.1%}<extra>Austin</extra>'))
+
+    y = z['austin_yoy'].dropna()
+    run = _negative_run(y)
+    subtitle = (f"Austin peaked at {y.max():+.1%} in {y.idxmax():%b %Y} and bottomed at "
+                f"{y.min():+.1%} in {y.idxmin():%b %Y}<br>"
+                f"Now {y.iloc[-1]:+.1%} — negative for {run} straight months, but closing on the US")
+    layout = _shared_layout('Austin Rent Growth Went From First to Last',
+                            'Rent change, year over year', subtitle=subtitle)
+    layout['yaxis']['tickformat'] = '+.0%'
+    fig.update_layout(**layout)
+    # CONCRETE sits under 3:1 against white, so both series are direct-labelled.
+    _label(fig, d.index[-1], d['us_yoy'].iloc[-1], f"US {d['us_yoy'].iloc[-1]:+.1%}", CONCRETE)
+    _label(fig, d.index[-1], d['austin_yoy'].iloc[-1], f"Austin {d['austin_yoy'].iloc[-1]:+.1%}", NAVY)
+    return fig
+
+
+def chart_rent_gap(z):
+    """Chart 30: Austin's rent growth minus the national rate, in points.
+
+    Strips out whatever national rent conditions are doing and leaves only
+    Austin-specific performance. Also immune to the seasonality problem, since
+    both series carry the same season.
+    """
+    d = z.dropna(subset=['gap_pp']).loc['2016':]
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=d.index, y=d['gap_pp'], mode='lines', name='Austin minus US',
+                             line=dict(color=NAVY, width=2), fill='tozeroy',
+                             fillcolor='rgba(23,35,68,0.08)',
+                             hovertemplate='%{y:+.1f} pp<extra></extra>', showlegend=False))
+    fig.add_hline(y=0, line=dict(color=CONCRETE, width=1))
+
+    g = d['gap_pp']
+    subtitle = (f"Worst gap {g.min():+.1f} points in {g.idxmin():%b %Y}; now {g.iloc[-1]:+.1f}<br>"
+                f"Austin still trails the national rate, by less than half as much")
+    layout = _shared_layout('How Far Austin Rent Growth Trails the Nation',
+                            'Percentage points vs US', subtitle=subtitle)
+    fig.update_layout(**layout)
+    _label(fig, d.index[-1], g.iloc[-1], f"{g.iloc[-1]:+.1f} pp", NAVY)
+    return fig
+
 
 def chart_asking_vs_achieved(monthly, hpi):
     """Chart 25: the divergence between what sellers ask and what homes fetch.
@@ -250,8 +365,11 @@ def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     print("Loading FRED series...")
     monthly, hpi = load_data()
+    z = load_zori()
 
     charts = [
+        (chart_rent_change(z), 'austin_rent_change.html'),
+        (chart_rent_gap(z), 'austin_rent_gap_vs_us.html'),
         (chart_asking_vs_achieved(monthly, hpi), 'austin_asking_vs_achieved.html'),
         (chart_inventory(monthly), 'austin_for_sale_inventory.html'),
         (chart_price_cuts(monthly), 'austin_listing_price_cuts.html'),
