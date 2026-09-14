@@ -196,6 +196,16 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 [Demographic Profile by Submarket [2026-03-30]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_demographic_profile.html)
 
+### Market Dispersion
+[Austin Retail Tightened - Except in One Submarket [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_vacancy_dispersion.html) - Northeast against the vacancy range of every other submarket
+
+[Austin's Widening Vacancy Gap Is One Submarket [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_vacancy_spread.html) - Best-to-worst vacancy spread, with and without the Northeast
+
+### Northeast Deep Dive
+[Northeast Retail Vacancy: Where the Empty Space Came From [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_northeast_vacancy_sources.html) - Vacant SF split between new deliveries and existing stock
+
+[Northeast's New Retail Is Half Empty [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_northeast_leaseup.html) - Lease-up of post-2024 deliveries
+
 ## Economic Indicators
 
 ### Employment
