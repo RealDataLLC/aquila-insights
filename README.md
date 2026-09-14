@@ -201,10 +201,31 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 [Austin's Widening Vacancy Gap Is One Submarket [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_vacancy_spread.html) - Best-to-worst vacancy spread, with and without the Northeast
 
+### Elections vs Fundamentals
+[Austin Retail Absorption Does Not Track the Election Calendar [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_absorption_election_overlay.html) - Quarterly net absorption 2018-2025 with post-election quarters marked; they rank 27th, 20th, 2nd and 23rd of 31
+
+[The Same Four Quarters, Two Opposite Headlines [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_election_mean_vs_median.html) - Mean says post-election quarters run +7%, median says -21%; n=4, so both are noise
+
 ### Northeast Deep Dive
 [Northeast Retail Vacancy: Where the Empty Space Came From [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_northeast_vacancy_sources.html) - Vacant SF split between new deliveries and existing stock
 
 [Northeast's New Retail Is Half Empty [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/retail/retail_northeast_leaseup.html) - Lease-up of post-2024 deliveries
+
+## Residential
+
+Austin metro (CBSA 12420) housing tracker from FRED: Realtor.com listing series plus the FHFA repeat-sales index. Regenerate with `PYTHONUTF8=1 python -m generators.residential.austin_tracker`.
+
+[Austin Rent Growth Went From First to Last [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_rent_change.html) - Austin vs US rent change year over year (Zillow ZORI); peaked +21.7% Dec 2021, bottomed -4.2% Dec 2024, now -0.9%
+
+[How Far Austin Rent Growth Trails the Nation [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_rent_gap_vs_us.html) - Austin rent growth minus the national rate, in percentage points; worst -7.1pp Dec 2024, now -3.2pp
+
+[Austin Housing: Asking Prices Are Not Sale Prices [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_asking_vs_achieved.html) - Median listing price vs FHFA repeat-sales index, both indexed to 2019 Q1; asking -29% from peak, achieved -11%
+
+[Austin For-Sale Inventory Has Stopped Building [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_for_sale_inventory.html) - Active listings vs new listings each month
+
+[Two in Five Austin Listings Have Cut Their Price [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_listing_price_cuts.html) - Share of active listings carrying a price reduction, monthly and 12-month average
+
+[Austin Housing Permits Have More Than Halved [2026-09-14]](https://realdatallc.github.io/aquila-insights/charts/residential/austin_housing_permits.html) - Private housing units authorized, trailing 12 months
 
 ## Economic Indicators
 

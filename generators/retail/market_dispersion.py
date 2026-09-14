@@ -57,6 +57,9 @@ NE_BASELINE = '2024 Q1'
 OUTLIER = 'Northeast'
 
 
+SOURCE = ('Source: CoStar via AQUILA market data. Submarket figures are the AQUILA competitive set. Chart: AQUILA Commercial.')
+
+
 # -- Helpers -------------------------------------------------------------------
 
 def _quarter_sort_key(q_str):
@@ -65,7 +68,7 @@ def _quarter_sort_key(q_str):
     return int(m.group(1)) + int(m.group(2)) / 10 if m else 0
 
 
-def _shared_layout(title_text, y_title, height=580, subtitle=None):
+def _shared_layout(title_text, y_title, height=580, subtitle=None, source=None):
     """Title centred per brand; subtitle left-aligned and legend below the plot.
 
     Both of those placements are deliberate. add_aquila_logo() parks the
@@ -83,6 +86,11 @@ def _shared_layout(title_text, y_title, height=580, subtitle=None):
         annotations.append(dict(
             text=subtitle, xref='paper', yref='paper', x=0, xanchor='left', y=1.075, yanchor='bottom',
             showarrow=False, align='left', font=dict(family=AQUILA_FONT, size=12, color=CONCRETE)))
+    if source:
+        # Below the legend and the rotated tick labels; margin sized to fit.
+        annotations.append(dict(
+            text=source, xref='paper', yref='paper', x=0, xanchor='left', y=-0.36, yanchor='top',
+            showarrow=False, align='left', font=dict(family=AQUILA_FONT, size=10, color=CONCRETE)))
 
     return dict(
         title=dict(text=title_text, font=dict(family=AQUILA_FONT, size=18, color=NAVY),
@@ -96,7 +104,7 @@ def _shared_layout(title_text, y_title, height=580, subtitle=None):
                     orientation='h', yanchor='top', y=-0.20, x=0.5, xanchor='center'),
         plot_bgcolor='white', paper_bgcolor='white',
         font=dict(family=AQUILA_FONT, color=NAVY),
-        height=height, margin=dict(l=75, r=120, t=125, b=110),
+        height=height, margin=dict(l=75, r=120, t=125, b=155),
         hovermode='x unified',
     )
 
@@ -235,7 +243,7 @@ def chart_dispersion_band(grp):
                 f"Northeast went {ne['vacancy'].iloc[0]:.2%} → {ne['vacancy'].iloc[-1]:.2%}, "
                 f"{(ne['vacancy'].iloc[-1] - last['max']) * 10000:,.0f} bps clear of the next-worst")
     layout = _shared_layout('Austin Retail Tightened — Except in One Submarket', 'Vacancy Rate',
-                            subtitle=subtitle)
+                            subtitle=subtitle, source=SOURCE)
     layout['yaxis']['tickformat'] = '.0%'
     fig.update_layout(**layout)
 
@@ -272,7 +280,7 @@ def chart_spread(grp):
     subtitle = (f"All submarkets: {all_sub['spread_bps'].iloc[0]:,.0f} → {a['spread_bps']:,.0f} bps<br>"
                 f"Without the Northeast: {ex_ne['spread_bps'].iloc[0]:,.0f} → {e['spread_bps']:,.0f} bps")
     layout = _shared_layout('Austin\'s Widening Vacancy Gap Is One Submarket', 'Spread (basis points)',
-                            subtitle=subtitle)
+                            subtitle=subtitle, source=SOURCE)
     layout['yaxis']['tickformat'] = ','
     layout['yaxis']['rangemode'] = 'tozero'
     fig.update_layout(**layout)
@@ -317,7 +325,7 @@ def chart_ne_decomposition(st):
     subtitle = (f"Vacant SF {start:,.0f} → {end:,.0f}; roughly half of the increase is space that was "
                 f"built after {_end_label(NE_BASELINE)} and has not leased")
     layout = _shared_layout('Northeast Retail Vacancy: Where the Empty Space Came From',
-                            'Vacant SF', subtitle=subtitle)
+                            'Vacant SF', subtitle=subtitle, source=SOURCE)
     layout['barmode'] = 'stack'
     layout['yaxis']['tickformat'] = ','
     fig.update_layout(**layout)
@@ -353,7 +361,7 @@ def chart_ne_leaseup(st):
                 f"<span style='font-size:11px'>Cohort grows from {int(first['n'])} building"
                 f"{'s' if first['n'] != 1 else ''} in {_end_label(first['quarter'])} to "
                 f"{int(last['n'])}; treat the first few quarters as a thin panel</span>")
-    layout = _shared_layout('Northeast\'s New Retail Is Half Empty', 'Occupancy', subtitle=subtitle)
+    layout = _shared_layout('Northeast\'s New Retail Is Half Empty', 'Occupancy', subtitle=subtitle, source=SOURCE)
     layout['yaxis']['tickformat'] = '.0%'
     layout['yaxis']['range'] = [0, 1]
     fig.update_layout(**layout)
