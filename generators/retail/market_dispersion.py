@@ -52,6 +52,10 @@ MIN_SUBMARKET_RBA = 2_000_000
 # with no RBA in this quarter but RBA later is a "delivery".
 NE_BASELINE = '2024 Q1'
 
+# The submarket held out of the dispersion band. It is the finding, not a
+# convenience: it accounts for the whole of the market's apparent widening.
+OUTLIER = 'Northeast'
+
 
 # -- Helpers -------------------------------------------------------------------
 
@@ -73,23 +77,26 @@ def _shared_layout(title_text, y_title, height=580, subtitle=None):
     """
     annotations = []
     if subtitle:
+        # y=1.075 (not 1.045) clears the logo, whose bottom sits at y=1.02.
+        # Keep each line under ~55 characters: the logo's left edge is around
+        # x=0.88 and a longer line runs underneath it and then off the figure.
         annotations.append(dict(
-            text=subtitle, xref='paper', yref='paper', x=0, xanchor='left', y=1.045, yanchor='bottom',
+            text=subtitle, xref='paper', yref='paper', x=0, xanchor='left', y=1.075, yanchor='bottom',
             showarrow=False, align='left', font=dict(family=AQUILA_FONT, size=12, color=CONCRETE)))
 
     return dict(
         title=dict(text=title_text, font=dict(family=AQUILA_FONT, size=18, color=NAVY),
-                   x=0.5, xanchor='center', y=0.955, yanchor='top'),
+                   x=0.5, xanchor='center', y=0.965, yanchor='top'),
         annotations=annotations,
         xaxis=dict(title='', tickfont=dict(family=AQUILA_FONT, size=11, color=NAVY), showgrid=False,
                    linecolor='#E8E8E8', tickangle=-45),
         yaxis=dict(title=y_title, title_font=dict(family=AQUILA_FONT, size=12, color=NAVY),
                    tickfont=dict(family=AQUILA_FONT, size=11, color=NAVY), gridcolor='#E8E8E8', zeroline=False),
         legend=dict(font=dict(family=AQUILA_FONT, size=11, color=NAVY), bgcolor='rgba(0,0,0,0)',
-                    orientation='h', yanchor='top', y=-0.26, x=0.5, xanchor='center'),
+                    orientation='h', yanchor='top', y=-0.20, x=0.5, xanchor='center'),
         plot_bgcolor='white', paper_bgcolor='white',
         font=dict(family=AQUILA_FONT, color=NAVY),
-        height=height, margin=dict(l=75, r=135, t=115, b=135),
+        height=height, margin=dict(l=75, r=120, t=125, b=110),
         hovermode='x unified',
     )
 
@@ -187,61 +194,92 @@ def load_northeast(supabase):
 
 # -- Story 7: Dispersion -------------------------------------------------------
 
-def chart_dispersion_band(grp):
-    """Chart 19: min/max band across submarkets, with the mean and the outlier."""
-    stats = grp.groupby(['quarter', '_sort'], as_index=False)['vacancy'].agg(['mean', 'min', 'max'])
+def _spread_stats(grp, exclude_northeast):
+    """Per-quarter mean/min/max of submarket vacancy, optionally ex-Northeast."""
+    d = grp[grp['submarket_name'] != OUTLIER] if exclude_northeast else grp
+    stats = d.groupby(['quarter', '_sort'], as_index=False)['vacancy'].agg(['mean', 'min', 'max'])
     stats = stats.reset_index().sort_values('_sort')
-    ne = grp[grp['submarket_name'] == 'Northeast'].sort_values('_sort')
+    stats['spread_bps'] = (stats['max'] - stats['min']) * 10000
+    return stats
+
+
+def chart_dispersion_band(grp):
+    """Chart 19: Northeast against the range of every other submarket.
+
+    The band EXCLUDES Northeast on purpose. Include it and Northeast simply is
+    the maximum from 2025 on, so the band's ceiling and the Northeast line are
+    the same line -- the chart then reads as a filled region rather than as one
+    submarket leaving the pack, which is the actual finding.
+    """
+    stats = _spread_stats(grp, exclude_northeast=True)
+    ne = grp[grp['submarket_name'] == OUTLIER].sort_values('_sort')
 
     fig = go.Figure()
     # Band first so the lines draw on top of it.
-    fig.add_trace(go.Scatter(x=stats['quarter'], y=stats['max'], mode='lines', name='Range',
+    fig.add_trace(go.Scatter(x=stats['quarter'], y=stats['max'], mode='lines', name='_band_top',
                              line=dict(width=0), hoverinfo='skip', showlegend=False))
+    n_other = grp.loc[grp['submarket_name'] != OUTLIER, 'submarket_name'].nunique()
     fig.add_trace(go.Scatter(x=stats['quarter'], y=stats['min'], mode='lines',
-                             name='Submarket range (best to worst)',
+                             name=f'Range of the other {n_other} submarkets',
                              line=dict(width=0), fill='tonexty', fillcolor='rgba(194,218,241,0.55)',
                              hoverinfo='skip'))
-    fig.add_trace(go.Scatter(x=stats['quarter'], y=stats['mean'], mode='lines', name='Submarket average',
-                             line=dict(color=NAVY, width=2),
-                             hovertemplate='%{y:.2%}<extra>Average</extra>'))
-    fig.add_trace(go.Scatter(x=ne['quarter'], y=ne['vacancy'], mode='lines', name='Northeast',
+    fig.add_trace(go.Scatter(x=stats['quarter'], y=stats['mean'], mode='lines',
+                             name='Average, excluding Northeast', line=dict(color=NAVY, width=2),
+                             hovertemplate='%{y:.2%}<extra>Average ex-Northeast</extra>'))
+    fig.add_trace(go.Scatter(x=ne['quarter'], y=ne['vacancy'], mode='lines', name=OUTLIER,
                              line=dict(color=SIGNAL, width=2),
                              hovertemplate='%{y:.2%}<extra>Northeast</extra>'))
 
     first, last = stats.iloc[0], stats.iloc[-1]
-    subtitle = (f"Average vacancy {first['mean']:.2%} → {last['mean']:.2%} while the "
-                f"best-to-worst spread widened {(first['max'] - first['min']) * 10000:,.0f} → "
-                f"{(last['max'] - last['min']) * 10000:,.0f} bps")
-    layout = _shared_layout('Austin Retail: The Average Hides the Market', 'Vacancy Rate', subtitle=subtitle)
+    subtitle = (f"Strip out the Northeast and vacancy FELL {first['mean']:.2%} → {last['mean']:.2%}<br>"
+                f"Northeast went {ne['vacancy'].iloc[0]:.2%} → {ne['vacancy'].iloc[-1]:.2%}, "
+                f"{(ne['vacancy'].iloc[-1] - last['max']) * 10000:,.0f} bps clear of the next-worst")
+    layout = _shared_layout('Austin Retail Tightened — Except in One Submarket', 'Vacancy Rate',
+                            subtitle=subtitle)
     layout['yaxis']['tickformat'] = '.0%'
     fig.update_layout(**layout)
 
     # After update_layout -- _shared_layout sets `annotations`, which would
     # replace anything added before it.
-    for series, color, label in ((stats['mean'], NAVY, 'Average'), (ne['vacancy'], SIGNAL, 'Northeast')):
+    for series, color, label in ((stats['mean'], NAVY, 'Average'), (ne['vacancy'], SIGNAL, OUTLIER)):
         fig.add_annotation(x=END_QUARTER, y=series.iloc[-1], text=f"  {label} {series.iloc[-1]:.1%}",
                            showarrow=False, xanchor='left', font=dict(family=AQUILA_FONT, size=11, color=color))
     return fig
 
 
 def chart_spread(grp):
-    """Chart 20: the best-to-worst spread on its own, in bps."""
-    stats = grp.groupby(['quarter', '_sort'], as_index=False)['vacancy'].agg(['min', 'max'])
-    stats = stats.reset_index().sort_values('_sort')
-    stats['spread_bps'] = (stats['max'] - stats['min']) * 10000
+    """Chart 20: the spread with and without Northeast, which is the whole point.
+
+    Plotted together because the pair IS the argument: the all-submarket spread
+    nearly tripled, and the same spread without one 3.6M SF submarket did not
+    widen at all.
+    """
+    all_sub = _spread_stats(grp, exclude_northeast=False)
+    ex_ne = _spread_stats(grp, exclude_northeast=True)
 
     fig = go.Figure()
-    fig.add_trace(go.Bar(x=stats['quarter'], y=stats['spread_bps'], marker_color=NAVY,
-                         marker_line_width=0, width=0.72,
-                         hovertemplate='%{y:,.0f} bps<extra></extra>', showlegend=False))
-    layout = _shared_layout('Gap Between Austin\'s Best and Worst Retail Submarket', 'Spread (basis points)',
-                            subtitle='Vacancy rate of the tightest submarket subtracted from the loosest')
+    fig.add_trace(go.Scatter(x=all_sub['quarter'], y=all_sub['spread_bps'], mode='lines',
+                             name='All submarkets', line=dict(color=NAVY, width=2),
+                             hovertemplate='%{y:,.0f} bps<extra>All submarkets</extra>'))
+    # Dashed: the two series are IDENTICAL until 2024 Q4 (Northeast is not the
+    # extreme before then), so a solid copper line would simply hide the navy
+    # one and make the divergence look like the navy series starting late.
+    fig.add_trace(go.Scatter(x=ex_ne['quarter'], y=ex_ne['spread_bps'], mode='lines',
+                             name='Excluding Northeast', line=dict(color=COPPER, width=2, dash='dot'),
+                             hovertemplate='%{y:,.0f} bps<extra>Excluding Northeast</extra>'))
+
+    a, e = all_sub.iloc[-1], ex_ne.iloc[-1]
+    subtitle = (f"All submarkets: {all_sub['spread_bps'].iloc[0]:,.0f} → {a['spread_bps']:,.0f} bps<br>"
+                f"Without the Northeast: {ex_ne['spread_bps'].iloc[0]:,.0f} → {e['spread_bps']:,.0f} bps")
+    layout = _shared_layout('Austin\'s Widening Vacancy Gap Is One Submarket', 'Spread (basis points)',
+                            subtitle=subtitle)
     layout['yaxis']['tickformat'] = ','
+    layout['yaxis']['rangemode'] = 'tozero'
     fig.update_layout(**layout)
 
-    peak = stats.loc[stats['spread_bps'].idxmax()]
-    fig.add_annotation(x=peak['quarter'], y=peak['spread_bps'], text=f"{peak['spread_bps']:,.0f} bps",
-                       showarrow=False, yshift=12, font=dict(family=AQUILA_FONT, size=11, color=NAVY))
+    for row, color, label in ((a, NAVY, 'All'), (e, COPPER, 'Excl. NE')):
+        fig.add_annotation(x=END_QUARTER, y=row['spread_bps'], text=f"  {label} {row['spread_bps']:,.0f}",
+                           showarrow=False, xanchor='left', font=dict(family=AQUILA_FONT, size=11, color=color))
     return fig
 
 
