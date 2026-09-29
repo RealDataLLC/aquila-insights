@@ -262,6 +262,30 @@ Update `reports/industrial_report_config.py` with the new quarter before generat
 
 [Net AGI per Inbound Mover, by County [2026-04-15]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/migration_austin_split.html) - Austin MSA counties vs Texas and Florida comps
 
+## Election 2026 Research Series
+
+[Do Austin Office Tenants Wait Out Elections? [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_requirements_seasonal.html) - Monthly requirement index, election vs non-election years
+
+[Year-End Requirement Slowdown by Year [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_requirements_yearend.html) - Nov-Dec requirement pace vs Jan-Aug, 2017-2025
+
+[Net AGI Migration by State [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_migration_top_states.html) - IRS net domestic AGI migration, top and bottom 10 states
+
+[Net AGI Gained by No-Wage-Tax States [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_migration_no_tax_trend.html) - IRS net AGI into the 9 no-wage-tax states by tax year
+
+[Austin Government Employment by Level [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_austin_government_jobs.html) - Federal / state / local jobs, Austin MSA
+
+[Government Share of Jobs: Austin vs Texas vs US [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_government_share.html) - Government as a share of total nonfarm employment
+
+[Federal Payrolls Since January 2025 [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_federal_jobs_index.html) - Federal jobs indexed to Jan 2025, Austin vs US
+
+[Austin Housing Permits: Single-Family vs Multifamily [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_austin_housing_permits.html) - Trailing 12-month permitted units, Austin MSA
+
+[Austin Median List Price vs Active Listings [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_austin_price_inventory.html) - Realtor.com price and inventory, Austin MSA
+
+[10-Year Treasury Around Midterm Elections [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_10y_treasury_midterms.html) - Yield path around 2010-2022 midterms vs 2026
+
+[Credit Spreads Around Midterm Elections [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_credit_spread_midterms.html) - Baa-10Y spread path around midterms vs 2026
+
 ## Austin Economy
 
 ### Industries and Companies That Came to Austin in 2025
