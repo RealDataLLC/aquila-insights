@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
 Election 2026 -- LinkedIn Research Series
-11 charts tying Austin CRE data to the November 3, 2026 midterms.
+12 charts tying Austin CRE data to the November 3, 2026 midterms.
 
 Charts (all in charts/economic-indicators/):
   Leasing hesitation (office requirements, Google Sheets)
     1. election_requirements_seasonal.html   -- Monthly requirement index, election vs non-election years
     2. election_requirements_yearend.html    -- Nov-Dec requirement index by year
+   2b. election_requirements_recovery.html   -- Sep-Jun path around the election vs prior Jan-Aug pace
   Tax policy and wealth migration (IRS SOI state-to-state migration)
     3. election_migration_top_states.html    -- Net AGI migration by state, latest year
     4. election_migration_no_tax_trend.html  -- Net AGI gained by no-wage-tax states, by year
@@ -203,6 +204,64 @@ def chart_requirements_yearend(monthly, last_date):
     fig.update_yaxes(title='Nov-Dec Requirement Index (x)', tickformat='.1f',
                      range=[0, yearend.max() * 1.25])
     _save(fig, 'election_requirements_yearend.html')
+
+
+def chart_requirements_recovery(monthly, last_date):
+    print('\n[2b] Requirements post-election recovery...')
+    # Sep of year Y through Jun of Y+1, every month indexed to year Y's Jan-Aug pace
+    base = monthly[monthly.month <= 8].groupby('year')['count'].mean()
+    months = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+    last_full = last_date.to_period('M').to_timestamp() - pd.offsets.MonthBegin(1)
+    if last_date.is_month_end:
+        last_full = last_date.to_period('M').to_timestamp()
+
+    paths = {}
+    for y in base.index:
+        window = pd.date_range(f'{y}-09-01', f'{y + 1}-06-01', freq='MS')
+        window = window[window <= last_full]
+        counts = monthly['count'].reindex(window, fill_value=0)
+        paths[y] = pd.Series((counts / base[y]).values, index=months[:len(window)])
+    complete = {y: p for y, p in paths.items() if len(p) == len(months)}
+    elec = pd.DataFrame({y: p for y, p in complete.items() if y in ELECTION_YEARS}).mean(axis=1)
+    mid = pd.DataFrame({y: p for y, p in complete.items() if y in ELECTION_YEARS and y % 4 == 2}).mean(axis=1)
+    non = pd.DataFrame({y: p for y, p in complete.items() if y not in ELECTION_YEARS}).mean(axis=1)
+    cur = paths.get(last_date.year)
+
+    q1 = lambda s: s[['Jan', 'Feb', 'Mar']].mean()
+    print(f'    Q1 vs prior Jan-Aug pace -- election: {q1(elec):.2f}  midterm: {q1(mid):.2f}  '
+          f'non-election: {q1(non):.2f}')
+
+    fig = go.Figure()
+    fig.add_vrect(x0='Oct', x1='Dec', fillcolor=GLASS_BLUE, opacity=0.25, line_width=0,
+                  annotation_text='Election season', annotation_position='top left',
+                  annotation_font=dict(size=11, color=NAVY))
+    fig.add_vline(x=3.5, line=dict(color=CONCRETE, width=1, dash='dot'))
+    fig.add_annotation(x=3.5, y=0.02, yref='paper', text=' New year', showarrow=False,
+                       xanchor='left', yanchor='bottom', font=dict(size=11, color=CONCRETE))
+    fig.add_hline(y=1, line=dict(color=CONCRETE, width=1, dash='dot'),
+                  annotation_text='Pre-election pace', annotation_position='bottom right',
+                  annotation_font=dict(size=11, color=CONCRETE))
+    fig.add_trace(go.Scatter(x=months, y=non.values, name='After non-election years (2017-2025 odd)',
+                             line=dict(color=CONCRETE, width=3),
+                             hovertemplate='%{y:.2f}x<extra>Non-election</extra>'))
+    fig.add_trace(go.Scatter(x=months, y=elec.values, name='After election years (2018-2024)',
+                             line=dict(color=NAVY, width=4),
+                             hovertemplate='%{y:.2f}x<extra>Election</extra>'))
+    fig.add_trace(go.Scatter(x=months, y=mid.values, name='After midterms only (2018, 2022)',
+                             line=dict(color=COPPER, width=3, dash='dash'),
+                             hovertemplate='%{y:.2f}x<extra>Midterms</extra>'))
+    if cur is not None and len(cur):
+        fig.add_trace(go.Scatter(x=list(cur.index), y=cur.values, name=f'{last_date.year} (to date)',
+                                 mode='markers', marker=dict(color=BRASS, size=12, line=dict(color=NAVY, width=1)),
+                                 hovertemplate='%{y:.2f}x<extra>' + str(last_date.year) + '</extra>'))
+    _style(
+        fig,
+        'Demand Comes Back in January, but It Does Not Catch Up',
+        "New office requirements, Sep through the following Jun, indexed to the election year's Jan-Aug pace",
+        'AQUILA office requirements database, 2017-2026. 2020-21 also reflects COVID-19.',
+    )
+    fig.update_yaxes(title='Requirement Index (x)', tickformat='.1f', rangemode='tozero')
+    _save(fig, 'election_requirements_recovery.html')
 
 
 # ── 2. Tax policy: IRS state-to-state migration ───────────────────────────────
@@ -511,6 +570,7 @@ def main():
         monthly = requirement_index(req)
         chart_requirements_seasonal(monthly, req.date.max())
         chart_requirements_yearend(monthly, req.date.max())
+        chart_requirements_recovery(monthly, req.date.max())
     except Exception as e:
         print(f'  [ERROR] Requirements charts skipped: {e}')
 
