@@ -68,6 +68,18 @@ MIDTERMS = {
 NO_WAGE_TAX_STATES = {'AK', 'FL', 'NV', 'NH', 'SD', 'TN', 'TX', 'WA', 'WY'}
 IRS_YEARS = ['1617', '1718', '1819', '1920', '2021', '2122', '2223']
 
+# Top marginal state income tax rate on wages, as of Jan 1, 2023 (Tax Foundation), matching the
+# latest IRS migration year. NH and WA tax only interest/dividends or capital gains -> 0 on wages.
+TOP_INCOME_TAX_2023 = {
+    'AK': 0, 'AL': 5.0, 'AR': 4.9, 'AZ': 2.5, 'CA': 13.3, 'CO': 4.4, 'CT': 6.99, 'DC': 10.75,
+    'DE': 6.6, 'FL': 0, 'GA': 5.75, 'HI': 11.0, 'IA': 6.0, 'ID': 5.8, 'IL': 4.95, 'IN': 3.15,
+    'KS': 5.7, 'KY': 4.5, 'LA': 4.25, 'MA': 9.0, 'MD': 5.75, 'ME': 7.15, 'MI': 4.25, 'MN': 9.85,
+    'MO': 4.95, 'MS': 5.0, 'MT': 6.75, 'NC': 4.75, 'ND': 2.9, 'NE': 6.64, 'NH': 0, 'NJ': 10.75,
+    'NM': 5.9, 'NV': 0, 'NY': 10.9, 'OH': 3.99, 'OK': 4.75, 'OR': 9.9, 'PA': 3.07, 'RI': 5.99,
+    'SC': 6.5, 'SD': 0, 'TN': 0, 'TX': 0, 'UT': 4.85, 'VA': 5.75, 'VT': 8.75, 'WA': 0, 'WI': 7.65,
+    'WV': 6.5, 'WY': 0,
+}
+
 
 def _style(fig, title, subtitle=None, source=None, **overrides):
     """Apply shared Aquila layout (centered title + subtitle) and a source note."""
@@ -310,9 +322,11 @@ def chart_migration_top_states(irs):
     df = irs[irs.year == latest].sort_values('net_agi_b')
     df = pd.concat([df.head(10), df.tail(10)])
     colors = [BRASS if s in NO_WAGE_TAX_STATES else NAVY for s in df.state]
+    rate = lambda s: f'{TOP_INCOME_TAX_2023[s]:g}%' if TOP_INCOME_TAX_2023.get(s) else 'No tax'
+    labels = [f'{s}  <span style="color:{CONCRETE}">{rate(s)}</span>' for s in df.state]
 
     fig = go.Figure(go.Bar(
-        x=df.net_agi_b, y=df.state, orientation='h', marker_color=colors,
+        x=df.net_agi_b, y=labels, orientation='h', marker_color=colors,
         text=[f"{'+' if v >= 0 else '-'}${abs(v):.1f}B" for v in df.net_agi_b], textposition='outside',
         hovertemplate='%{y}: %{x:$,.2f}B net AGI<extra></extra>', showlegend=False,
     ))
@@ -323,13 +337,17 @@ def chart_migration_top_states(irs):
         fig,
         'Tax Policy Is on the Ballot. Income Is Already Voting With Its Feet.',
         f'Net domestic adjusted gross income migration, top and bottom 10 states, tax year {latest}',
-        'IRS Statistics of Income, state-to-state migration data. Net = inflow AGI - outflow AGI.',
+        'IRS Statistics of Income, state-to-state migration data. Net = inflow AGI - outflow AGI. '
+        'Top marginal state income tax rate as of Jan 1, 2023: Tax Foundation.',
         hovermode='closest', height=720, barmode='overlay',
         margin=dict(l=60, r=60, t=110, b=150),
     )
+    pad = (df.net_agi_b.max() - df.net_agi_b.min()) * 0.12
     fig.update_xaxes(title='Net AGI Migration ($ Billions)', tickprefix='$', ticksuffix='B',
-                     gridcolor=GRID, zeroline=True, zerolinecolor=NAVY)
-    fig.update_yaxes(showgrid=False, categoryorder='array', categoryarray=list(df.state))
+                     gridcolor=GRID, zeroline=True, zerolinecolor=NAVY,
+                     range=[df.net_agi_b.min() - pad, df.net_agi_b.max() + pad])
+    fig.update_yaxes(showgrid=False, categoryorder='array', categoryarray=labels,
+                     title=dict(text='State  |  Top income tax rate', font=dict(size=11, color=CONCRETE)))
     _save(fig, 'election_migration_top_states.html')
 
 
