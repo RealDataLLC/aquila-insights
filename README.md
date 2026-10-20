@@ -299,6 +299,8 @@ Austin metro (CBSA 12420) housing tracker from FRED: Realtor.com listing series 
 
 [Year-End Requirement Slowdown by Year [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_requirements_yearend.html) - Nov-Dec requirement pace vs Jan-Aug, 2017-2025
 
+[Post-Election Recovery in Office Requirements [2026-10-20]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_requirements_recovery.html) - Sep-Jun requirement index vs the election year's Jan-Aug pace; Q1 returns to ~1.0x, midterms only 0.86x
+
 [Net AGI Migration by State [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_migration_top_states.html) - IRS net domestic AGI migration, top and bottom 10 states
 
 [Net AGI Gained by No-Wage-Tax States [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_migration_no_tax_trend.html) - IRS net AGI into the 9 no-wage-tax states by tax year

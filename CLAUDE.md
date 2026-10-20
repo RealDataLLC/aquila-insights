@@ -199,7 +199,7 @@ from aquila.git import commit_and_push_all
 | economic | `generators/economic/fred_housing.py` | 1 | FRED API |
 | economic | `generators/economic/austin_economy.py` | 6 | Excel |
 | economic | `generators/economic/census_office.py` | 10 | Census ACS, LODES, BLS QCEW, FRED |
-| economic | `generators/economic/election.py` | 11 | Google Sheets (requirements), IRS SOI, FRED |
+| economic | `generators/economic/election.py` | 12 | Google Sheets (requirements), IRS SOI, FRED |
 | property_mgmt | `generators/property_mgmt/ams_kpi.py` | 1 | Excel |
 | development | `generators/development/permits.py` | 6 | API |
 
