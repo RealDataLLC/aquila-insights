@@ -25,7 +25,7 @@ from aquila.charts import write_chart_html
 # Cap TITM data at the end of this quarter so the demand charts line up with the
 # quarterly Supabase charts. TITM is a live sheet, so without a cap it bleeds
 # into the current (partial) quarter. Update as new quarters close.
-END_QUARTER = '2026 Q1'
+END_QUARTER = '2026 Q3'
 
 
 def main():
