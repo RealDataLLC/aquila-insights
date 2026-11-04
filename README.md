@@ -319,6 +319,13 @@ Austin metro (CBSA 12420) housing tracker from FRED: Realtor.com listing series 
 
 [Credit Spreads Around Midterm Elections [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_credit_spread_midterms.html) - Baa-10Y spread path around midterms vs 2026
 
+### How Close Was Kalshi?
+[Kalshi Picked the Winner in 98% of Races [2026-11-04]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_accuracy.html) - Share of resolved races won by the market favorite, by office (Kalshi's own count, morning of Nov 4)
+
+[Kalshi Had the Senate Toss-Ups Right, Except South Carolina [2026-11-04]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_senate_odds.html) - Final Nov 2 odds in the six Senate races Kalshi published, vs who won
+
+[The Senate Landed in Kalshi's Top Bucket [2026-11-04]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_senate_seats.html) - Oct 26 odds for Democratic Senate seats vs the 54-56 result (AK, MS uncalled)
+
 ## Austin Economy
 
 ### Industries and Companies That Came to Austin in 2025
