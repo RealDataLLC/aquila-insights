@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-Pull Kalshi prices for every Nov 3, 2026 race as of the close of Nov 2 (the day before the vote).
+Pull Kalshi prices for every Nov 3, 2026 race at three points before the vote:
+one month out (Oct 3), one week out (Oct 27) and the day before (Nov 2), each at the
+close (midnight ET).
 
-Writes data/election_kalshi_nov2.csv, one row per market, which election_kalshi.py reads.
-Grading on the day-before price keeps election-night trading (prices moving to 99c as
-results come in) out of the accuracy count. Kalshi's own recap graded on later prices.
+Writes data/election_kalshi_prices.csv, one row per market per snapshot, which
+election_kalshi.py reads. Pre-vote prices keep election-night trading (prices moving to
+99c as results come in) out of the accuracy count. Kalshi's own recap graded on later prices.
 
-Snapshot: the last trade at or before 2026-11-03 05:00 UTC (midnight ET, end of Nov 2),
-from hourly candles; if a market didn't trade in the 14 days before, the bid/ask midpoint.
-`result` is Kalshi's settlement (yes/no), blank while a race is unsettled.
+Price at a snapshot: the last trade at or before it, from hourly candles; if a market didn't
+trade in the 14 days before, the bid/ask midpoint. `result` is Kalshi's settlement (yes/no),
+blank while a race is unsettled.
 
 Public market-data API, no key needed. Re-run when uncalled races settle, then re-run
 election_kalshi.py.
@@ -29,10 +31,15 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 API = 'https://api.elections.kalshi.com/trade-api/v2'
-SNAPSHOT = dt.datetime(2026, 11, 3, 5, 0, tzinfo=dt.timezone.utc)  # midnight ET ending Nov 2
-SNAP_TS = int(SNAPSHOT.timestamp())
+# Label -> midnight ET ending that day (EDT until Nov 1, then EST).
+SNAPSHOTS = {
+    '2026-10-03': dt.datetime(2026, 10, 4, 4, 0, tzinfo=dt.timezone.utc),
+    '2026-10-27': dt.datetime(2026, 10, 28, 4, 0, tzinfo=dt.timezone.utc),
+    '2026-11-02': dt.datetime(2026, 11, 3, 5, 0, tzinfo=dt.timezone.utc),
+}
+SNAP_TS = {k: int(v.timestamp()) for k, v in SNAPSHOTS.items()}
 LOOKBACK = 14 * 86400
-OUT = os.path.join('data', 'election_kalshi_nov2.csv')
+OUT = os.path.join('data', 'election_kalshi_prices.csv')
 
 # Race series by office. Kalshi lists each race as its own series (SENATEIA, GOVPARTYTX, ...);
 # every House district is one event in KXHOUSERACE.
@@ -73,10 +80,8 @@ def events(series):
             return out
 
 
-def snapshot_price(series, ticker):
-    d = get(f'/series/{series}/markets/{ticker}/candlesticks',
-            start_ts=SNAP_TS - LOOKBACK, end_ts=SNAP_TS, period_interval=60)
-    candles = [c for c in d.get('candlesticks', []) if c['end_period_ts'] <= SNAP_TS]
+def _price_at(candles, ts):
+    candles = [c for c in candles if ts - LOOKBACK < c['end_period_ts'] <= ts]
     for c in reversed(candles):
         p = c['price'].get('close_dollars') or c['price'].get('previous_dollars')
         if p is not None:
@@ -86,6 +91,14 @@ def snapshot_price(series, ticker):
         if bid and ask:
             return (float(bid) + float(ask)) / 2, 'mid'
     return None, ''
+
+
+def snapshot_prices(series, ticker):
+    """{snapshot label: (price, basis)} from one hourly-candle pull spanning every snapshot."""
+    d = get(f'/series/{series}/markets/{ticker}/candlesticks',
+            start_ts=min(SNAP_TS.values()) - LOOKBACK, end_ts=max(SNAP_TS.values()), period_interval=60)
+    candles = d.get('candlesticks', [])
+    return {label: _price_at(candles, ts) for label, ts in SNAP_TS.items()}
 
 
 def party(ticker):
@@ -114,18 +127,19 @@ def race_events():
 def rows_for(office, e):
     rows = []
     for m in e.get('markets', []):
-        price, basis = snapshot_price(e['series_ticker'], m['ticker'])
-        rows.append(dict(
-            office=office, event_ticker=e['event_ticker'], race=e['title'].replace(' winner?', ''),
-            market_ticker=m['ticker'], candidate=m.get('yes_sub_title') or '', party=party(m['ticker']),
-            price_nov2='' if price is None else f'{price:.3f}', price_basis=basis,
-            result=m.get('result') or '',
-        ))
+        for snapshot, (price, basis) in snapshot_prices(e['series_ticker'], m['ticker']).items():
+            rows.append(dict(
+                snapshot=snapshot, office=office, event_ticker=e['event_ticker'],
+                race=e['title'].replace(' winner?', ''), market_ticker=m['ticker'],
+                candidate=m.get('yes_sub_title') or '', party=party(m['ticker']),
+                price='' if price is None else f'{price:.3f}', price_basis=basis,
+                result=m.get('result') or '',
+            ))
     return rows
 
 
 def main():
-    print('Kalshi prices at', SNAPSHOT.isoformat())
+    print('Kalshi prices at', ', '.join(SNAPSHOTS))
     races = race_events()
     print(f'  {len(races)} races')
     seats = get(f'/events/{SEATS_EVENT}', with_nested_markets='true')['event']
@@ -133,13 +147,13 @@ def main():
     jobs = races + [('Senate seat count', seats)]
     with ThreadPoolExecutor(4) as ex:
         rows = [r for batch in ex.map(lambda j: rows_for(*j), jobs) for r in batch]
-    rows.sort(key=lambda r: (r['office'], r['event_ticker'], r['market_ticker']))
+    rows.sort(key=lambda r: (r['snapshot'], r['office'], r['event_ticker'], r['market_ticker']))
     os.makedirs('data', exist_ok=True)
     with open(OUT, 'w', newline='', encoding='utf-8') as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
-    print(f'  [OK] {OUT}: {len(rows)} markets')
+    print(f'  [OK] {OUT}: {len(rows)} rows')
 
 
 if __name__ == '__main__':

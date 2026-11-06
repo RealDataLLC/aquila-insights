@@ -320,11 +320,13 @@ Austin metro (CBSA 12420) housing tracker from FRED: Realtor.com listing series 
 [Credit Spreads Around Midterm Elections [2026-09-29]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_credit_spread_midterms.html) - Baa-10Y spread path around midterms vs 2026
 
 ### How Close Was Kalshi?
-[The Day Before the Vote, Kalshi Favorites Won 96% of Races [2026-11-05]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_accuracy.html) - Share of settled races won by the Nov 2 closing favorite, by office (Kalshi's own recap, on later prices, said 98%)
+[The Day Before the Vote, Kalshi Favorites Won 96% of Races [2026-11-06]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_accuracy.html) - Share of settled races won by the Nov 2 closing favorite, by office (Kalshi's own recap, on later prices, said 98%)
 
-[Kalshi Had the Competitive Senate Races Right, Except South Carolina [2026-11-05]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_senate_odds.html) - Nov 2 closing odds in every Senate race priced 10-90% for the Democrat, vs who won
+[Kalshi Favorites Won 94.5% of Races a Month Out and 96.0% the Day Before [2026-11-06]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_accuracy_trend.html) - Favorites won vs their average price, at the Oct 3, Oct 27 and Nov 2 closes
 
-[The Senate Landed in Kalshi's Top Bucket, Priced at 54% [2026-11-05]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_senate_seats.html) - Nov 2 closing odds for Democratic Senate seats vs the 54-56 result (AK, MS uncalled)
+[By Nov 2, Kalshi Had the Competitive Senate Races Right, Except South Carolina [2026-11-06]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_senate_odds.html) - Democratic odds a month, a week and a day out in every Senate race priced 10-90% on Nov 2, vs who won (Iowa and Kansas flipped in the final week)
+
+[Kalshi Priced the Senate Result at 33% a Month Out, 54% the Day Before [2026-11-06]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_senate_seats.html) - Democratic Senate seat odds at the Oct 3, Oct 27 and Nov 2 closes vs the 54-56 result (AK, MS uncalled)
 
 ## Austin Economy
 
