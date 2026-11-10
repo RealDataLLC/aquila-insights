@@ -447,7 +447,7 @@ def main():
         path = f"{OUTPUT_DIR}/austin_2025_top_companies.html"
         add_aquila_logo(fig)
         # Inject CSS to vertically center text in Plotly SVG table cells
-        html = fig.to_html(full_html=True, include_plotlyjs=True)
+        html = fig.to_html(full_html=True, include_plotlyjs="cdn")
         css_fix = "<style>g.table g.cells text { dominant-baseline: central !important; }</style>"
         html = html.replace('</head>', css_fix + '\n</head>', 1)
         with open(path, 'w', encoding='utf-8') as f:
