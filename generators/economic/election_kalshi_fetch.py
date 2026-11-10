@@ -15,6 +15,11 @@ blank while a race is unsettled.
 Public market-data API, no key needed. Re-run when uncalled races settle, then re-run
 election_kalshi.py.
 
+Also writes data/election_kalshi_texas_volume.csv: lifetime trading in each Texas statewide
+race and TX-23, for the chart comparing Kalshi money with campaign money. `contracts` is
+Kalshi's volume (each contract settles at $1, so contracts traded = dollars staked by both
+sides); `open_interest` is contracts outstanding at settlement, i.e. the dollars paid out.
+
 Usage:
     python -m generators.economic.election_kalshi_fetch
 """
@@ -40,6 +45,10 @@ SNAPSHOTS = {
 SNAP_TS = {k: int(v.timestamp()) for k, v in SNAPSHOTS.items()}
 LOOKBACK = 14 * 86400
 OUT = os.path.join('data', 'election_kalshi_prices.csv')
+TX_OUT = os.path.join('data', 'election_kalshi_texas_volume.csv')
+# Texas races with a Kalshi market. TX-09, 15, 28, 32, 34 and 35 had none.
+TX_EVENTS = [('SENATETX', 'SENATETX-26'), ('GOVPARTYTX', 'GOVPARTYTX-26'), ('KXLTGOVTX', 'KXLTGOVTX-26'),
+             ('KXATTYGENTX', 'KXATTYGENTX-26'), ('KXHOUSERACE', 'KXHOUSERACE-TX23-26')]
 
 # Race series by office. Kalshi lists each race as its own series (SENATEIA, GOVPARTYTX, ...);
 # every House district is one event in KXHOUSERACE.
@@ -138,6 +147,29 @@ def rows_for(office, e):
     return rows
 
 
+def texas_volume():
+    rows = []
+    for series, ticker in TX_EVENTS:
+        e = get(f'/events/{ticker}', with_nested_markets='true')['event']
+        for m in e['markets']:
+            opened = int(dt.datetime.fromisoformat(m['open_time'].replace('Z', '+00:00')).timestamp())
+            d = get(f'/series/{series}/markets/{m["ticker"]}/candlesticks',
+                    start_ts=opened, end_ts=SNAP_TS['2026-11-02'] + 7 * 86400, period_interval=1440)
+            candles = d.get('candlesticks', [])
+            oi = float(candles[-1].get('open_interest_fp') or 0) if candles else 0.0
+            rows.append(dict(event_ticker=ticker, race=e['title'].replace(' winner?', ''),
+                             market_ticker=m['ticker'], candidate=m.get('yes_sub_title') or '',
+                             party=party(m['ticker']), result=m.get('result') or '',
+                             contracts=f'{float(m.get("volume_fp") or 0):.2f}', open_interest=f'{oi:.2f}',
+                             opened=m['open_time'][:10]))
+            time.sleep(0.5)
+    with open(TX_OUT, 'w', newline='', encoding='utf-8') as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    print(f'  [OK] {TX_OUT}: {len(rows)} rows')
+
+
 def main():
     print('Kalshi prices at', ', '.join(SNAPSHOTS))
     races = race_events()
@@ -154,6 +186,7 @@ def main():
         w.writeheader()
         w.writerows(rows)
     print(f'  [OK] {OUT}: {len(rows)} rows')
+    texas_volume()
 
 
 if __name__ == '__main__':

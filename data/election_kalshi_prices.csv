@@ -21,8 +21,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-03,Attorney General,KXATTYGENID-26,Idaho Attorney General,KXATTYGENID-26-R,Raúl Labrador,R,0.972,last,yes
 2026-10-03,Attorney General,KXATTYGENIL-26,Illinois Attorney General,KXATTYGENIL-26-D,Kwame Raoul,D,0.990,last,yes
 2026-10-03,Attorney General,KXATTYGENIL-26,Illinois Attorney General,KXATTYGENIL-26-R,Bob Fioretti,R,0.085,last,no
-2026-10-03,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-D,Chris Mann,D,0.410,last,
-2026-10-03,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-R,Kris Kobach,R,0.590,last,
+2026-10-03,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-D,Chris Mann,D,0.410,last,yes
+2026-10-03,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-R,Kris Kobach,R,0.590,last,no
 2026-10-03,Attorney General,KXATTYGENMA-26,Massachusetts Attorney General,KXATTYGENMA-26-D,Andrea Joy Campbell,D,0.930,last,yes
 2026-10-03,Attorney General,KXATTYGENMA-26,Massachusetts Attorney General,KXATTYGENMA-26-R,Michael C. Walsh,R,0.022,last,no
 2026-10-03,Attorney General,KXATTYGENMD-26,Maryland Attorney General,KXATTYGENMD-26-D,Anthony G. Brown,D,0.979,last,yes
@@ -155,12 +155,12 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-03,House,KXHOUSERACE-AZ03-26,AZ-03 House,KXHOUSERACE-AZ03-26-R,Republican party,R,0.032,last,no
 2026-10-03,House,KXHOUSERACE-AZ04-26,AZ-04 House,KXHOUSERACE-AZ04-26-D,Greg Stanton,D,0.954,last,yes
 2026-10-03,House,KXHOUSERACE-AZ04-26,AZ-04 House,KXHOUSERACE-AZ04-26-R,Zuhdi Jasser,R,0.076,last,no
-2026-10-03,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-D,Elizabeth Lee,D,0.092,last,
-2026-10-03,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-R,Mark Lamb,R,0.890,last,
+2026-10-03,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-D,Elizabeth Lee,D,0.092,last,no
+2026-10-03,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-R,Mark Lamb,R,0.890,last,yes
 2026-10-03,House,KXHOUSERACE-AZ07-26,AZ-07 House,KXHOUSERACE-AZ07-26-D,Adelita Grijalva,D,0.979,last,yes
 2026-10-03,House,KXHOUSERACE-AZ07-26,AZ-07 House,KXHOUSERACE-AZ07-26-R,Daniel Francis Butierez Sr.,R,0.015,last,no
-2026-10-03,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-D,Bernadette Greene-Placentia,D,0.170,last,
-2026-10-03,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-R,Abe Hamadeh,R,0.790,last,
+2026-10-03,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-D,Bernadette Greene-Placentia,D,0.170,last,no
+2026-10-03,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-R,Abe Hamadeh,R,0.790,last,yes
 2026-10-03,House,KXHOUSERACE-AZ09-26,AZ-09 House,KXHOUSERACE-AZ09-26-D,Dani Sterbinsky,D,0.034,last,no
 2026-10-03,House,KXHOUSERACE-AZ09-26,AZ-09 House,KXHOUSERACE-AZ09-26-R,Paul Gosar,R,0.950,last,yes
 2026-10-03,House,KXHOUSERACE-CA01-26,CA-01 House,KXHOUSERACE-CA01-26-D,Mike McGuire,D,0.958,last,yes
@@ -300,8 +300,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-03,House,KXHOUSERACE-FL24-26,FL-24 House,KXHOUSERACE-FL24-26-R,Mayonna Te Brown,R,0.034,last,no
 2026-10-03,House,KXHOUSERACE-FL25-26,FL-25 House,KXHOUSERACE-FL25-26-D,Jared Moskowitz,D,0.730,last,yes
 2026-10-03,House,KXHOUSERACE-FL25-26,FL-25 House,KXHOUSERACE-FL25-26-R,Scott Singer,R,0.260,last,no
-2026-10-03,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-D,Nicole Locklin,D,0.110,last,
-2026-10-03,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-R,Mario Díaz-Balart,R,0.870,last,
+2026-10-03,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-D,Nicole Locklin,D,0.110,last,no
+2026-10-03,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-R,Mario Díaz-Balart,R,0.870,last,yes
 2026-10-03,House,KXHOUSERACE-FL27-26,FL-27 House,KXHOUSERACE-FL27-26-D,Eliott Rodriguez,D,0.380,last,
 2026-10-03,House,KXHOUSERACE-FL27-26,FL-27 House,KXHOUSERACE-FL27-26-R,Maria Elvira Salazar,R,0.630,last,
 2026-10-03,House,KXHOUSERACE-FL28-26,FL-28 House,KXHOUSERACE-FL28-26-D,Phil Ehr,D,0.060,last,no
@@ -422,10 +422,10 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-03,House,KXHOUSERACE-LA03-26,LA-03 House,KXHOUSERACE-LA03-26-R,Republican party,R,0.979,last,yes
 2026-10-03,House,KXHOUSERACE-LA04-26,LA-04 House,KXHOUSERACE-LA04-26-D,Democratic party,D,0.039,last,no
 2026-10-03,House,KXHOUSERACE-LA04-26,LA-04 House,KXHOUSERACE-LA04-26-R,Republican party,R,0.954,last,yes
-2026-10-03,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-D,Democratic party,D,0.019,last,
-2026-10-03,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-R,Republican party,R,0.976,last,
-2026-10-03,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-D,Democratic party,D,0.056,last,
-2026-10-03,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-R,Republican party,R,0.912,last,
+2026-10-03,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-D,Pat Moore,D,0.019,last,
+2026-10-03,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-R,Gabe Firment,R,0.976,last,
+2026-10-03,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-D,Chauna Banks,D,0.056,last,
+2026-10-03,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-R,Blake Miguez,R,0.912,last,
 2026-10-03,House,KXHOUSERACE-MA01-26,MA-01 House,KXHOUSERACE-MA01-26-D,Richard Neal,D,0.937,last,yes
 2026-10-03,House,KXHOUSERACE-MA01-26,MA-01 House,KXHOUSERACE-MA01-26-R,Republican party,R,0.059,last,no
 2026-10-03,House,KXHOUSERACE-MA02-26,MA-02 House,KXHOUSERACE-MA02-26-D,Jim McGovern,D,0.940,last,yes
@@ -529,8 +529,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-03,House,KXHOUSERACE-NC06-26,NC-06 House,KXHOUSERACE-NC06-26-R,Addison McDowell,R,0.908,last,no
 2026-10-03,House,KXHOUSERACE-NC07-26,NC-07 House,KXHOUSERACE-NC07-26-D,Kim Hardy,D,0.160,last,
 2026-10-03,House,KXHOUSERACE-NC07-26,NC-07 House,KXHOUSERACE-NC07-26-R,David Rouzer,R,0.830,last,
-2026-10-03,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-D,Colby Watson,D,0.042,last,
-2026-10-03,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-R,Mark Harris,R,0.917,last,
+2026-10-03,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-D,Colby Watson,D,0.042,last,no
+2026-10-03,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-R,Mark Harris,R,0.917,last,yes
 2026-10-03,House,KXHOUSERACE-NC09-26,NC-09 House,KXHOUSERACE-NC09-26-D,Richard Ojeda,D,0.190,last,yes
 2026-10-03,House,KXHOUSERACE-NC09-26,NC-09 House,KXHOUSERACE-NC09-26-R,Richard Hudson,R,0.760,last,no
 2026-10-03,House,KXHOUSERACE-NC10-26,NC-10 House,KXHOUSERACE-NC10-26-D,Ashley Bell,D,0.079,last,
@@ -604,8 +604,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-03,House,KXHOUSERACE-NY16-26,NY-16 House,KXHOUSERACE-NY16-26-R,Joseph Cinquemani,R,0.084,last,no
 2026-10-03,House,KXHOUSERACE-NY20-26,NY-20 House,KXHOUSERACE-NY20-26-D,Paul Tonko,D,0.973,last,yes
 2026-10-03,House,KXHOUSERACE-NY20-26,NY-20 House,KXHOUSERACE-NY20-26-R,Ralph Ambrosio,R,0.048,last,no
-2026-10-03,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-D,Blake Gendebien,D,0.180,last,
-2026-10-03,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-R,Anthony Constantino,R,0.830,last,
+2026-10-03,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-D,Blake Gendebien,D,0.180,last,no
+2026-10-03,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-R,Anthony Constantino,R,0.830,last,yes
 2026-10-03,House,KXHOUSERACE-NY23-26,NY-23 House,KXHOUSERACE-NY23-26-D,Aaron Gies,D,0.072,last,no
 2026-10-03,House,KXHOUSERACE-NY23-26,NY-23 House,KXHOUSERACE-NY23-26-R,Nick Langworthy,R,0.942,last,yes
 2026-10-03,House,KXHOUSERACE-NY24-26,NY-24 House,KXHOUSERACE-NY24-26-D,Alissa Ellman,D,0.037,last,no
@@ -686,8 +686,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-03,House,KXHOUSERACE-RI01-26,RI-01 House,KXHOUSERACE-RI01-26-R,Kellie Keenan,R,0.048,last,no
 2026-10-03,House,KXHOUSERACE-RI02-26,RI-02 House,KXHOUSERACE-RI02-26-D,Seth Magaziner,D,0.960,last,yes
 2026-10-03,House,KXHOUSERACE-RI02-26,RI-02 House,KXHOUSERACE-RI02-26-R,Victor Mellor,R,0.041,last,no
-2026-10-03,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-D,Nancy S. Lacore,D,0.310,last,
-2026-10-03,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-R,Jenny Costa Honeycutt,R,0.700,last,
+2026-10-03,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-D,Nancy S. Lacore,D,0.310,last,yes
+2026-10-03,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-R,Jenny Costa Honeycutt,R,0.700,last,no
 2026-10-03,House,KXHOUSERACE-SC02-26,SC-02 House,KXHOUSERACE-SC02-26-D,Zyon Khalifa,D,0.100,last,
 2026-10-03,House,KXHOUSERACE-SC02-26,SC-02 House,KXHOUSERACE-SC02-26-R,Joe Wilson,R,0.901,last,
 2026-10-03,House,KXHOUSERACE-SC03-26,SC-03 House,KXHOUSERACE-SC03-26-D,Eunice Lehmacher,D,0.028,last,no
@@ -808,8 +808,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-03,House,KXHOUSERACE-WA02-26,WA-02 House,KXHOUSERACE-WA02-26-R,Edwin H. Feller,R,0.030,last,no
 2026-10-03,House,KXHOUSERACE-WA04-26,WA-04 House,KXHOUSERACE-WA04-26-D,John Duresky,D,0.073,last,no
 2026-10-03,House,KXHOUSERACE-WA04-26,WA-04 House,KXHOUSERACE-WA04-26-R,Amanda McKinney,R,0.938,last,yes
-2026-10-03,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-D,Carmela Conroy,D,0.180,last,
-2026-10-03,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-R,Michael Baumgartner,R,0.840,last,
+2026-10-03,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-D,Carmela Conroy,D,0.180,last,no
+2026-10-03,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-R,Michael Baumgartner,R,0.840,last,yes
 2026-10-03,House,KXHOUSERACE-WA06-26,WA-06 House,KXHOUSERACE-WA06-26-D,Emily Randall,D,0.980,last,yes
 2026-10-03,House,KXHOUSERACE-WA06-26,WA-06 House,KXHOUSERACE-WA06-26-R,Teresa Fox,R,0.017,last,no
 2026-10-03,House,KXHOUSERACE-WA07-26,WA-07 House,KXHOUSERACE-WA07-26-D,Pramila Jayapal,D,0.975,last,yes
@@ -1021,8 +1021,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-27,Attorney General,KXATTYGENID-26,Idaho Attorney General,KXATTYGENID-26-R,Raúl Labrador,R,0.966,last,yes
 2026-10-27,Attorney General,KXATTYGENIL-26,Illinois Attorney General,KXATTYGENIL-26-D,Kwame Raoul,D,0.975,last,yes
 2026-10-27,Attorney General,KXATTYGENIL-26,Illinois Attorney General,KXATTYGENIL-26-R,Bob Fioretti,R,0.019,last,no
-2026-10-27,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-D,Chris Mann,D,0.600,last,
-2026-10-27,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-R,Kris Kobach,R,0.420,last,
+2026-10-27,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-D,Chris Mann,D,0.600,last,yes
+2026-10-27,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-R,Kris Kobach,R,0.420,last,no
 2026-10-27,Attorney General,KXATTYGENMA-26,Massachusetts Attorney General,KXATTYGENMA-26-D,Andrea Joy Campbell,D,0.980,last,yes
 2026-10-27,Attorney General,KXATTYGENMA-26,Massachusetts Attorney General,KXATTYGENMA-26-R,Michael C. Walsh,R,0.022,last,no
 2026-10-27,Attorney General,KXATTYGENMD-26,Maryland Attorney General,KXATTYGENMD-26-D,Anthony G. Brown,D,0.978,last,yes
@@ -1155,12 +1155,12 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-27,House,KXHOUSERACE-AZ03-26,AZ-03 House,KXHOUSERACE-AZ03-26-R,Republican party,R,0.032,last,no
 2026-10-27,House,KXHOUSERACE-AZ04-26,AZ-04 House,KXHOUSERACE-AZ04-26-D,Greg Stanton,D,0.954,last,yes
 2026-10-27,House,KXHOUSERACE-AZ04-26,AZ-04 House,KXHOUSERACE-AZ04-26-R,Zuhdi Jasser,R,0.066,last,no
-2026-10-27,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-D,Elizabeth Lee,D,0.130,last,
-2026-10-27,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-R,Mark Lamb,R,0.880,last,
+2026-10-27,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-D,Elizabeth Lee,D,0.130,last,no
+2026-10-27,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-R,Mark Lamb,R,0.880,last,yes
 2026-10-27,House,KXHOUSERACE-AZ07-26,AZ-07 House,KXHOUSERACE-AZ07-26-D,Adelita Grijalva,D,0.957,last,yes
 2026-10-27,House,KXHOUSERACE-AZ07-26,AZ-07 House,KXHOUSERACE-AZ07-26-R,Daniel Francis Butierez Sr.,R,0.039,last,no
-2026-10-27,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-D,Bernadette Greene-Placentia,D,0.110,last,
-2026-10-27,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-R,Abe Hamadeh,R,0.890,last,
+2026-10-27,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-D,Bernadette Greene-Placentia,D,0.110,last,no
+2026-10-27,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-R,Abe Hamadeh,R,0.890,last,yes
 2026-10-27,House,KXHOUSERACE-AZ09-26,AZ-09 House,KXHOUSERACE-AZ09-26-D,Dani Sterbinsky,D,0.056,last,no
 2026-10-27,House,KXHOUSERACE-AZ09-26,AZ-09 House,KXHOUSERACE-AZ09-26-R,Paul Gosar,R,0.965,last,yes
 2026-10-27,House,KXHOUSERACE-CA01-26,CA-01 House,KXHOUSERACE-CA01-26-D,Mike McGuire,D,0.962,last,yes
@@ -1300,8 +1300,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-27,House,KXHOUSERACE-FL24-26,FL-24 House,KXHOUSERACE-FL24-26-R,Mayonna Te Brown,R,0.053,last,no
 2026-10-27,House,KXHOUSERACE-FL25-26,FL-25 House,KXHOUSERACE-FL25-26-D,Jared Moskowitz,D,0.770,last,yes
 2026-10-27,House,KXHOUSERACE-FL25-26,FL-25 House,KXHOUSERACE-FL25-26-R,Scott Singer,R,0.240,last,no
-2026-10-27,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-D,Nicole Locklin,D,0.160,last,
-2026-10-27,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-R,Mario Díaz-Balart,R,0.850,last,
+2026-10-27,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-D,Nicole Locklin,D,0.160,last,no
+2026-10-27,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-R,Mario Díaz-Balart,R,0.850,last,yes
 2026-10-27,House,KXHOUSERACE-FL27-26,FL-27 House,KXHOUSERACE-FL27-26-D,Eliott Rodriguez,D,0.340,last,
 2026-10-27,House,KXHOUSERACE-FL27-26,FL-27 House,KXHOUSERACE-FL27-26-R,Maria Elvira Salazar,R,0.670,last,
 2026-10-27,House,KXHOUSERACE-FL28-26,FL-28 House,KXHOUSERACE-FL28-26-D,Phil Ehr,D,0.070,last,no
@@ -1422,10 +1422,10 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-27,House,KXHOUSERACE-LA03-26,LA-03 House,KXHOUSERACE-LA03-26-R,Republican party,R,0.975,last,yes
 2026-10-27,House,KXHOUSERACE-LA04-26,LA-04 House,KXHOUSERACE-LA04-26-D,Democratic party,D,0.030,last,no
 2026-10-27,House,KXHOUSERACE-LA04-26,LA-04 House,KXHOUSERACE-LA04-26-R,Republican party,R,0.971,last,yes
-2026-10-27,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-D,Democratic party,D,0.037,last,
-2026-10-27,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-R,Republican party,R,0.975,last,
-2026-10-27,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-D,Democratic party,D,0.083,last,
-2026-10-27,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-R,Republican party,R,0.929,last,
+2026-10-27,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-D,Pat Moore,D,0.037,last,
+2026-10-27,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-R,Gabe Firment,R,0.975,last,
+2026-10-27,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-D,Chauna Banks,D,0.083,last,
+2026-10-27,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-R,Blake Miguez,R,0.929,last,
 2026-10-27,House,KXHOUSERACE-MA01-26,MA-01 House,KXHOUSERACE-MA01-26-D,Richard Neal,D,0.993,last,yes
 2026-10-27,House,KXHOUSERACE-MA01-26,MA-01 House,KXHOUSERACE-MA01-26-R,Republican party,R,0.013,last,no
 2026-10-27,House,KXHOUSERACE-MA02-26,MA-02 House,KXHOUSERACE-MA02-26-D,Jim McGovern,D,0.990,last,yes
@@ -1529,8 +1529,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-27,House,KXHOUSERACE-NC06-26,NC-06 House,KXHOUSERACE-NC06-26-R,Addison McDowell,R,0.890,last,no
 2026-10-27,House,KXHOUSERACE-NC07-26,NC-07 House,KXHOUSERACE-NC07-26-D,Kim Hardy,D,0.230,last,
 2026-10-27,House,KXHOUSERACE-NC07-26,NC-07 House,KXHOUSERACE-NC07-26-R,David Rouzer,R,0.780,last,
-2026-10-27,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-D,Colby Watson,D,0.049,last,
-2026-10-27,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-R,Mark Harris,R,0.945,last,
+2026-10-27,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-D,Colby Watson,D,0.049,last,no
+2026-10-27,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-R,Mark Harris,R,0.945,last,yes
 2026-10-27,House,KXHOUSERACE-NC09-26,NC-09 House,KXHOUSERACE-NC09-26-D,Richard Ojeda,D,0.290,last,yes
 2026-10-27,House,KXHOUSERACE-NC09-26,NC-09 House,KXHOUSERACE-NC09-26-R,Richard Hudson,R,0.720,last,no
 2026-10-27,House,KXHOUSERACE-NC10-26,NC-10 House,KXHOUSERACE-NC10-26-D,Ashley Bell,D,0.068,last,
@@ -1604,8 +1604,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-27,House,KXHOUSERACE-NY16-26,NY-16 House,KXHOUSERACE-NY16-26-R,Joseph Cinquemani,R,0.084,last,no
 2026-10-27,House,KXHOUSERACE-NY20-26,NY-20 House,KXHOUSERACE-NY20-26-D,Paul Tonko,D,0.980,last,yes
 2026-10-27,House,KXHOUSERACE-NY20-26,NY-20 House,KXHOUSERACE-NY20-26-R,Ralph Ambrosio,R,0.029,last,no
-2026-10-27,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-D,Blake Gendebien,D,0.340,last,
-2026-10-27,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-R,Anthony Constantino,R,0.680,last,
+2026-10-27,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-D,Blake Gendebien,D,0.340,last,no
+2026-10-27,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-R,Anthony Constantino,R,0.680,last,yes
 2026-10-27,House,KXHOUSERACE-NY23-26,NY-23 House,KXHOUSERACE-NY23-26-D,Aaron Gies,D,0.022,last,no
 2026-10-27,House,KXHOUSERACE-NY23-26,NY-23 House,KXHOUSERACE-NY23-26-R,Nick Langworthy,R,0.943,last,yes
 2026-10-27,House,KXHOUSERACE-NY24-26,NY-24 House,KXHOUSERACE-NY24-26-D,Alissa Ellman,D,0.058,last,no
@@ -1686,8 +1686,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-27,House,KXHOUSERACE-RI01-26,RI-01 House,KXHOUSERACE-RI01-26-R,Kellie Keenan,R,0.031,last,no
 2026-10-27,House,KXHOUSERACE-RI02-26,RI-02 House,KXHOUSERACE-RI02-26-D,Seth Magaziner,D,0.943,last,yes
 2026-10-27,House,KXHOUSERACE-RI02-26,RI-02 House,KXHOUSERACE-RI02-26-R,Victor Mellor,R,0.055,last,no
-2026-10-27,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-D,Nancy S. Lacore,D,0.390,last,
-2026-10-27,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-R,Jenny Costa Honeycutt,R,0.630,last,
+2026-10-27,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-D,Nancy S. Lacore,D,0.390,last,yes
+2026-10-27,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-R,Jenny Costa Honeycutt,R,0.630,last,no
 2026-10-27,House,KXHOUSERACE-SC02-26,SC-02 House,KXHOUSERACE-SC02-26-D,Zyon Khalifa,D,0.150,last,
 2026-10-27,House,KXHOUSERACE-SC02-26,SC-02 House,KXHOUSERACE-SC02-26-R,Joe Wilson,R,0.850,last,
 2026-10-27,House,KXHOUSERACE-SC03-26,SC-03 House,KXHOUSERACE-SC03-26-D,Eunice Lehmacher,D,0.029,last,no
@@ -1808,8 +1808,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-10-27,House,KXHOUSERACE-WA02-26,WA-02 House,KXHOUSERACE-WA02-26-R,Edwin H. Feller,R,0.057,last,no
 2026-10-27,House,KXHOUSERACE-WA04-26,WA-04 House,KXHOUSERACE-WA04-26-D,John Duresky,D,0.100,last,no
 2026-10-27,House,KXHOUSERACE-WA04-26,WA-04 House,KXHOUSERACE-WA04-26-R,Amanda McKinney,R,0.890,last,yes
-2026-10-27,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-D,Carmela Conroy,D,0.160,last,
-2026-10-27,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-R,Michael Baumgartner,R,0.860,last,
+2026-10-27,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-D,Carmela Conroy,D,0.160,last,no
+2026-10-27,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-R,Michael Baumgartner,R,0.860,last,yes
 2026-10-27,House,KXHOUSERACE-WA06-26,WA-06 House,KXHOUSERACE-WA06-26-D,Emily Randall,D,0.984,last,yes
 2026-10-27,House,KXHOUSERACE-WA06-26,WA-06 House,KXHOUSERACE-WA06-26-R,Teresa Fox,R,0.035,last,no
 2026-10-27,House,KXHOUSERACE-WA07-26,WA-07 House,KXHOUSERACE-WA07-26-D,Pramila Jayapal,D,0.975,last,yes
@@ -2021,8 +2021,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-11-02,Attorney General,KXATTYGENID-26,Idaho Attorney General,KXATTYGENID-26-R,Raúl Labrador,R,0.960,last,yes
 2026-11-02,Attorney General,KXATTYGENIL-26,Illinois Attorney General,KXATTYGENIL-26-D,Kwame Raoul,D,0.975,last,yes
 2026-11-02,Attorney General,KXATTYGENIL-26,Illinois Attorney General,KXATTYGENIL-26-R,Bob Fioretti,R,0.020,last,no
-2026-11-02,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-D,Chris Mann,D,0.580,last,
-2026-11-02,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-R,Kris Kobach,R,0.430,last,
+2026-11-02,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-D,Chris Mann,D,0.580,last,yes
+2026-11-02,Attorney General,KXATTYGENKS-26,Kansas Attorney General,KXATTYGENKS-26-R,Kris Kobach,R,0.430,last,no
 2026-11-02,Attorney General,KXATTYGENMA-26,Massachusetts Attorney General,KXATTYGENMA-26-D,Andrea Joy Campbell,D,0.980,last,yes
 2026-11-02,Attorney General,KXATTYGENMA-26,Massachusetts Attorney General,KXATTYGENMA-26-R,Michael C. Walsh,R,0.022,last,no
 2026-11-02,Attorney General,KXATTYGENMD-26,Maryland Attorney General,KXATTYGENMD-26-D,Anthony G. Brown,D,0.978,last,yes
@@ -2155,12 +2155,12 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-11-02,House,KXHOUSERACE-AZ03-26,AZ-03 House,KXHOUSERACE-AZ03-26-R,Republican party,R,0.023,last,no
 2026-11-02,House,KXHOUSERACE-AZ04-26,AZ-04 House,KXHOUSERACE-AZ04-26-D,Greg Stanton,D,0.969,last,yes
 2026-11-02,House,KXHOUSERACE-AZ04-26,AZ-04 House,KXHOUSERACE-AZ04-26-R,Zuhdi Jasser,R,0.047,last,no
-2026-11-02,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-D,Elizabeth Lee,D,0.110,last,
-2026-11-02,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-R,Mark Lamb,R,0.880,last,
+2026-11-02,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-D,Elizabeth Lee,D,0.110,last,no
+2026-11-02,House,KXHOUSERACE-AZ05-26,AZ-05 House,KXHOUSERACE-AZ05-26-R,Mark Lamb,R,0.880,last,yes
 2026-11-02,House,KXHOUSERACE-AZ07-26,AZ-07 House,KXHOUSERACE-AZ07-26-D,Adelita Grijalva,D,0.997,last,yes
 2026-11-02,House,KXHOUSERACE-AZ07-26,AZ-07 House,KXHOUSERACE-AZ07-26-R,Daniel Francis Butierez Sr.,R,0.021,last,no
-2026-11-02,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-D,Bernadette Greene-Placentia,D,0.140,last,
-2026-11-02,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-R,Abe Hamadeh,R,0.870,last,
+2026-11-02,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-D,Bernadette Greene-Placentia,D,0.140,last,no
+2026-11-02,House,KXHOUSERACE-AZ08-26,AZ-08 House,KXHOUSERACE-AZ08-26-R,Abe Hamadeh,R,0.870,last,yes
 2026-11-02,House,KXHOUSERACE-AZ09-26,AZ-09 House,KXHOUSERACE-AZ09-26-D,Dani Sterbinsky,D,0.029,last,no
 2026-11-02,House,KXHOUSERACE-AZ09-26,AZ-09 House,KXHOUSERACE-AZ09-26-R,Paul Gosar,R,0.987,last,yes
 2026-11-02,House,KXHOUSERACE-CA01-26,CA-01 House,KXHOUSERACE-CA01-26-D,Mike McGuire,D,0.967,last,yes
@@ -2300,8 +2300,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-11-02,House,KXHOUSERACE-FL24-26,FL-24 House,KXHOUSERACE-FL24-26-R,Mayonna Te Brown,R,0.025,last,no
 2026-11-02,House,KXHOUSERACE-FL25-26,FL-25 House,KXHOUSERACE-FL25-26-D,Jared Moskowitz,D,0.820,last,yes
 2026-11-02,House,KXHOUSERACE-FL25-26,FL-25 House,KXHOUSERACE-FL25-26-R,Scott Singer,R,0.190,last,no
-2026-11-02,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-D,Nicole Locklin,D,0.140,last,
-2026-11-02,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-R,Mario Díaz-Balart,R,0.860,last,
+2026-11-02,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-D,Nicole Locklin,D,0.140,last,no
+2026-11-02,House,KXHOUSERACE-FL26-26,FL-26 House,KXHOUSERACE-FL26-26-R,Mario Díaz-Balart,R,0.860,last,yes
 2026-11-02,House,KXHOUSERACE-FL27-26,FL-27 House,KXHOUSERACE-FL27-26-D,Eliott Rodriguez,D,0.390,last,
 2026-11-02,House,KXHOUSERACE-FL27-26,FL-27 House,KXHOUSERACE-FL27-26-R,Maria Elvira Salazar,R,0.620,last,
 2026-11-02,House,KXHOUSERACE-FL28-26,FL-28 House,KXHOUSERACE-FL28-26-D,Phil Ehr,D,0.072,last,no
@@ -2422,10 +2422,10 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-11-02,House,KXHOUSERACE-LA03-26,LA-03 House,KXHOUSERACE-LA03-26-R,Republican party,R,0.980,last,yes
 2026-11-02,House,KXHOUSERACE-LA04-26,LA-04 House,KXHOUSERACE-LA04-26-D,Democratic party,D,0.033,last,no
 2026-11-02,House,KXHOUSERACE-LA04-26,LA-04 House,KXHOUSERACE-LA04-26-R,Republican party,R,0.973,last,yes
-2026-11-02,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-D,Democratic party,D,0.019,last,
-2026-11-02,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-R,Republican party,R,0.976,last,
-2026-11-02,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-D,Democratic party,D,0.051,last,
-2026-11-02,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-R,Republican party,R,0.949,last,
+2026-11-02,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-D,Pat Moore,D,0.019,last,
+2026-11-02,House,KXHOUSERACE-LA05-26,LA-05 House,KXHOUSERACE-LA05-26-R,Gabe Firment,R,0.976,last,
+2026-11-02,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-D,Chauna Banks,D,0.051,last,
+2026-11-02,House,KXHOUSERACE-LA06-26,LA-06 House,KXHOUSERACE-LA06-26-R,Blake Miguez,R,0.949,last,
 2026-11-02,House,KXHOUSERACE-MA01-26,MA-01 House,KXHOUSERACE-MA01-26-D,Richard Neal,D,0.984,last,yes
 2026-11-02,House,KXHOUSERACE-MA01-26,MA-01 House,KXHOUSERACE-MA01-26-R,Republican party,R,0.019,last,no
 2026-11-02,House,KXHOUSERACE-MA02-26,MA-02 House,KXHOUSERACE-MA02-26-D,Jim McGovern,D,0.997,last,yes
@@ -2529,8 +2529,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-11-02,House,KXHOUSERACE-NC06-26,NC-06 House,KXHOUSERACE-NC06-26-R,Addison McDowell,R,0.860,last,no
 2026-11-02,House,KXHOUSERACE-NC07-26,NC-07 House,KXHOUSERACE-NC07-26-D,Kim Hardy,D,0.260,last,
 2026-11-02,House,KXHOUSERACE-NC07-26,NC-07 House,KXHOUSERACE-NC07-26-R,David Rouzer,R,0.750,last,
-2026-11-02,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-D,Colby Watson,D,0.061,last,
-2026-11-02,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-R,Mark Harris,R,0.942,last,
+2026-11-02,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-D,Colby Watson,D,0.061,last,no
+2026-11-02,House,KXHOUSERACE-NC08-26,NC-08 House,KXHOUSERACE-NC08-26-R,Mark Harris,R,0.942,last,yes
 2026-11-02,House,KXHOUSERACE-NC09-26,NC-09 House,KXHOUSERACE-NC09-26-D,Richard Ojeda,D,0.350,last,yes
 2026-11-02,House,KXHOUSERACE-NC09-26,NC-09 House,KXHOUSERACE-NC09-26-R,Richard Hudson,R,0.660,last,no
 2026-11-02,House,KXHOUSERACE-NC10-26,NC-10 House,KXHOUSERACE-NC10-26-D,Ashley Bell,D,0.064,last,
@@ -2604,8 +2604,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-11-02,House,KXHOUSERACE-NY16-26,NY-16 House,KXHOUSERACE-NY16-26-R,Joseph Cinquemani,R,0.025,last,no
 2026-11-02,House,KXHOUSERACE-NY20-26,NY-20 House,KXHOUSERACE-NY20-26-D,Paul Tonko,D,0.988,last,yes
 2026-11-02,House,KXHOUSERACE-NY20-26,NY-20 House,KXHOUSERACE-NY20-26-R,Ralph Ambrosio,R,0.021,last,no
-2026-11-02,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-D,Blake Gendebien,D,0.310,last,
-2026-11-02,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-R,Anthony Constantino,R,0.700,last,
+2026-11-02,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-D,Blake Gendebien,D,0.310,last,no
+2026-11-02,House,KXHOUSERACE-NY21-26,NY-21 House,KXHOUSERACE-NY21-26-R,Anthony Constantino,R,0.700,last,yes
 2026-11-02,House,KXHOUSERACE-NY23-26,NY-23 House,KXHOUSERACE-NY23-26-D,Aaron Gies,D,0.039,last,no
 2026-11-02,House,KXHOUSERACE-NY23-26,NY-23 House,KXHOUSERACE-NY23-26-R,Nick Langworthy,R,0.978,last,yes
 2026-11-02,House,KXHOUSERACE-NY24-26,NY-24 House,KXHOUSERACE-NY24-26-D,Alissa Ellman,D,0.050,last,no
@@ -2686,8 +2686,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-11-02,House,KXHOUSERACE-RI01-26,RI-01 House,KXHOUSERACE-RI01-26-R,Kellie Keenan,R,0.030,last,no
 2026-11-02,House,KXHOUSERACE-RI02-26,RI-02 House,KXHOUSERACE-RI02-26-D,Seth Magaziner,D,0.966,last,yes
 2026-11-02,House,KXHOUSERACE-RI02-26,RI-02 House,KXHOUSERACE-RI02-26-R,Victor Mellor,R,0.031,last,no
-2026-11-02,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-D,Nancy S. Lacore,D,0.490,last,
-2026-11-02,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-R,Jenny Costa Honeycutt,R,0.520,last,
+2026-11-02,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-D,Nancy S. Lacore,D,0.490,last,yes
+2026-11-02,House,KXHOUSERACE-SC01-26,SC-01 House,KXHOUSERACE-SC01-26-R,Jenny Costa Honeycutt,R,0.520,last,no
 2026-11-02,House,KXHOUSERACE-SC02-26,SC-02 House,KXHOUSERACE-SC02-26-D,Zyon Khalifa,D,0.084,last,
 2026-11-02,House,KXHOUSERACE-SC02-26,SC-02 House,KXHOUSERACE-SC02-26-R,Joe Wilson,R,0.918,last,
 2026-11-02,House,KXHOUSERACE-SC03-26,SC-03 House,KXHOUSERACE-SC03-26-D,Eunice Lehmacher,D,0.018,last,no
@@ -2808,8 +2808,8 @@ snapshot,office,event_ticker,race,market_ticker,candidate,party,price,price_basi
 2026-11-02,House,KXHOUSERACE-WA02-26,WA-02 House,KXHOUSERACE-WA02-26-R,Edwin H. Feller,R,0.039,last,no
 2026-11-02,House,KXHOUSERACE-WA04-26,WA-04 House,KXHOUSERACE-WA04-26-D,John Duresky,D,0.080,last,no
 2026-11-02,House,KXHOUSERACE-WA04-26,WA-04 House,KXHOUSERACE-WA04-26-R,Amanda McKinney,R,0.928,last,yes
-2026-11-02,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-D,Carmela Conroy,D,0.240,last,
-2026-11-02,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-R,Michael Baumgartner,R,0.790,last,
+2026-11-02,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-D,Carmela Conroy,D,0.240,last,no
+2026-11-02,House,KXHOUSERACE-WA05-26,WA-05 House,KXHOUSERACE-WA05-26-R,Michael Baumgartner,R,0.790,last,yes
 2026-11-02,House,KXHOUSERACE-WA06-26,WA-06 House,KXHOUSERACE-WA06-26-D,Emily Randall,D,0.990,last,yes
 2026-11-02,House,KXHOUSERACE-WA06-26,WA-06 House,KXHOUSERACE-WA06-26-R,Teresa Fox,R,0.018,last,no
 2026-11-02,House,KXHOUSERACE-WA07-26,WA-07 House,KXHOUSERACE-WA07-26-D,Pramila Jayapal,D,0.975,last,yes
