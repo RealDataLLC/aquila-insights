@@ -1,0 +1,22 @@
+event_ticker,kind,source,window,dem,rep,url
+SENATETX-26,poll_avg,270toWin average (13 polls),latest poll 2026-11-02,49.6,46.4,https://www.270towin.com/2026-senate-polls/texas
+SENATETX-26,poll_avg,RealClearPolitics (via Newsweek),2026-10-15 to 2026-11-01,49.0,46.5,https://www.newsweek.com/james-talarico-chances-victory-record-high-poll-12648491
+SENATETX-26,result,Reported result (not certified),as of 2026-11-10,55.06,42.97,https://en.wikipedia.org/wiki/2026_United_States_Senate_election_in_Texas
+GOVPARTYTX-26,poll_avg,270toWin,2026-10-13 to 2026-11-01,47.1,49.3,https://en.wikipedia.org/wiki/2026_Texas_gubernatorial_election
+GOVPARTYTX-26,poll_avg,Decision Desk HQ,through 2026-11-01,47.5,49.1,https://en.wikipedia.org/wiki/2026_Texas_gubernatorial_election
+GOVPARTYTX-26,poll_avg,FiftyPlusOne,through 2026-11-01,47.4,48.9,https://en.wikipedia.org/wiki/2026_Texas_gubernatorial_election
+GOVPARTYTX-26,poll_avg,RealClearPolitics,2026-10-15 to 2026-11-01,47.3,49.8,https://en.wikipedia.org/wiki/2026_Texas_gubernatorial_election
+GOVPARTYTX-26,poll_avg,Silver Bulletin,through 2026-11-01,47.7,49.4,https://en.wikipedia.org/wiki/2026_Texas_gubernatorial_election
+GOVPARTYTX-26,result,Reported result (not certified),as of 2026-11-10,52.82,45.68,https://en.wikipedia.org/wiki/2026_Texas_gubernatorial_election
+KXLTGOVTX-26,poll,Texas Southern Univ. (2000 LV),2026-10-21 to 2026-10-25,45,49,https://en.wikipedia.org/wiki/2026_Texas_lieutenant_gubernatorial_election
+KXLTGOVTX-26,poll,Texas Public Opinion Research (969 LV),2026-10-15 to 2026-10-18,47,50,https://en.wikipedia.org/wiki/2026_Texas_lieutenant_gubernatorial_election
+KXLTGOVTX-26,poll,UH Hobby School (2000 LV),2026-10-10 to 2026-10-14,42,47,https://en.wikipedia.org/wiki/2026_Texas_lieutenant_gubernatorial_election
+KXLTGOVTX-26,poll,UT/Texas Politics Project,2026-09-25 to 2026-10-05,49,46,https://en.wikipedia.org/wiki/2026_Texas_lieutenant_gubernatorial_election
+KXLTGOVTX-26,result,Reported result (99% reporting; not certified),as of 2026-11-06,51.7,45.6,https://en.wikipedia.org/wiki/2026_Texas_lieutenant_gubernatorial_election
+KXATTYGENTX-26,poll,Texas Southern Univ. (2000 LV),2026-10-21 to 2026-10-25,45,49,https://en.wikipedia.org/wiki/2026_Texas_Attorney_General_election
+KXATTYGENTX-26,poll,Texas Public Opinion Research (969 LV),2026-10-15 to 2026-10-18,48,50,https://en.wikipedia.org/wiki/2026_Texas_Attorney_General_election
+KXATTYGENTX-26,poll,UH Hobby School (2000 LV),2026-10-10 to 2026-10-14,42,47,https://en.wikipedia.org/wiki/2026_Texas_Attorney_General_election
+KXATTYGENTX-26,poll,UT/Texas Politics Project (861 LV),2026-09-25 to 2026-10-05,48,47,https://en.wikipedia.org/wiki/2026_Texas_Attorney_General_election
+KXATTYGENTX-26,result,Reported result (99% reporting; not certified),as of 2026-11-10,52.4,45.9,https://en.wikipedia.org/wiki/2026_Texas_Attorney_General_election
+KXHOUSERACE-TX23-26,poll,Normington Petts (400 LV; D-aligned internal),2026-10-05 to 2026-10-07,46,46,https://poliagg.com/race/us-house-2026-tx-23/
+KXHOUSERACE-TX23-26,result,Reported result (not certified),as of 2026-11-10,52.1,44.0,https://en.wikipedia.org/wiki/Brandon_Herrera

@@ -144,6 +144,8 @@ AQUILA_FONT = "Futura LT Pro, Futura, Arial, sans-serif"
 
 All 62 HTML charts include an Aquila logo watermark (bottom-right, 12% width, solid opacity).
 
+Pages load plotly.js from cdn.plot.ly (`include_plotlyjs="cdn"`, set in `write_chart_html`). Never inline it: the inline bundle makes every page about 4.8 MB, and charts sit blank on slow connections and in-app previews.
+
 ```python
 # Standard pattern for generators:
 from aquila.charts import write_chart_html

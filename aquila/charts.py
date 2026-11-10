@@ -83,7 +83,7 @@ def write_chart_html(fig, path, sizex: float = 0.12, opacity: float = 1.0):
         Logo opacity (default 0.7).
     """
     add_aquila_logo(fig, sizex=sizex, opacity=opacity)
-    fig.write_html(path)
+    fig.write_html(path, include_plotlyjs="cdn")
 
 
 def aquila_styled_line_chart(

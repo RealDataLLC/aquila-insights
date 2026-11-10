@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Election 2026 -- How Close Was Kalshi?
-7 charts grading Kalshi's prediction markets against the November 3, 2026 midterms,
+8 charts grading Kalshi's prediction markets against the November 3, 2026 midterms,
 using closing prices one month out (Oct 3), one week out (Oct 27) and the day before (Nov 2).
 
 Charts (all in charts/economic-indicators/):
@@ -12,6 +12,7 @@ Charts (all in charts/economic-indicators/):
   5. election_kalshi_misses.html          -- Where the week-out and day-before favorites lost, by state
   6. election_kalshi_calibration.html     -- Favorites' win rate vs their price, by price band
   7. election_kalshi_texas_money.html     -- Money traded on Kalshi's Texas races vs campaign money
+  8. election_kalshi_texas_polls.html     -- Texas final poll margins vs results, with Kalshi's favorite
 
 Reads data/election_kalshi_prices.csv, written by election_kalshi_fetch.py from Kalshi's
 public API. Pre-vote prices keep election-night trading out of the grade; Kalshi's own
@@ -22,6 +23,10 @@ SENATE_RESULT_SEATS, re-run this.
 Chart 7 also reads data/election_kalshi_texas_volume.csv (same fetch). Campaign money is typed
 in below (TX_CAMPAIGN_MONEY) from FEC and Texas Ethics Commission reporting; refresh it after
 the FEC post-general reports (due Dec 3, 2026).
+
+Chart 8 reads data/election_texas_polls.csv (poll averages, polls and reported results, typed in with a
+source URL per row). Results there are as reported Nov 6-10, 2026 and not certified: replace them with the
+Texas Secretary of State canvass when it is published.
 
 Usage:
     python -m generators.economic.election_kalshi_fetch   # refresh the CSV
@@ -66,20 +71,19 @@ WEEK = '2026-10-27'
 TX_VOLUME = os.path.join('data', 'election_kalshi_texas_volume.csv')
 
 # Campaign money per Texas race with a Kalshi market, $M:
-# event ticker -> (label, Democrat $, Republican $, outside groups $ or None, basis).
-# Senate and TX-23: FEC receipts, cycle to Oct 14, 2026 (pre-general report). Senate outside =
-# FEC independent expenditures for or against either candidate (pro-Talarico $52.7M: $7.8M for him,
-# $44.9M against Paxton; pro-Paxton $157.3M: $73.1M for him, $84.2M against Talarico).
+# event ticker -> (label, Democrat $, Republican $, basis). Candidate committees only: outside groups
+# are left out because Kalshi is compared with what the campaigns themselves raised.
+# Senate and TX-23: FEC receipts, cycle to Oct 14, 2026 (pre-general report).
 # Governor: spending Oct 15, 2025-Oct 24, 2026 (Texas Tribune, from TEC filings).
 # Lt. Governor: cycle receipts (Houston Chronicle, from TEC filings).
 # AG: lower bounds. Middleton's $16.8M self-funding through the May runoff + $3.37M raised Jul-Oct;
 # Johnson's Jan-Jun ($0.98M) + Jul-Oct ($1.09M) reports.
 TX_CAMPAIGN_MONEY = {
-    'SENATETX-26': ('Senate: Talarico (D) vs Paxton (R)', 146.35, 22.33, 210.03, 'raised'),
-    'GOVPARTYTX-26': ('Governor: Hinojosa (D) vs Abbott (R)', 36.8, 281.0, None, 'spent'),
-    'KXLTGOVTX-26': ('Lt. Governor: Goodwin (D) vs Patrick (R)', 3.1, 26.7, None, 'raised'),
-    'KXATTYGENTX-26': ('Attorney General: Johnson (D) vs Middleton (R)', 2.07, 20.17, None, 'raised, at least'),
-    'KXHOUSERACE-TX23-26': ('TX-23 House: Padilla Stout (D) vs Herrera (R)', 1.12, 3.12, None, 'raised'),
+    'SENATETX-26': ('Senate: Talarico (D) vs Paxton (R)', 146.35, 22.33, 'raised'),
+    'GOVPARTYTX-26': ('Governor: Hinojosa (D) vs Abbott (R)', 36.8, 281.0, 'spent'),
+    'KXLTGOVTX-26': ('Lt. Governor: Goodwin (D) vs Patrick (R)', 3.1, 26.7, 'raised'),
+    'KXATTYGENTX-26': ('Attorney General: Johnson (D) vs Middleton (R)', 2.07, 20.17, 'raised, at least'),
+    'KXHOUSERACE-TX23-26': ('TX-23 House: Padilla Stout (D) vs Herrera (R)', 1.12, 3.12, 'raised'),
 }
 
 
@@ -458,16 +462,16 @@ def chart_texas_money(snaps):
             vol[r['event_ticker']][1] += float(r['open_interest']) / 1e6
     day = {e: m for (_, e), m in snaps[DAY].items()}
     rows = []
-    for ticker, (label, d, r, outside, basis) in TX_CAMPAIGN_MONEY.items():
+    for ticker, (label, d, r, basis) in TX_CAMPAIGN_MONEY.items():
         traded, payout = vol[ticker]
         fav, price = _favorite(day[ticker])
         win = _winner(day[ticker])
         call = (f'{"Democrat" if fav["party"] == "D" else "Republican"} favored at {price:.0%} the day before; '
                 f'{"Democrat" if win["party"] == "D" else "Republican"} won')
         rows.append(dict(label=f'{label}<br><sup>{call}</sup>', traded=traded, payout=payout, campaigns=d + r,
-                         d=d, r=r, outside=outside, basis=basis))
+                         d=d, r=r, basis=basis))
         print(f'    {label}: Kalshi traded {_money(traded)}, paid out {_money(payout)}; campaigns '
-              f'{_money(d + r)} ({basis})' + (f' + outside {_money(outside)}' if outside else '') + f'  [{call}]')
+              f'{_money(d + r)} ({basis})  [{call}]')
     rows.reverse()  # Plotly draws the first bar at the bottom; keep the Senate on top
     y = [x['label'] for x in rows]
 
@@ -483,22 +487,17 @@ def chart_texas_money(snaps):
                           + ('<br>D %{customdata[0]}, R %{customdata[1]} (%{customdata[2]})' if key == 'campaigns'
                              else '') + '<extra></extra>',
         ))
-    fig.add_trace(go.Bar(
-        y=y, x=[x['outside'] for x in rows], orientation='h', name='Outside groups (FEC independent expenditures)',
-        marker_color=CONCRETE, text=[_money(x['outside']) if x['outside'] else '' for x in rows],
-        textposition='outside', hovertemplate='%{y}<br>Outside groups: %{text}<extra></extra>',
-    ))
     sen = rows[-1]
     # Plotly reads text with two '$' as LaTeX; use the HTML entity in titles and notes.
     _style(
         fig,
-        f'{_money(sen["traded"])} Traded on Talarico vs Paxton, More Than the Campaigns Raised '
+        f'{_money(sen["traded"])} Traded on Talarico vs Paxton, More Than the Two Campaigns Raised Combined '
         f'({_money(sen["campaigns"])})',
-        'Each Texas race with a Kalshi market: money traded on Kalshi vs money raised or spent by the two '
-        'campaigns | Log scale',
-        'Kalshi public market data, market open through settlement; each contract settles at $1. Senate and TX-23: '
-        'FEC receipts to Oct 14, 2026; Senate outside groups = FEC independent expenditures for or against either '
-        'candidate.<br>Governor: spending Oct 15, 2025-Oct 24, 2026 (Texas Tribune, TEC filings). Lt. Governor: '
+        'Each Texas race with a Kalshi market vs the two campaigns\' own money | Traded counts every contract that '
+        'changed hands; paid out is the money at stake at settlement | Log scale',
+        'Kalshi public market data, market open through settlement; each contract settles at $1. Campaigns = the two '
+        'candidates\' committees only, not outside groups. Senate and TX-23: FEC receipts to Oct 14, 2026.'
+        '<br>Governor: spending Oct 15, 2025-Oct 24, 2026 (Texas Tribune, TEC filings). Lt. Governor: '
         'cycle receipts (Houston Chronicle, TEC). AG: at least Middleton\'s $16.8M self-funding + $3.4M raised '
         'Jul-Oct, and Johnson\'s 2026 reports.<br>Kalshi listed no market on TX-09, 15, 28, 32, 34 or 35. '
         'As of Nov 10, 2026.',
@@ -517,6 +516,92 @@ def chart_texas_money(snaps):
     _save(fig, 'election_kalshi_texas_money.html')
 
 
+TX_POLLS = os.path.join('data', 'election_texas_polls.csv')
+
+
+def _margin(d, r):
+    if abs(d - r) < 0.05:
+        return 'Tied'
+    return f'D+{d - r:.1f}' if d > r else f'R+{r - d:.1f}'
+
+
+def chart_texas_polls(snaps):
+    """Final poll margin vs result in each Texas race, with Kalshi's day-before favorite.
+
+    Poll margin = mean of the aggregator averages where any exist (Senate, Governor), else the mean of
+    the October public polls (Lt. Governor, AG; the Republican-sponsored Stratus poll is left out of the CSV).
+    TX-23 had only one poll, a Democrat-aligned internal, and is labeled so.
+    """
+    print('\n[8] Texas polls vs Kalshi vs result...')
+    rows = defaultdict(lambda: {'poll_avg': [], 'poll': [], 'result': None})
+    with open(TX_POLLS, encoding='utf-8') as f:
+        for r in csv.DictReader(f):
+            d, rp = float(r['dem']), float(r['rep'])
+            if r['kind'] == 'result':
+                rows[r['event_ticker']]['result'] = (d, rp)
+            else:
+                rows[r['event_ticker']][r['kind']].append(d - rp)
+    day = {e: m for (_, e), m in snaps[DAY].items()}
+    races = []
+    for ticker, (label, *_rest) in TX_CAMPAIGN_MONEY.items():
+        src = rows[ticker]
+        polls = src['poll_avg'] or src['poll']
+        basis = (f'average of {len(polls)} polling averages' if src['poll_avg'] else
+                 f'mean of {len(polls)} October polls' if len(polls) > 1 else 'one D-aligned internal poll')
+        poll = sum(polls) / len(polls)
+        d, rp = src['result']
+        fav, price = _favorite(day[ticker])
+        kalshi = f'{"Democrat" if fav["party"] == "D" else "Republican"} {price:.0%}'
+        races.append(dict(label=label, poll=poll, result=d - rp, kalshi=kalshi, basis=basis))
+        print(f'    {label}: polls {_margin(poll, 0)} ({basis}), result {_margin(d, rp)}, '
+              f'miss {d - rp - poll:.1f} pts toward D; Kalshi day before: {kalshi}')
+    races.reverse()  # Plotly draws the first row at the bottom; keep the Senate on top
+    y = [f'{x["label"]}<br><sup>Kalshi the day before: {x["kalshi"]} | polls: {x["basis"]}</sup>' for x in races]
+
+    fig = go.Figure()
+    for yi, x in zip(y, races):  # connector from the polls to the result
+        fig.add_trace(go.Scatter(x=[x['poll'], x['result']], y=[yi, yi], mode='lines', showlegend=False,
+                                 line=dict(color=CONCRETE, width=3), hoverinfo='skip'))
+    fig.add_trace(go.Scatter(
+        x=[x['poll'] for x in races], y=y, mode='markers+text', name='Final polls',
+        marker=dict(symbol='diamond', size=14, color='white', line=dict(color=COPPER, width=2.5)),
+        text=[_margin(x['poll'], 0) for x in races], textposition='top center',
+        hovertemplate='%{y}<br>Final polls: %{text}<extra></extra>',
+    ))
+    fig.add_trace(go.Scatter(
+        x=[x['result'] for x in races], y=y, mode='markers+text', name='Result',
+        marker=dict(size=14, color=NAVY),
+        text=[_margin(x['result'], 0) for x in races], textposition='top center',
+        hovertemplate='%{y}<br>Result: %{text}<extra></extra>',
+    ))
+    fig.add_vline(x=0, line=dict(color=NAVY, width=1))
+    misses = [x['result'] - x['poll'] for x in races]
+    poll_r = sum(x['poll'] < 0 for x in races)
+    kalshi_r = sum(x['kalshi'].startswith('Republican') for x in races)
+    _style(
+        fig,
+        f'Texas Polls Missed Every Race by {min(misses):.0f}-{max(misses):.0f} Points, and Kalshi Leaned With Them',
+        f'Final poll margin vs result, each Texas race with a Kalshi market | Polls had the Republican ahead in '
+        f'{poll_r} of {len(races)} races, Kalshi favored the Republican in {kalshi_r}; the Democrat won all '
+        f'{len(races)}',
+        'Polls: Senate = 270toWin and RealClearPolitics; Governor = 270toWin, Decision Desk HQ, FiftyPlusOne, '
+        'RealClearPolitics, Silver Bulletin (as of Nov 1-2); Lt. Governor and AG = October public polls (Texas '
+        'Southern, Texas Public<br>Opinion Research, UH Hobby, UT/Texas Politics Project), no aggregator average; '
+        'TX-23 = Normington Petts, Oct 5-7, Democrat-aligned. Results as reported Nov 6-10, 2026, not certified. '
+        'Kalshi: Nov 2 closing price.',
+        hovermode='closest', showlegend=True, height=640, margin=dict(l=420, r=60, t=120, b=170),
+        legend=dict(orientation='v', yanchor='top', y=0.99, xanchor='left', x=0.01, bgcolor='rgba(255,255,255,0.85)'),
+    )
+    for a in fig.layout.annotations:
+        if a.text.startswith('Source'):
+            a.x = -0.55  # start under the race labels so the note isn't clipped
+    fig.update_xaxes(title='Margin (points): Republican ahead <- 0 -> Democrat ahead', range=[-8, 15],
+                     zeroline=False, gridcolor='#E8E8E8', tickvals=[-5, 0, 5, 10, 15],
+                     ticktext=['R+5', '0', 'D+5', 'D+10', 'D+15'])
+    fig.update_yaxes(gridcolor='rgba(0,0,0,0)')
+    _save(fig, 'election_kalshi_texas_polls.html')
+
+
 def main():
     print('=' * 60)
     print('Election 2026 -- How Close Was Kalshi?')
@@ -530,6 +615,7 @@ def main():
     chart_misses(snaps)
     chart_calibration(snaps)
     chart_texas_money(snaps)
+    chart_texas_polls(snaps)
 
 
 if __name__ == '__main__':

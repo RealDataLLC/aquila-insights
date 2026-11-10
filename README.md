@@ -328,7 +328,9 @@ Austin metro (CBSA 12420) housing tracker from FRED: Realtor.com listing series 
 
 [Day-Before Favorites Priced at 50-70% Won Only 12 of 27 Races [2026-11-10]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_calibration.html) - Favorite win rate vs its price, by 10-point price band, a week and a day out (90%+ favorites won every race)
 
-[\$187M Traded on Talarico vs Paxton, More Than the Campaigns Raised (\$169M) [2026-11-10]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_texas_money.html) - Money traded and paid out on Kalshi's Texas Senate, Governor, Lt. Governor, AG and TX-23 markets vs campaign fundraising and spending
+[\$187M Traded on Talarico vs Paxton, More Than the Two Campaigns Raised Combined (\$169M) [2026-11-10]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_texas_money.html) - Money traded and paid out on Kalshi's Texas Senate, Governor, Lt. Governor, AG and TX-23 markets vs what the two campaigns raised or spent (candidate committees only). Traded counts every contract that changed hands; the \$126M paid out on the Senate race is the money actually at stake. Only the Senate beats campaign money: Governor drew \$106M vs \$318M spent. Kalshi favored the Republican in the other four Texas races, and the Democrat won all four
+
+[Texas Polls Missed Every Race by 8-9 Points, and Kalshi Leaned With Them [2026-11-10]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_texas_polls.html) - Final poll margin vs result in the five Texas races with a Kalshi market, with Kalshi's day-before favorite. Polls had the Republican ahead in 3, Kalshi favored the Republican in 4, and the Democrat won all 5. Senate and Governor use aggregator averages; Lt. Governor and AG use October public polls (no aggregator covered them); TX-23's only poll was a Democrat-aligned internal. Results not yet certified
 
 [By Nov 2, Kalshi Had the Competitive Senate Races Right, Except South Carolina [2026-11-10]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_senate_odds.html) - Democratic odds a month, a week and a day out in every Senate race priced 10-90% on Nov 2, vs who won (Iowa and Kansas flipped in the final week)
 
@@ -459,6 +461,7 @@ All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.12.0** | 2026-11-10 | Charts load plotly.js from cdn.plot.ly instead of inlining it: `write_chart_html()` and `austin_economy.py` use `include_plotlyjs="cdn"`, and 137 published pages were rewritten (670 MB to 6 MB; each page about 30 KB instead of 4.8 MB). Kalshi: Texas money chart drops the outside-groups bar and compares the two campaigns' own money; new Texas polls vs Kalshi vs result chart (`data/election_texas_polls.csv`, source URL per row) |
 | **6.11.0** | 2026-11-04 | Industrial charts refreshed to Q3 2026 — all 9 industrial charts regenerated; `END_QUARTER` bumped to `2026 Q3` in `nnn_rent.py` and `demand.py` |
 | **6.10.0** | 2026-06-18 | Industrial charts refreshed to Q1 2026 — all 9 industrial charts regenerated; `nnn_rent.py` `END_QUARTER` bumped to `2026 Q1`; `demand.py` now looks up the TITM tab by name (tabs were reordered) and caps data at `END_QUARTER` so the live TITM charts no longer bleed into the partial current quarter |
 | **6.9.0** | 2026-03-26 | Solid logo watermark on all charts — changed default opacity from 0.7 to 1.0 in `add_aquila_logo()` and `write_chart_html()`; regenerated all 62 charts |
