@@ -336,6 +336,9 @@ Austin metro (CBSA 12420) housing tracker from FRED: Realtor.com listing series 
 
 [Kalshi Priced the Senate Result at 33% a Month Out, 54% the Day Before [2026-11-10]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_kalshi_senate_seats.html) - Democratic Senate seat odds at the Oct 3, Oct 27 and Nov 2 closes vs the 54-56 result (AK, MS uncalled)
 
+### How Texas Counties Swung
+[Austin's Suburbs Swung 14-22 Points Toward Democrats; Travis Moved Only 6 [2026-11-11]](https://realdatallc.github.io/aquila-insights/charts/economic-indicators/election_texas_county_swing.html) - Governor margin by county, 2022 (O'Rourke vs Abbott) vs 2026 (Hinojosa vs Abbott): Bastrop +22, Hays +16, Williamson +14, Travis +6; statewide R+11 to D+7. Williamson, Bastrop, Tarrant, Collin and Denton flipped. 2026 counts are unofficial (Nov 4-10); Caldwell and Montgomery not yet posted
+
 ## Austin Economy
 
 ### Industries and Companies That Came to Austin in 2025
@@ -461,6 +464,7 @@ All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.13.0** | 2026-11-11 | Texas county swing chart: Governor margin by county, 2022 vs 2026, Austin metro highlighted (`generators/economic/election_texas_counties.py`, `data/election_texas_counties.csv` with source and status per row; 2026 counts unofficial until the Nov 17 canvass) |
 | **6.12.0** | 2026-11-10 | Charts load plotly.js from cdn.plot.ly instead of inlining it: `write_chart_html()` and `austin_economy.py` use `include_plotlyjs="cdn"`, and 137 published pages were rewritten (670 MB to 6 MB; each page about 30 KB instead of 4.8 MB). Kalshi: Texas money chart drops the outside-groups bar and compares the two campaigns' own money; new Texas polls vs Kalshi vs result chart (`data/election_texas_polls.csv`, source URL per row) |
 | **6.11.0** | 2026-11-04 | Industrial charts refreshed to Q3 2026 — all 9 industrial charts regenerated; `END_QUARTER` bumped to `2026 Q3` in `nnn_rent.py` and `demand.py` |
 | **6.10.0** | 2026-06-18 | Industrial charts refreshed to Q1 2026 — all 9 industrial charts regenerated; `nnn_rent.py` `END_QUARTER` bumped to `2026 Q1`; `demand.py` now looks up the TITM tab by name (tabs were reordered) and caps data at `END_QUARTER` so the live TITM charts no longer bleed into the partial current quarter |
