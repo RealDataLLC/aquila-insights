@@ -1,0 +1,29 @@
+county,year,dem_pct,rep_pct,dem_votes,rep_votes,total,austin_metro,status,url
+Travis,2022,72.61,25.89,334667,119321,460979,1,official (Wikipedia county table; county Clarity shows 72.59/25.85),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Williamson,2022,48.88,49.43,110242,111488,225553,1,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Hays,2022,54.60,43.58,48970,39085,89683,1,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Bastrop,2022,41.07,57.15,12007,16707,29235,1,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Harris,2022,54.03,44.47,595653,490261,1102418,0,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Dallas,2022,62.78,35.93,392634,224684,625391,0,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Tarrant,2022,47.25,51.34,279423,303600,591368,0,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Bexar,2022,57.52,41.05,311023,221993,540768,0,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Collin,2022,44.31,54.31,161737,198236,364976,0,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Denton,2022,42.92,55.70,136389,177017,317781,0,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Fort Bend,2022,51.63,46.89,129116,117249,250066,0,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+El Paso,2022,63.56,34.80,105156,57573,165446,0,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Hidalgo,2022,58.55,40.22,82671,56783,141196,0,official (Wikipedia county table),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Statewide,2022,43.86,54.75,3553656,4435558,8101994,0,official (Wikipedia totals row),https://en.wikipedia.org/wiki/2022_Texas_gubernatorial_election
+Travis,2026,75.61,23.17,416300,127543,550557,1,unofficial; county Clarity 2026-11-10,https://results.enr.clarityelections.com/TX/Travis/127492/
+Williamson,2026,56.05,42.33,156631,118285,279436,1,unofficial; county Clarity election night 2026-11-04,https://results.enr.clarityelections.com/TX/Williamson/127488/
+Hays,2026,62.66,35.78,75457,43094,120427,1,county cumulative results CSV (files named official),https://www.hayscountytx.gov/873/November-3-2026-General-Election
+Bastrop,2026,51.91,46.44,19303,17268,37184,1,unofficial; county Clarity 2026-11-10,https://results.enr.clarityelections.com/TX/Bastrop/127476/
+Harris,2026,63.55,34.97,879134,483850,1383460,0,unofficial; county cumulative report 2026-11-04,https://app.harrisvotes.com/electionresults/electionday
+Dallas,2026,68.76,29.52,540468,232067,786012,0,unofficial; county Clarity 2026-11-10,https://results.enr.clarityelections.com/TX/Dallas/127396/
+Tarrant,2026,56.34,42.13,410931,307297,729430,0,unofficial; county cumulative report 2026-11-04,https://www.tarrantcountytx.gov/content/dam/main/elections/2026/1126/reports/cumulative.pdf
+Bexar,2026,64.75,33.79,427403,223071,660091,0,unofficial; county Clarity 2026-11-09,https://results.enr.clarityelections.com/TX/Bexar/127291/
+Collin,2026,51.50,46.94,237170,216166,460548,0,unofficial; county election summary 2026-11-10,https://www.collincountytx.gov/Elections/Election-Results
+Denton,2026,50.32,48.20,200600,192154,398663,0,unofficial; county Clarity 2026-11-10,https://results.enr.clarityelections.com/TX/Denton/127398/
+Fort Bend,2026,60.61,37.98,201825,126463,332973,0,unofficial; county Clarity 2026-11-10,https://results.enr.clarityelections.com/TX/Fort_Bend/127480/
+El Paso,2026,70.16,28.02,154658,61759,220439,0,unofficial; county Clarity 2026-11-06,https://results.enr.clarityelections.com/TX/El_Paso/127348/
+Hidalgo,2026,70.51,28.49,143417,57948,,0,unofficial; The Monitor 2026-11-10 (news report),https://myrgv.com/local-news/2026/11/10/a-red-rejection-high-turnout-in-valley-helps-historic-democratic-success-in-midterm-election/
+Statewide,2026,52.80,45.67,5230789,4524527,9907381,0,unofficial; Texas SOS 2026-11-04,https://electionresults.sos.state.tx.us/results.html
