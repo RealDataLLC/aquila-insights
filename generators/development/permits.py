@@ -46,7 +46,7 @@ def save_chart(fig, filename):
     add_aquila_logo(fig)
     for attempt in range(3):
         try:
-            fig.write_html(filepath)
+            fig.write_html(filepath, include_plotlyjs="cdn")
             print(f"  [OK] Saved to charts/development/{filename}")
             return
         except OSError as e:
