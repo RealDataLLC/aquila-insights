@@ -1,6 +1,6 @@
 # Update: What Are the Largest Companies in Austin, Texas Today?
 
-*Updated draft, 2026-11-16, for the Learning Center article first posted August 15, 2025. Data: CoStar tenant locations, Austin market (MSA), office space use, locations of 150,000+ SF, pulled November 2026. Totals add each company's qualifying locations, the same method as the 2025 list. That method reproduces last year's figures exactly for the companies that didn't change (Dell 1,852,443 SF, IBM 1,361,659, Flex 704,269 and others).*
+*Updated draft, 2026-11-16, for the Learning Center article first posted August 15, 2025. Data: CoStar tenant locations, Austin market (MSA), office space use, locations of 150,000+ SF, pulled November 2026. Totals add each company's qualifying locations, the same method as the 2025 list. The August 2025 source export (CoStar, pulled 2025-08-15) used the same filters. "Office" means CoStar's Space Use = Office, whatever the building type, which is why NXP's space in an industrial building counted last year.*
 
 ## Suggested intro and method note
 
@@ -65,14 +65,23 @@ Apple, Dell, IBM and Meta have long dominated Austin's office headlines, but 202
 
 ## What changed since August 2025
 
-- **NXP Semiconductors (was #1, 2,435,810 SF) is off the list.** CoStar no longer shows NXP at its Oak Hill campus, which went on the market in February. Its new HQ at Champion Office Park (about 225,000 SF) is split across two buildings, and neither space reaches 150,000 SF.
-- **Google fell from #6 to #27** (1,193,921 → 271,321 SF). Only its 500 W. 2nd St. space still counts.
-- **Austin Community College fell from #5 to #19** (1,216,000 → 354,722 SF). Only two ACC office spaces still qualify (Highland Bldg. 1000 and Stonehollow Dr.). ACC's 2026 purchase of Bergstrom Tech Center (560,381 SF) isn't in CoStar's tenant records yet. Worth checking with CoStar, since once it is, ACC moves back into the top 10.
-- **Samsung halved** (991,207 → 499,998 SF). The office now on record is the 499,998 SF building at the Taylor campus.
-- **Meta fell to 833,644 SF** after leaving Domain 12, where IBM is now the tenant. Meta still holds Sixth and Guadalupe and Third + Shoal.
-- **Indeed fell to 520,494 SF** (from 703,937). **Intel** fell slightly, to 353,438 SF.
+These come from comparing this export row by row with the August 2025 export (same filters).
+
+- **NXP Semiconductors (was #1, 2,435,810 SF) is off the list.** CoStar no longer shows NXP at its Oak Hill campus (6501 William Cannon Dr.), which went on the market in February. Its new HQ at Champion Office Park (about 225,000 SF) is split across two buildings, and neither space reaches 150,000 SF.
+- **Google fell from #6 to #27** (1,193,921 → 271,321 SF). Its 738,000 SF at Sail Tower and 151,998 SF at the Offices at Saltillo are no longer on record, and 500 W. 2nd St. went from 303,923 to 271,321 SF.
+- **Austin Community College fell from #5 to #19** (1,216,000 → 354,722 SF). CoStar no longer lists the 1,016,000 SF Highland campus record at 6001 Airport Blvd. ACC's 2026 purchase of Bergstrom Tech Center (560,381 SF) isn't in CoStar's tenant records yet. Worth checking with CoStar, since either one would move ACC back into the top 10.
+- **Samsung fell from #8 to #14** (991,207 → 499,998 SF). CoStar now records Samsung's Taylor office building at 499,998 SF, down from 800,000. The 191,207 SF it held at 15700 Long Vista Dr. now belongs to Allen Control Systems, which signed for that space in August 2026.
+- **Meta fell to 833,644 SF.** IBM now holds Meta's former 320,095 SF at Domain 12. Sixth and Guadalupe (582,376 SF) and Third + Shoal (251,268 SF) remain.
+- **Indeed fell to 520,494 SF** (from 703,937) after its 183,911 SF at Domain Gateway dropped off. **Intel** fell to 353,438 SF (from 388,430).
 - **New this year:** SB Energy (bought Highpoint 2222, #4), The Senate of Texas, Austin Energy (now listed separately from the City of Austin), BillionToOne and Baylor Scott & White Quality Alliance.
-- **No longer have a 150,000+ SF office space:** Texas Facilities Commission, Progressive, eBay, Vista Equity Partners, Silicon Labs, Atlassian and PayPal.
+- **No longer have a 150,000+ SF office space:**
+  - Texas Facilities Commission: George H.W. Bush State Office Building
+  - Progressive: Met Center 15
+  - eBay: 7700 Parmer D
+  - Vista Equity Partners: The Republic
+  - Silicon Labs: 417 W. 2nd St.
+  - Atlassian: Centro
+  - PayPal: Domain Tower 2
 
 ## Corrections carried over from the 2025 article
 
