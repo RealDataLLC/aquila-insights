@@ -1,36 +1,85 @@
 # Update: What Are the Largest Companies in Austin, Texas Today?
 
-*Review and update plan, 2026-11-16, for the Learning Center article first posted August 15, 2025. The ranked table needs a fresh CoStar tenant pull (office tenants in the Austin MSA, 150,000+ SF) after year-end. Terminal does not hold MSA-wide office tenant data, and the original 2025 export was not found.*
+*Updated draft, 2026-11-16, for the Learning Center article first posted August 15, 2025. Data: CoStar tenant locations, Austin market (MSA), office space use, locations of 150,000+ SF, pulled November 2026. Totals add each company's qualifying locations, the same method as the 2025 list. That method reproduces last year's figures exactly for the companies that didn't change (Dell 1,852,443 SF, IBM 1,361,659, Flex 704,269 and others).*
 
-## Problems in the current article
+## Suggested intro and method note
 
-1. **Five companies are listed twice.** Ranks 53–57 repeat ranks 48–52 (Atlassian, PayPal, AT&T Labs, Dell Pediatric Research Institute, State Bar of Texas). The list is really 52 entries.
-2. **City of Austin appears twice:** rank 20 (438,766 SF) and rank 46 ("City Of Austin," 167,537 SF). This is a casing difference in the CoStar export. Combined, it is about 606,303 SF, which would rank about 14th.
-3. **The method note doesn't match the numbers.** The note says the list covers tenants "occupying 150,000 square feet or more in a single building." The top figures are clearly multi-building totals (NXP 2.4M SF, Apple 2.3M SF). The note should say: companies with at least one 150,000+ SF space, ranked by their total office SF in the MSA.
-4. **"Companies" includes many public entities.** About 17 of the 52 are government, education or nonprofit occupiers: State of Texas, HHSC, Texas Facilities Commission, TDEM, TCEQ, DARS, IRS, Veterans Affairs, City of Austin, City of Kyle, Travis County, UT Austin, Austin Community College, Dell Pediatric Research Institute, State Bar of Texas, Great Hills Baptist Church and Trellis Company. Either rename the article ("Largest Office Occupiers") or split it into a companies table and a public-sector table.
-5. **One entry is stale.** The Department of Assistive and Rehabilitative Services (rank 42) was abolished in 2016, when its programs moved to HHSC and the Texas Workforce Commission. That space is CoStar carrying an old tenant name.
-6. **Some values to check in the new pull:**
-   - City of Kyle at 450,000 SF of office looks too high for a city of Kyle's size; it may be a planned or mixed-use municipal campus.
-   - "Round Rock CCTTI" (rank 37) isn't a recognizable name.
-   - The industrial-heavy occupiers (NXP, Samsung, Flex) may include R&D or manufacturing space that CoStar classes as office.
+Apple, Dell, IBM and Meta have long dominated Austin's office headlines, but 2026 reshuffled the list. NXP, last year's #1, is leaving its Oak Hill campus. SoftBank's SB Energy bought the former 3M campus outright. Google and Meta gave back large blocks of space.
 
-## Changes we already know about since August 2025
+*As of November 2026, this ranking shows the largest office occupiers in the Austin MSA. It counts every company with at least one office space of 150,000 square feet or more, ranked by the total square footage of those spaces. Data is sourced from CoStar.*
 
-| Company | Change | Effect on the list |
-|---|---|---|
-| NXP Semiconductors (#1, 2,435,810 SF) | Leased the ~225,000 SF Champion Office Park as its new HQ (early 2026) and put its ~1.5M SF Oak Hill campus on the market | Biggest mover; likely falls well out of the top spot after the move |
-| Meta (#7, 1,178,885 SF) | Vacated Domain 12; IBM is taking the ~320,000 SF; Meta is still subleasing at Sixth and Guadalupe | Likely drops |
-| IBM (#4, 1,361,659 SF) | Taking ~320,000 SF at Domain 12 (renovation 2026) | Likely rises, depending on what it gives back |
-| Nvidia (not listed) | 99,370 SF at One Uptown (3Q 2025), expected to expand by ~79,346 SF in 2026 | Could enter at about 179,000 SF |
-| SB Energy (SoftBank, not listed) | Bought the ~1.18M SF Highpoint 2222 campus (March 2026) for an R&D and data center campus | Could enter once it occupies the space; CoStar may treat the space as owner-occupied |
-| Austin Community College (#5, 1,216,000 SF) | Bought Bergstrom Tech Center Buildings 310 and 312 (560,381 SF) | Likely grows |
-| City of Austin (#20 + #46) | Bought University Park, 3300 N. IH-35 (206,657 SF) | Grows, on top of combining its two rows |
-| SolarWinds (#30, 229,792 SF) | Signed ~100,000 SF at Zilker Point; leaving Southwest Parkway in fall 2027 | Likely drops below 150,000 SF after the move |
-| Atlassian (#48, 153,505 SF) | Listed its entire ~158,000 SF East Austin office for sublease | Still occupies the space for now; watch it |
+## 2026 ranking
 
-## Steps in January
+† = government, education or nonprofit occupier. If the title stays "Largest Companies," consider moving these to a second table. Doing that leaves 30 companies.
 
-1. Run the CoStar Tenants search (Austin MSA, office, 150,000+ SF occupied in at least one location) and export each company's total occupied SF.
-2. Normalize names (casing, "Inc." / "Corporation"), merge duplicates, and drop records for defunct tenants.
-3. Decide how to handle public-sector occupiers (rename the article or split the table).
-4. Compare against the August 2025 table and write one sentence for each company that moved more than five places, using the changes above.
+| Rank | Occupier | Office SF | Aug 2025 SF (rank) |
+|---|---|---|---|
+| 1 | Apple | 2,287,021 | 2,325,996 (#2) |
+| 2 | Dell Technologies | 1,852,443 | 1,852,443 (#3) |
+| 3 | IBM | 1,361,659 | 1,361,659 (#4) |
+| 4 | SB Energy | 1,179,740 | new |
+| 5 | Meta | 833,644 | 1,178,885 (#7) |
+| 6 | State of Texas † | 831,143 | 815,809 (#9) |
+| 7 | Texas Health and Human Services Commission † | 738,178 | 738,178 (#10) |
+| 8 | Flex | 704,269 | 704,269 (#11) |
+| 9 | National Instruments | 612,000 | 612,000 (#13) |
+| 10 | Texas Division of Emergency Management † | 586,674 | 586,674 (#15) |
+| 11 | Oracle Corporation | 550,750 | 550,750 (#16) |
+| 12 | Indeed | 520,494 | 703,937 (#12) |
+| 13 | Amazon | 503,595 | 503,595 (#17) |
+| 14 | Samsung | 499,998 | 991,207 (#8) |
+| 15 | Charles Schwab | 465,790 | 465,790 (#18) |
+| 16 | City of Kyle † | 450,000 | 450,000 (#19) |
+| 17 | The University of Texas at Austin † | 438,600 | 438,600 (#21) |
+| 18 | BAE Systems | 396,000 | 396,000 (#22) |
+| 19 | Austin Community College † | 354,722 | 1,216,000 (#5) |
+| 20 | Intel Corporation | 353,438 | 388,430 (#23) |
+| 21 | Travis County † | 335,725 | 335,725 (#24) |
+| 22 | The Senate of Texas † | 333,500 | new |
+| 23 | City of Austin † | 331,305 | 606,303 (#20 + #46) |
+| 24 | General Motors | 302,604 | 302,604 (#25) |
+| 25 | Great Hills Baptist Church † | 280,000 | 280,000 (#26) |
+| 26 | Austin Energy † | 274,998 | new |
+| 27 | Google | 271,321 | 1,193,921 (#6) |
+| 28 | Vrbo | 263,670 | 263,670 (#27) |
+| 29 | Texas Mutual Insurance Company | 257,364 | 257,364 (#28) |
+| 30 | Internal Revenue Service † | 235,878 | 235,878 (#29) |
+| 31 | SolarWinds | 229,792 | 229,792 (#30) |
+| 32 | AMD | 224,734 | 224,734 (#31) |
+| 33 | BillionToOne | 223,500 | new |
+| 34 | Superior Healthplan | 215,812 | 215,812 (#34) |
+| 35 | Dimensional | 210,000 | 210,000 (#35) |
+| 36 | Whole Foods Market | 209,955 | 209,955 (#36) |
+| 37 | Round Rock CCTTI † | 206,336 | 206,336 (#37) |
+| 38 | Texas Commission on Environmental Quality † | 201,575 | 201,575 (#38) |
+| 39 | Department of Assistive and Rehabilitative Services † | 199,258 | 184,000 (#42) |
+| 40 | Natera | 191,689 | 191,689 (#40) |
+| 41 | Trellis Company | 190,790 | 190,790 (#41) |
+| 42 | Visa Inc. | 176,883 | 176,883 (#44) |
+| 43 | Department of Veterans Affairs † | 170,709 | 170,709 (#45) |
+| 44 | Baylor Scott & White Quality Alliance | 169,980 | new |
+| 45 | Austin Regional Clinic | 160,000 | 159,500 (#47) |
+| 46 | AT&T Labs | 150,030 | 150,030 (#50) |
+| 47 | State Bar of Texas † | 150,000 | 150,000 (#52) |
+| 48 | Dell Pediatric Research Institute † | 150,000 | 150,000 (#51) |
+
+## What changed since August 2025
+
+- **NXP Semiconductors (was #1, 2,435,810 SF) is off the list.** CoStar no longer shows NXP at its Oak Hill campus, which went on the market in February. Its new HQ at Champion Office Park (about 225,000 SF) is split across two buildings, and neither space reaches 150,000 SF.
+- **Google fell from #6 to #27** (1,193,921 → 271,321 SF). Only its 500 W. 2nd St. space still counts.
+- **Austin Community College fell from #5 to #19** (1,216,000 → 354,722 SF). Only two ACC office spaces still qualify (Highland Bldg. 1000 and Stonehollow Dr.). ACC's 2026 purchase of Bergstrom Tech Center (560,381 SF) isn't in CoStar's tenant records yet. Worth checking with CoStar, since once it is, ACC moves back into the top 10.
+- **Samsung halved** (991,207 → 499,998 SF). The office now on record is the 499,998 SF building at the Taylor campus.
+- **Meta fell to 833,644 SF** after leaving Domain 12, where IBM is now the tenant. Meta still holds Sixth and Guadalupe and Third + Shoal.
+- **Indeed fell to 520,494 SF** (from 703,937). **Intel** fell slightly, to 353,438 SF.
+- **New this year:** SB Energy (bought Highpoint 2222, #4), The Senate of Texas, Austin Energy (now listed separately from the City of Austin), BillionToOne and Baylor Scott & White Quality Alliance.
+- **No longer have a 150,000+ SF office space:** Texas Facilities Commission, Progressive, eBay, Vista Equity Partners, Silicon Labs, Atlassian and PayPal.
+
+## Corrections carried over from the 2025 article
+
+- The 2025 table repeated ranks 48–52 as 53–57. The new table has no repeats.
+- City of Austin was listed twice in 2025 because of a casing difference ("City Of Austin"). Its spaces are combined here.
+- The 2025 method note said "in a single building," but the totals combined multiple buildings. The method note above fixes that.
+- **The Department of Assistive and Rehabilitative Services was abolished in 2016**, but CoStar still lists it at 6101 E. Oltorf St. Drop it, or relabel the space as HHSC if CoStar confirms.
+- **To verify before publishing:**
+  - "Round Rock CCTTI" (9900 Spectrum Dr.) isn't a recognizable name.
+  - The City of Kyle's 450,000 SF is the Kyle Public Safety Center.
