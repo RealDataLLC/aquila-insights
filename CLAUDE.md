@@ -516,8 +516,8 @@ Verify credentials NOT committed: `git log --all --full-history -- aquila_graph.
 
 ---
 
-**Last Updated:** 2026-11-04
-**Document Version:** 6.11.0
+**Last Updated:** 2026-11-16
+**Document Version:** 6.14.0
 
 ---
 

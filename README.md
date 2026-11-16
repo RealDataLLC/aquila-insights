@@ -75,31 +75,31 @@ Submarket boundary maps (Citywide, CBD, NW, SW, East) are generated from KMZ pol
 [TI Allowance by Lease Type [2026-03-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_ti_by_lease_type.html) - Average TI per SF by lease type (New/Renewal/Expansion/Sublease), office only
 
 #### Vacancy Rates (Competitive Set)
-[Vacancy Rate — CBD [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_cbd.html)
+[Vacancy Rate — CBD [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_cbd.html)
 
-[Vacancy Rate — Northwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_northwest.html)
+[Vacancy Rate — Northwest [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_northwest.html)
 
-[Vacancy Rate — Southwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_southwest.html)
+[Vacancy Rate — Southwest [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_southwest.html)
 
-[Vacancy Rate — The Domain [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_domain.html)
+[Vacancy Rate — The Domain [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_vacancy_rate_domain.html)
 
 #### Rental Rates (Competitive Set)
-[Rental Rate — CBD [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_cbd.html)
+[Rental Rate — CBD [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_cbd.html)
 
-[Rental Rate — Northwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_northwest.html)
+[Rental Rate — Northwest [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_northwest.html)
 
-[Rental Rate — Southwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_southwest.html)
+[Rental Rate — Southwest [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_southwest.html)
 
-[Rental Rate — The Domain [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_domain.html)
+[Rental Rate — The Domain [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_rental_rate_domain.html)
 
 #### Operating Expenses (Competitive Set)
-[Operating Expenses — CBD [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_cbd.html)
+[Operating Expenses — CBD [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_cbd.html)
 
-[Operating Expenses — Northwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_northwest.html)
+[Operating Expenses — Northwest [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_northwest.html)
 
-[Operating Expenses — Southwest [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_southwest.html)
+[Operating Expenses — Southwest [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_southwest.html)
 
-[Operating Expenses — The Domain [2026-08-19]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_domain.html)
+[Operating Expenses — The Domain [2026-11-16]](https://realdatallc.github.io/aquila-insights/charts/office/office_opex_domain.html)
 
 
 ## Industrial
@@ -464,6 +464,7 @@ All chart URLs: `https://realdatallc.github.io/aquila-insights/charts/{category}
 
 | Version | Date | Summary |
 |---------|------|---------|
+| **6.14.0** | 2026-11-16 | Office market metrics refreshed to Q3 2026 — all 12 vacancy/rent/opex charts (CBD, Northwest, Southwest, The Domain) regenerated from Supabase `market_tables_office` |
 | **6.13.0** | 2026-11-11 | Texas county swing chart: Governor margin by county, 2022 vs 2026, Austin metro highlighted (`generators/economic/election_texas_counties.py`, `data/election_texas_counties.csv` with source and status per row; 2026 counts unofficial until the Nov 17 canvass) |
 | **6.12.0** | 2026-11-10 | Charts load plotly.js from cdn.plot.ly instead of inlining it: `write_chart_html()` and `austin_economy.py` use `include_plotlyjs="cdn"`, and 137 published pages were rewritten (670 MB to 6 MB; each page about 30 KB instead of 4.8 MB). Kalshi: Texas money chart drops the outside-groups bar and compares the two campaigns' own money; new Texas polls vs Kalshi vs result chart (`data/election_texas_polls.csv`, source URL per row) |
 | **6.11.0** | 2026-11-04 | Industrial charts refreshed to Q3 2026 — all 9 industrial charts regenerated; `END_QUARTER` bumped to `2026 Q3` in `nnn_rent.py` and `demand.py` |
