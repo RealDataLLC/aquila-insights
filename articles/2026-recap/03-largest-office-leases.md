@@ -6,7 +6,7 @@ Austin office leasing in 2026 was a flight-to-quality story. The largest deals w
 
 ## 1. NXP Semiconductors: Champion Office Park, Northwest
 
-**About 225,000 SF, full-campus headquarters lease, signed early 2026.** NXP leased the two-building Champion Office Park at 6433 N. Champion Grandview Way from Menlo Equities as its new Austin headquarters. It is leaving its 155-acre, roughly 1.5 million SF Oak Hill campus at 6501 William Cannon Blvd., which went on the market in February. This was the year's largest office lease, and one of the clearest examples of a large Austin employer trading an owned legacy campus for less, newer space.
+**About 225,000 SF, full-campus headquarters lease, signed early 2026.** NXP leased the two-building Champion Office Park at 6433 N. Champion Grandview Way from Menlo Equities as its new Austin headquarters. It is leaving its 155-acre, roughly 1.5 million SF Oak Hill campus at 6501 William Cannon Blvd., which it listed for sale in December 2025. NXP's $30 million renovation of the new campus is due to finish in March 2027. This was the year's largest office lease, and one of the clearest examples of a large Austin employer trading an owned legacy campus for less, newer space.
 
 ## 2. Jackson Walker L.L.P.: The Republic, CBD
 
